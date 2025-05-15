@@ -1,5 +1,8 @@
 const express = require('express');
-const { connectDB, ObjectId, getDB } = require('./db');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { connectDB, ObjectId } = require('./db');
+const { authMiddleware, roleMiddleware, isSelfOrAdmin  } = require('./middleware/auth');
 require('dotenv').config();
 
 const app = express();
@@ -8,182 +11,203 @@ app.use(express.json());
 const usersCollection = 'users';
 const itemsCollection = 'items';
 
-// Users Routes
+// =========================
+// AUTH ROUTES
+// =========================
 
-// POST route to create a new user
-app.post('/users', async (req, res) => {
-  const { name, email, role } = req.body;
+app.get('/me', authMiddleware, (req, res) => {
+  res.status(200).json({
+    message: 'Current logged-in user',
+    user: req.user
+  });
+});
 
-  // Check if name, email, and role are provided
-  if (!name || !email || !role) {
-    return res.status(400).json({ error: 'Name, email, and role are required' });
-  }
-
-  // Validate role
+app.post('/auth/register', async (req, res) => {
+  const { name, email, password, role } = req.body;
   const validRoles = ['super_admin', 'admin', 'user'];
+
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
   if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Role must be one of the following: super_admin, admin, or user' });
+    return res.status(400).json({ error: 'Invalid role' });
   }
 
-  // Validate email format
-  const isValidEmail = /\S+@\S+\.\S+/.test(email);
-  if (!isValidEmail) {
+  try {
+    const db = await connectDB();
+    const users = db.collection(usersCollection);
+
+    const existingUser = await users.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const result = await users.insertOne({ name, email, role, password: hashedPassword });
+
+    res.status(201).json({ message: 'User registered', userId: result.insertedId });
+  } catch (err) {
+    res.status(500).json({ error: 'Registration failed', details: err.message });
+  }
+});
+
+app.post('/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+  try {
+    const db = await connectDB();
+    const users = db.collection(usersCollection);
+
+    const user = await users.findOne({ email });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed', details: err.message });
+  }
+});
+
+// =========================
+// USER ROUTES
+// =========================
+
+// Check admin is not trying to create super_admin or admin
+
+// Create new user (admin only)
+app.post('/users', authMiddleware, async (req, res) => {
+  const { name, email, password, role } = req.body;
+  const validRoles = ['super_admin', 'admin', 'user'];
+  if (
+  req.user.role === 'admin' &&
+  ['admin', 'super_admin'].includes(role)
+  ) {
+  return res.status(403).json({ error: 'Admins cannot create other admins or super_admins' });
+  }
+
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  if (!/\S+@\S+\.\S+/.test(email)) {
     return res.status(400).json({ error: 'Invalid email format' });
   }
 
   try {
-    const db = await connectDB(); // Connect to the DB
+    const db = await connectDB();
     const collection = db.collection(usersCollection);
-    const result = await collection.insertOne({ name, email, role });
 
-    // Respond with the user data
-    res.status(201).json({
-      message: 'User created successfully',
-      userId: result.insertedId,
-    });
+    const existingUser = await collection.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    // Only admins can create other users
+    if (!['admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const result = await collection.insertOne({ name, email, role, password: hashedPassword });
+
+    res.status(201).json({ message: 'User created successfully', userId: result.insertedId });
   } catch (err) {
     console.error('Error in POST /users:', err);
     res.status(500).json({ error: 'Failed to create user', details: err.message });
   }
 });
 
-
-// GET route to fetch all users
-app.get('/users', async (req, res) => {
+// Protected User Routes
+app.get('/users', authMiddleware, roleMiddleware(['super_admin']), async (req, res) => {
   try {
-    const db = await connectDB();  // Connect, and potentially reuse existing connection.
-    const collection = db.collection(usersCollection);
-    const users = await collection.find().toArray();
+    const db = await connectDB();
+    const users = await db.collection(usersCollection).find().toArray();
     res.status(200).json(users);
   } catch (err) {
-    console.error('Error in GET /users:', err);
     res.status(500).json({ error: 'Failed to fetch users', details: err.message });
   }
 });
 
-// GET route to fetch a user by ID
-app.get('/users/:id', async (req, res) => {
+app.get('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
-
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect, and potentially reuse existing connection.
-    const collection = db.collection(usersCollection);
-    const user = await collection.findOne(query);
+    const db = await connectDB();
+    const user = await db.collection(usersCollection).findOne(query);
 
-    if (!user) {
-      console.log(`User not found with ID: ${id}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
     res.status(200).json(user);
   } catch (err) {
-    console.error(`Error fetching user with ID: ${id}`, err);
     res.status(500).json({ error: 'Failed to fetch user', details: err.message });
   }
 });
 
-// PUT route to update a user by ID
-app.put('/users/:id', async (req, res) => {
+app.put('/users/:id',isSelfOrAdmin, async (req, res) => {
   const { id } = req.params;
-  const updatedData = req.body;  // The data you want to update
-
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
+  const updatedData = req.body;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect to the database
-    const collection = db.collection(usersCollection);
+    const db = await connectDB();
+    const result = await db.collection(usersCollection).updateOne(query, { $set: updatedData });
 
-    // Update the user with the new data
-    const result = await collection.updateOne(query, { $set: updatedData });
-
-    if (result.matchedCount === 0) {
-      console.log(`User not found with ID: ${id}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Respond with success
-    res.status(200).json({ message: `User with ID: ${id} updated successfully` });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json({ message: 'User updated successfully' });
   } catch (err) {
-    console.error(`Error updating user with ID: ${id}`, err);
     res.status(500).json({ error: 'Failed to update user', details: err.message });
   }
 });
 
-
-// DELETE route to delete a user by ID
-app.delete('/users/:id', async (req, res) => {
+app.patch('/users/:id', isSelfOrAdmin, async (req, res) => {
   const { id } = req.params;
-
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
+  const updateData = req.body;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(usersCollection);
-    const result = await collection.deleteOne(query);
+    const db = await connectDB();
+    const result = await db.collection(usersCollection).updateOne(query, { $set: updateData });
 
-    if (result.deletedCount === 0) {
-      console.log(`User not found with ID: ${id}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // If deletion was successful
-    res.status(200).json({ message: `User with ID: ${id} deleted successfully` });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json({ message: 'User updated successfully' });
   } catch (err) {
-    console.error(`Error deleting user with ID: ${id}`, err);
+    res.status(500).json({ error: 'Failed to update user', details: err.message });
+  }
+});
+
+app.delete('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  const { id } = req.params;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
+
+  try {
+    const db = await connectDB();
+    const result = await db.collection(usersCollection).deleteOne(query);
+
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'User not found' });
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to delete user', details: err.message });
   }
 });
 
-// PATCH route to partially update a user by ID
-app.patch('/users/:id', async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body;  // The fields to be updated
-
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id }; // If not a valid ObjectId, treat it as a string ID
-  }
-
-  try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(usersCollection);
-
-    // Update the user with the provided fields
-    const result = await collection.updateOne(query, { $set: updateData });
-
-    if (result.matchedCount === 0) {
-      console.log(`User not found with ID: ${id}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.status(200).json({ message: `User with ID: ${id} updated successfully` });
-  } catch (err) {
-    console.error(`Error updating user with ID: ${id}`, err);
-    res.status(500).json({ error: 'Failed to update user', details: err.message });
-  }
-});
-
-
-
-// Items Routes
+// =========================
+// ITEMS ROUTES
+// =========================
 
 function validateItem(item) {
   if (!item.name || typeof item.name !== 'string') {
@@ -194,174 +218,107 @@ function validateItem(item) {
   }
 }
 
-app.post('/items', async (req, res) => {
-  console.log("POST /items hit!", req.body);
-
+app.post('/items', authMiddleware, async (req, res) => {
   try {
-    const db = await connectDB();  // Connect, and potentially reuse existing connection.
-    const collection = db.collection(itemsCollection);
     const item = req.body;
     validateItem(item);
-    const result = await collection.insertOne(item);
-    res.status(201).send({
-      message: 'Item inserted',
-      insertedId: result.insertedId
-    });
+
+    const db = await connectDB();
+    const result = await db.collection(itemsCollection).insertOne(item);
+
+    res.status(201).json({ message: 'Item inserted', insertedId: result.insertedId });
   } catch (err) {
-    console.error('Error in POST /items:', err);
-    res.status(400).send({
-      error: err.message
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
 app.get('/items', async (req, res) => {
   try {
-    const db = await connectDB();  // Connect, and potentially reuse existing connection.
-    const collection = db.collection(itemsCollection);
-    const items = await collection.find().toArray();
-    res.status(200).send(items);
+    const db = await connectDB();
+    const items = await db.collection(itemsCollection).find().toArray();
+    res.status(200).json(items);
   } catch (err) {
-    console.error('Error in GET /items:', err);
-    res.status(500).send({
-      error: 'Failed to fetch items'
-    });
+    res.status(500).json({ error: 'Failed to fetch items' });
   }
 });
 
-// GET route to fetch an item by ID
 app.get('/items/:id', async (req, res) => {
   const { id } = req.params;
-  
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };  // If not a valid ObjectId, handle it like a regular string ID
-  }
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(itemsCollection);
-    const item = await collection.findOne(query);
+    const db = await connectDB();
+    const item = await db.collection(itemsCollection).findOne(query);
 
-    if (!item) {
-      console.log(`Item not found with ID: ${id}`);
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    res.status(200).json(item);  // Return the found item
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    res.status(200).json(item);
   } catch (err) {
-    console.error(`Error fetching item with ID: ${id}`, err);
     res.status(500).json({ error: 'Failed to fetch item', details: err.message });
   }
 });
-// PUT route to update an item by ID
-app.put('/items/:id', async (req, res) => {
-  const { id } = req.params;
-  const updatedData = req.body;  // The new data to update the item with
 
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
+app.put('/items/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(itemsCollection);
+    const db = await connectDB();
+    const result = await db.collection(itemsCollection).updateOne(query, { $set: updatedData });
 
-    // Update the item
-    const result = await collection.updateOne(query, { $set: updatedData });
-
-    if (result.matchedCount === 0) {
-      console.log(`Item not found with ID: ${id}`);
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    res.status(200).json({ message: `Item with ID: ${id} updated successfully` });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Item not found' });
+    res.status(200).json({ message: 'Item updated successfully' });
   } catch (err) {
-    console.error(`Error updating item with ID: ${id}`, err);
     res.status(500).json({ error: 'Failed to update item', details: err.message });
   }
 });
-// DELETE route to remove an item by ID
-app.delete('/items/:id', async (req, res) => {
-  const { id } = req.params;
 
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
+app.patch('/items/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(itemsCollection);
+    const db = await connectDB();
+    const result = await db.collection(itemsCollection).updateOne(query, { $set: updateData });
 
-    // Delete the item
-    const result = await collection.deleteOne(query);
-
-    if (result.deletedCount === 0) {
-      console.log(`Item not found with ID: ${id}`);
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    res.status(200).json({ message: `Item with ID: ${id} deleted successfully` });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Item not found' });
+    res.status(200).json({ message: 'Item updated successfully' });
   } catch (err) {
-    console.error(`Error deleting item with ID: ${id}`, err);
+    res.status(500).json({ error: 'Failed to update item', details: err.message });
+  }
+});
+
+app.delete('/items/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
+
+  try {
+    const db = await connectDB();
+    const result = await db.collection(itemsCollection).deleteOne(query);
+
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Item not found' });
+    res.status(200).json({ message: 'Item deleted successfully' });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to delete item', details: err.message });
   }
 });
 
-// PATCH route to partially update an item by ID
-app.patch('/items/:id', async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body;  // Only the fields that need to be updated
+// =========================
+// START SERVER
+// =========================
 
-  let query;
-  if (ObjectId.isValid(id)) {
-    query = { _id: new ObjectId(id) };
-  } else {
-    query = { _id: id };
-  }
-
-  try {
-    const db = await connectDB();  // Connect to DB
-    const collection = db.collection(itemsCollection);
-
-    // Update only the fields that are provided in the request body
-    const result = await collection.updateOne(query, { $set: updateData });
-
-    if (result.matchedCount === 0) {
-      console.log(`Item not found with ID: ${id}`);
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    res.status(200).json({ message: `Item with ID: ${id} updated successfully` });
-  } catch (err) {
-    console.error(`Error updating item with ID: ${id}`, err);
-    res.status(500).json({ error: 'Failed to update item', details: err.message });
-  }
-});
-
-// ===============================
-// Start the Server
-// ===============================
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    await connectDB(); // Ensure DB connection is established *before* starting the server.
+    await connectDB();
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
-    // Handle the error appropriately, maybe retry connection, or exit.
+    console.error('❌ Failed to start server:', error);
   }
 }
-startServer();
 
+startServer();
