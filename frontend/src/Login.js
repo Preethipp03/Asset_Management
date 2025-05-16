@@ -1,66 +1,54 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // ✅ import Link
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+const Login = () => {
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
     try {
-      const response = await fetch('http://localhost:5000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        alert('Login successful!');
-      } else {
-        setError(data.message || 'Login failed');
-      }
+      const res = await axios.post('http://localhost:5000/auth/login', form);
+      localStorage.setItem('token', res.data.token);
+      setError(null);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Server error. Please try again later.');
+      setError(err.response?.data?.error || 'Login failed');
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: 'auto' }}>
+    <div>
       <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <label>Email:</label><br />
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
           required
-        /><br /><br />
-
-        <label>Password:</label><br />
+        /><br />
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
           required
-        /><br /><br />
-
-        {error && <div style={{ color: 'red' }}>{error}</div>}
-
+        /><br />
         <button type="submit">Login</button>
       </form>
-
-      {/* ✅ Add this */}
-      <p style={{ marginTop: '15px' }}>
-        Don't have an account? <Link to="/register">Register here</Link>
-      </p>
     </div>
   );
-}
+};
 
+// ⬇️ Make sure this is outside and not indented into a block
 export default Login;
