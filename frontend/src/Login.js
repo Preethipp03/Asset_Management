@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom'; // ✅ import Link
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -19,10 +20,8 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // Save token in localStorage
         localStorage.setItem('token', data.token);
         alert('Login successful!');
-        // Redirect or update UI here
       } else {
         setError(data.message || 'Login failed');
       }
@@ -55,6 +54,11 @@ function Login() {
 
         <button type="submit">Login</button>
       </form>
+
+      {/* ✅ Add this */}
+      <p style={{ marginTop: '15px' }}>
+        Don't have an account? <Link to="/register">Register here</Link>
+      </p>
     </div>
   );
 }
