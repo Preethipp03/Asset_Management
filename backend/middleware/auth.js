@@ -25,16 +25,19 @@ const roleMiddleware = (roles) => (req, res, next) => {
   next();
 };
 
-// Optional ownership check (for /users/:id and own maintenance)
+// Ownership check: user can access own data or admin/super_admin can access
 const isSelfOrAdmin = (req, res, next) => {
-  const userId = req.params.id;
-  const isAdmin = ['admin', 'superadmin'].includes(req.user.role);
-  if (req.user.id === userId || isAdmin) {
+  const userId = req.user.id.toString();
+  const paramId = req.params.id.toString();
+  const isAdmin = ['admin', 'super_admin'].includes(req.user.role);
+
+  console.log('isSelfOrAdmin check:', { userId, paramId, userRole: req.user.role, isAdmin });
+
+  if (userId === paramId || isAdmin) {
     return next();
   }
+
   return res.status(403).json({ error: 'Access denied' });
 };
-
-
 
 module.exports = { authMiddleware, roleMiddleware, isSelfOrAdmin };

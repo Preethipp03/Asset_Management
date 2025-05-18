@@ -1,14 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
-  useEffect(() => {
-    console.log('AdminDashboard mounted');
-  }, []);
-
   return (
-    <div>
-      <h1>admin Dashboard</h1>
-      <p>Welcome, User! You have basic access.</p>
+    <div style={{ padding: '20px' }}>
+      <h1>Admin Dashboard</h1>
+      <div>
+        <h2>Asset Management</h2>
+        <Link to="/assets" style={{ marginRight: '10px' }}>
+          <button>View Assets</button>
+        </Link>
+        <Link to="/assets/add">
+          <button>Add Asset</button>
+        </Link>
+      </div>
     </div>
   );
 };

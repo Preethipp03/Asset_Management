@@ -15,7 +15,7 @@ app.use(cors({
 app.use(express.json());
 
 const usersCollection = 'users';
-const itemsCollection = 'items';
+const assetsCollection = 'assets';
 
 // =========================
 // AUTH ROUTES
@@ -135,7 +135,7 @@ app.get('/users', authMiddleware, roleMiddleware(['super_admin']), async (req, r
   }
 });
 
-app.get('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.get('/users/:id', authMiddleware, isSelfOrAdmin, async (req, res) => {
   const { id } = req.params;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
@@ -150,7 +150,7 @@ app.get('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), 
   }
 });
 
-app.put('/users/:id', authMiddleware, isSelfOrAdmin, async (req, res) => {
+app.put('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']),isSelfOrAdmin, async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
@@ -173,7 +173,7 @@ app.put('/users/:id', authMiddleware, isSelfOrAdmin, async (req, res) => {
   }
 });
 
-app.patch('/users/:id', authMiddleware, isSelfOrAdmin, async (req, res) => {
+app.patch('/users/:id', authMiddleware,roleMiddleware(['admin', 'super_admin']), isSelfOrAdmin, async (req, res) => {
   const { id } = req.params;
   const updateData = req.body;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
@@ -211,104 +211,212 @@ app.delete('/users/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']
 });
 
 // =========================
-// ITEMS ROUTES (unchanged)
+// assets ROUTES (unchanged)
 // =========================
 
-function validateItem(item) {
-  if (!item.name || typeof item.name !== 'string') {
-    throw new Error('Item name is required and should be a string.');
+function validateAsset(asset) {
+  if (!asset.name || typeof asset.name !== 'string') {
+    throw new Error('Asset name is required and should be a string.');
   }
-  if (typeof item.price !== 'number') {
-    throw new Error('Item price is required and should be a number.');
+  if (!asset.type || typeof asset.type !== 'string') {
+    throw new Error('Asset type is required and should be a string.');
+  }
+  if (!asset.category || typeof asset.category !== 'string') {
+    throw new Error('Asset category is required and should be a string.');
+  }
+  if (typeof asset.price !== 'number') {
+    throw new Error('Asset price is required and should be a number.');
+  }
+  if (!asset.purchaseDate || isNaN(Date.parse(asset.purchaseDate))) {
+    throw new Error('Purchase date is required and should be a valid date.');
+  }
+  if (!asset.location || typeof asset.location !== 'string') {
+    throw new Error('Location is required and should be a string.');
+  }
+  if (!asset.condition || typeof asset.condition !== 'string') {
+    throw new Error('Condition is required and should be a string.');
+  }
+
+  // Optional fields
+  if (asset.warranty && typeof asset.warranty !== 'string') {
+    throw new Error('Warranty should be a string if provided.');
+  }
+  if (asset.serialNumber && typeof asset.serialNumber !== 'string') {
+    throw new Error('Serial Number should be a string if provided.');
+  }
+  if (asset.assignedTo && typeof asset.assignedTo !== 'string') {
+    throw new Error('Assigned To should be a string if provided.');
+  }
+  if (asset.notes && typeof asset.notes !== 'string') {
+    throw new Error('Notes should be a string if provided.');
+  }
+  
+}
+
+function validateAsset(asset) {
+  if (!asset.name || !asset.type || !asset.category || !asset.price || !asset.purchaseDate) {
+    throw new Error('Missing required fields');
+  }
+  const validStatuses = ['active', 'in_repair', 'disposed'];
+  if (asset.status && !validStatuses.includes(asset.status)) {
+    throw new Error('Invalid status value');
   }
 }
 
-app.post('/items', authMiddleware, async (req, res) => {
+
+app.post('/assets', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
-    const item = req.body;
-    validateItem(item);
+    const asset = req.body;
+    validateAsset(asset);
+
+    const formattedAsset = {
+      name: asset.name.trim(),
+      type: asset.type.trim(),
+      category: asset.category.trim(),
+      price: Number(asset.price),
+      purchaseDate: new Date(asset.purchaseDate),
+      warranty: asset.warranty?.trim() || '',
+      location: asset.location.trim(),
+      condition: asset.condition.trim(),
+      serialNumber: asset.serialNumber?.trim() || '',
+      assignedTo: asset.assignedTo?.trim() || '',
+      notes: asset.notes?.trim() || '',
+    };
 
     const db = await connectDB();
-    const result = await db.collection(itemsCollection).insertOne(item);
+    const result = await db.collection(assetsCollection).insertOne(formattedAsset);
 
-    res.status(201).json({ message: 'Item created', itemId: result.insertedId });
+    res.status(201).json({ message: 'Asset created', assetId: result.insertedId });
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Failed to create item' });
+    res.status(400).json({ error: err.message || 'Failed to create asset' });
   }
 });
 
-app.get('/items', authMiddleware, async (req, res) => {
+
+
+app.get('/assets', authMiddleware, async (req, res) => {
   try {
     const db = await connectDB();
-    const items = await db.collection(itemsCollection).find().toArray();
-    res.status(200).json(items);
+    const assets = await db.collection(assetsCollection).find().toArray();
+    res.status(200).json(assets);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch items', details: err.message });
+    res.status(500).json({ error: 'Failed to fetch assets', details: err.message });
   }
 });
 
-app.get('/items/:id', authMiddleware, async (req, res) => {
+
+app.get('/assets/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
     const db = await connectDB();
-    const item = await db.collection(itemsCollection).findOne(query);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    res.status(200).json(item);
+    const asset = await db.collection(assetsCollection).findOne(query);
+    if (!asset) return res.status(404).json({ error: 'Asset not found' });
+    res.status(200).json(asset);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch item', details: err.message });
+    res.status(500).json({ error: 'Failed to fetch asset', details: err.message });
   }
 });
 
-app.put('/items/:id', authMiddleware, async (req, res) => {
+app.put('/assets/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
-  const item = req.body;
+  const asset = req.body;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
-    validateItem(item);
+    validateAsset(asset);
+
+    const updatedAsset = {
+      name: asset.name.trim(),
+      type: asset.type.trim(),
+      category: asset.category.trim(),
+      price: Number(asset.price),
+      purchaseDate: new Date(asset.purchaseDate),
+      warranty: asset.warranty?.trim() || '',
+      location: asset.location.trim(),
+      condition: asset.condition.trim(),
+      serialNumber: asset.serialNumber?.trim() || '',
+      assignedTo: asset.assignedTo?.trim() || '',
+      notes: asset.notes?.trim() || '',
+      status: asset.status?.trim() || '', // ✅ Add this line
+    };
+
 
     const db = await connectDB();
-    const result = await db.collection(itemsCollection).updateOne(query, { $set: item });
+    const result = await db.collection(assetsCollection).updateOne(query, { $set: updatedAsset });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: 'Item not found' });
-    res.status(200).json({ message: 'Item updated successfully' });
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Asset not found' });
+    res.status(200).json({ message: 'Asset updated successfully' });
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Failed to update item' });
+    res.status(400).json({ error: err.message || 'Failed to update asset' });
   }
 });
 
-app.patch('/items/:id', authMiddleware, async (req, res) => {
+
+
+app.patch('/assets/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
+  const updates = req.body;
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
+
+  try {
+    // Prepare an object to hold only valid fields for update
+    const allowedFields = [
+      'name', 'type', 'category', 'price', 'purchaseDate',
+      'warranty', 'location', 'condition', 'serialNumber',
+      'assignedTo','status', 'notes'
+    ];
+
+    const updateData = {};
+
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        // Format fields properly
+        if (key === 'price') {
+          updateData[key] = Number(updates[key]);
+        } else if (key === 'purchaseDate') {
+          updateData[key] = new Date(updates[key]);
+        } else if (typeof updates[key] === 'string') {
+          updateData[key] = updates[key].trim();
+        } else {
+          updateData[key] = updates[key];
+        }
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields provided for update' });
+    }
+
+    const db = await connectDB();
+    const result = await db.collection(assetsCollection).updateOne(query, { $set: updateData });
+
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Asset not found' });
+
+    res.status(200).json({ message: 'Asset updated successfully' });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to update asset' });
+  }
+});
+
+
+app.delete('/assets/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  const { id } = req.params;
   const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
   try {
     const db = await connectDB();
-    const result = await db.collection(itemsCollection).updateOne(query, { $set: updateData });
+    const result = await db.collection(assetsCollection).deleteOne(query);
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: 'Item not found' });
-    res.status(200).json({ message: 'Item updated successfully' });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Asset not found' });
+    res.status(200).json({ message: 'Asset deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update item', details: err.message });
+    res.status(500).json({ error: 'Failed to delete asset', details: err.message });
   }
 });
 
-app.delete('/items/:id', authMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 
-  try {
-    const db = await connectDB();
-    const result = await db.collection(itemsCollection).deleteOne(query);
-
-    if (result.deletedCount === 0) return res.status(404).json({ error: 'Item not found' });
-    res.status(200).json({ message: 'Item deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete item', details: err.message });
-  }
-});
 
 // Start server
 const port = process.env.PORT || 5000;

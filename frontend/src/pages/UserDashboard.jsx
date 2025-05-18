@@ -1,14 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 const UserDashboard = () => {
-  useEffect(() => {
-    console.log('UserDashboard mounted');
-  }, []);
-
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h1>User Dashboard</h1>
-      <p>Welcome, User! You have basic access.</p>
+      <p>Welcome! Limited access for users.</p>
     </div>
   );
 };
