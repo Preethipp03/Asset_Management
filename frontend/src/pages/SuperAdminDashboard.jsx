@@ -5,6 +5,7 @@ const SuperAdminDashboard = () => {
   return (
     <div style={{ padding: '20px' }}>
       <h1>Super Admin Dashboard</h1>
+
       <div style={{ marginTop: '20px' }}>
         <h2>User Management</h2>
         <Link to="/users" style={{ marginRight: '10px' }}>
@@ -14,6 +15,7 @@ const SuperAdminDashboard = () => {
           <button>Add User</button>
         </Link>
       </div>
+
       <div style={{ marginTop: '20px' }}>
         <h2>Asset Management</h2>
         <Link to="/assets" style={{ marginRight: '10px' }}>
@@ -21,6 +23,16 @@ const SuperAdminDashboard = () => {
         </Link>
         <Link to="/assets/add">
           <button>Add Asset</button>
+        </Link>
+      </div>
+
+      <div style={{ marginTop: '20px' }}>
+        <h2>Movement Management</h2>
+        <Link to="/movements" style={{ marginRight: '10px' }}>
+          <button>View Movements</button>
+        </Link>
+        <Link to="/movements/add">
+          <button>Add Movement</button>
         </Link>
       </div>
     </div>

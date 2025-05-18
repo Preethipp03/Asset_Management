@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
-import {jwtDecode} from 'jwt-decode';  // FIXED IMPORT
+import {jwtDecode} from 'jwt-decode';  // Fixed import: default import, not named
+
 
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -18,7 +19,14 @@ import AddAsset from './pages/assets/AddAsset';
 import EditAsset from './pages/assets/EditAsset';
 import ViewAsset from './pages/assets/ViewAsset';
 
-// Protected Route
+// Movement Pages
+import MovementList from './pages/movements/MovementList';
+import AddMovement from './pages/movements/AddMovement';
+import EditMovement from './pages/movements/EditMovement';
+import ViewMovement from './pages/movements/ViewMovement';
+
+
+// Protected Route component (defined inline)
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
   if (!token) return <Navigate to="/" />;
@@ -122,6 +130,40 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <ViewAsset />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Movement Management Routes */}
+        <Route
+          path="/movements"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <MovementList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movements/add"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <AddMovement />
+            </ProtectedRoute>
+          }
+        />
+                <Route
+          path="/movements/view/:id"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <ViewMovement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movements/edit/:id"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <EditMovement />
             </ProtectedRoute>
           }
         />
