@@ -46,7 +46,7 @@ const ViewMovement = () => {
       {movement.returnable && (
         <p><strong>Expected Return Date:</strong> {new Date(movement.expectedReturnDate).toLocaleDateString()}</p>
       )}
-      <p><strong>Notes:</strong> {movement.notes || 'N/A'}</p>
+      <p><strong>description:</strong> {movement.description || 'N/A'}</p>
     </div>
   );
 };

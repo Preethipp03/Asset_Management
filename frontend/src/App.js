@@ -12,6 +12,7 @@ import UserDashboard from './pages/UserDashboard';
 import UserList from './pages/users/UserList';
 import AddUser from './pages/users/AddUser';
 import EditUser from './pages/users/EditUser';
+import AddUserAdmin from './pages/users/AddUserAdmin';
 
 // Asset pages
 import AssetList from './pages/assets/AssetList';
@@ -25,6 +26,10 @@ import AddMovement from './pages/movements/AddMovement';
 import EditMovement from './pages/movements/EditMovement';
 import ViewMovement from './pages/movements/ViewMovement';
 
+//Maintenance Pages
+import MaintenanceList from './pages/maintenance/MaintenanceList';
+import AddMaintenance from './pages/maintenance/AddMaintenance';
+import EditMaintenance from './pages/maintenance/EditMaintenance';
 
 // Protected Route component (defined inline)
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -88,6 +93,15 @@ const App = () => {
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
               <AddUser />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/users/add-user"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AddUserAdmin /> 
             </ProtectedRoute>
           }
         />
@@ -167,6 +181,30 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route 
+          path="/maintenance" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <MaintenanceList /> 
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+          path="/maintenance/add" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <AddMaintenance /> 
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+          path="/maintenance/edit/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <EditMaintenance /> 
+              </ProtectedRoute>
+            }
+          />
       </Routes>
     </BrowserRouter>
   );

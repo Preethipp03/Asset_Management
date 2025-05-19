@@ -17,6 +17,7 @@ app.use(express.json());
 const usersCollection = 'users';
 const assetsCollection = 'assets';
 const movementsCollection = 'movements';
+const maintenanceCollection = 'maintenance';
 
 // =========================
 // AUTH ROUTES
@@ -70,8 +71,20 @@ app.post('/users', authMiddleware, roleMiddleware(['admin', 'super_admin']), asy
   if (!name || !email || !password || !role) {
     return res.status(400).json({ error: 'All fields are required' });
   }
+
   if (!validRoles.includes(role)) {
     return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  // Enforce role creation permissions
+  const requesterRole = req.user.role;
+
+  if (requesterRole === 'admin' && role !== 'user') {
+    return res.status(403).json({ error: 'Admin can only create users' });
+  }
+
+  if (requesterRole === 'user') {
+    return res.status(403).json({ error: 'User role is not allowed to create users' });
   }
 
   try {
@@ -91,17 +104,6 @@ app.post('/users', authMiddleware, roleMiddleware(['admin', 'super_admin']), asy
     res.status(201).json({ message: 'User created', userId: result.insertedId });
   } catch (err) {
     res.status(500).json({ error: 'Failed to create user', details: err.message });
-  }
-});
-
-// Get all users (super_admin only)
-app.get('/users', authMiddleware, roleMiddleware(['super_admin']), async (req, res) => {
-  try {
-    const db = await connectDB();
-    const users = await db.collection(usersCollection).find().toArray();
-    res.status(200).json(users);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users', details: err.message });
   }
 });
 
@@ -213,8 +215,8 @@ function validateAsset(asset) {
   if (asset.assignedTo && typeof asset.assignedTo !== 'string') {
     throw new Error('Assigned To should be a string if provided.');
   }
-  if (asset.notes && typeof asset.notes !== 'string') {
-    throw new Error('Notes should be a string if provided.');
+  if (asset.description && typeof asset.description !== 'string') {
+    throw new Error('description should be a string if provided.');
   }
 }
 
@@ -236,7 +238,7 @@ app.post('/assets', authMiddleware, roleMiddleware(['admin', 'super_admin']), as
       warranty: asset.warranty ? asset.warranty.trim() : '',
       serialNumber: asset.serialNumber ? asset.serialNumber.trim() : '',
       assignedTo: asset.assignedTo ? asset.assignedTo.trim() : '',
-      notes: asset.notes ? asset.notes.trim() : '',
+      description: asset.description ? asset.description.trim() : '',
       };
 const db = await connectDB();
 const result = await db.collection(assetsCollection).insertOne(formattedAsset);
@@ -291,7 +293,7 @@ const formattedAsset = {
   warranty: asset.warranty ? asset.warranty.trim() : '',
   serialNumber: asset.serialNumber ? asset.serialNumber.trim() : '',
   assignedTo: asset.assignedTo ? asset.assignedTo.trim() : '',
-  notes: asset.notes ? asset.notes.trim() : '',
+  description: asset.description ? asset.description.trim() : '',
 };
 
 const db = await connectDB();
@@ -377,7 +379,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin']),
       returnable: movement.returnable || false,
       expectedReturnDate: movement.returnable ? new Date(movement.expectedReturnDate) : null,
       date: new Date(movement.date),  // Ensure frontend sends ISO or parseable date string
-      notes: movement.notes ? movement.notes.trim() : ''
+      description: movement.description ? movement.description.trim() : ''
     };
 
     const result = await db.collection(movementsCollection).insertOne(movementDoc);
@@ -425,22 +427,19 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
   const updatedMovement = req.body;
 
   try {
-    // Validate movement, ensure assetId exists or fallback dummy for validation (could refine this)
-    validateMovement({
-      ...updatedMovement,
-      assetId: updatedMovement.assetId || '',
-    });
+    // Validate movement data (must have assetId and other required fields)
+    validateMovement(updatedMovement);
 
     const db = await connectDB();
 
-    // Confirm asset exists if assetId provided
-    if (updatedMovement.assetId) {
-      const assetExists = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updatedMovement.assetId) });
-      if (!assetExists) return res.status(404).json({ error: 'Asset not found' });
-    }
+    // Confirm asset exists for the given assetId
+    const assetExists = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updatedMovement.assetId) });
+    if (!assetExists) return res.status(404).json({ error: 'Asset not found' });
 
-    // Format fields (trim strings, convert dates)
+    // Prepare the update document
     const updateDoc = {
+      assetId: new ObjectId(updatedMovement.assetId),
+      assetName: assetExists.name,
       movementFrom: updatedMovement.movementFrom.trim(),
       movementTo: updatedMovement.movementTo.trim(),
       movementType: updatedMovement.movementType.trim(),
@@ -449,16 +448,8 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
       returnable: updatedMovement.returnable || false,
       expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
       date: new Date(updatedMovement.date),
-      notes: updatedMovement.notes ? updatedMovement.notes.trim() : '',
+      description: updatedMovement.description ? updatedMovement.description.trim() : '',
     };
-
-    if (updatedMovement.assetId) {
-      updateDoc.assetId = new ObjectId(updatedMovement.assetId);
-
-      // Get asset name for the movement record
-      const asset = await db.collection(assetsCollection).findOne({ _id: updateDoc.assetId });
-      updateDoc.assetName = asset.name;
-    }
 
     // Update movement document
     const result = await db.collection(movementsCollection).updateOne(
@@ -468,19 +459,18 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    // If asset location changed, update asset location
-    if (updatedMovement.movementTo && updatedMovement.assetId) {
-      await db.collection(assetsCollection).updateOne(
-        { _id: new ObjectId(updatedMovement.assetId) },
-        { $set: { location: updatedMovement.movementTo.trim() } }
-      );
-    }
+    // Update asset location according to movementTo
+    await db.collection(assetsCollection).updateOne(
+      { _id: new ObjectId(updatedMovement.assetId) },
+      { $set: { location: updatedMovement.movementTo } }
+    );
 
     res.status(200).json({ message: 'Movement updated successfully' });
   } catch (err) {
     res.status(400).json({ error: 'Failed to update movement', details: err.message });
   }
 });
+
 // Partial update movement
 app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
@@ -543,6 +533,228 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
   } catch (error) {
     console.error('Error deleting asset:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// Validate maintenance input
+function validateMaintenance(maintenance) {
+  const validStatuses = ['scheduled', 'in_progress', 'completed'];
+  const validTypes = ['preventive', 'corrective'];
+
+  if (
+    !maintenance.assetId ||
+    !ObjectId.isValid(maintenance.assetId) ||
+    !maintenance.maintenanceType ||
+    !validTypes.includes(maintenance.maintenanceType) ||
+    !maintenance.scheduledDate ||
+    isNaN(Date.parse(maintenance.scheduledDate)) ||
+    !maintenance.status ||
+    !validStatuses.includes(maintenance.status)
+  ) {
+    throw new Error('Missing or invalid required fields for maintenance');
+  }
+
+  if (maintenance.completedDate && isNaN(Date.parse(maintenance.completedDate))) {
+    throw new Error('Invalid completedDate');
+  }
+
+  if (maintenance.description && typeof maintenance.description !== 'string') {
+    throw new Error('Description should be a string');
+  }
+
+  if (maintenance.performedBy && typeof maintenance.performedBy !== 'string') {
+    throw new Error('performedBy should be a string');
+  }
+
+  if (maintenance.description && typeof maintenance.description !== 'string') {
+    throw new Error('description should be a string');
+  }
+}
+
+
+/// Create maintenance record
+app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const maintenance = req.body;
+    validateMaintenance(maintenance);
+
+    const db = await connectDB();
+
+    // Confirm asset exists
+    const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
+    if (!asset) return res.status(404).json({ error: 'Asset not found' });
+
+    const maintenanceDoc = {
+      assetId: new ObjectId(maintenance.assetId),
+      assetName: asset.name,
+      maintenanceType: maintenance.maintenanceType.trim(),
+      description: maintenance.description ? maintenance.description.trim() : '',
+      scheduledDate: new Date(maintenance.scheduledDate),
+      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
+      status: maintenance.status.trim(),
+      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
+      description: maintenance.description ? maintenance.description.trim() : '',
+    };
+
+    const result = await db.collection(maintenanceCollection).insertOne(maintenanceDoc);
+    res.status(201).json({ message: 'Maintenance record created', maintenanceId: result.insertedId });
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to create maintenance record', details: err.message });
+  }
+});
+
+// Get all maintenance records (admin and super_admin only)
+app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const db = await connectDB();
+    const maintenance = await db.collection(maintenanceCollection).find().toArray();
+    res.status(200).json(maintenance);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch maintenance records', details: err.message });
+  }
+});
+
+// Get maintenance by ID
+app.get('/maintenance/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
+
+  try {
+    const db = await connectDB();
+    const maintenance = await db.collection(maintenanceCollection).findOne({ _id: new ObjectId(id) });
+    if (!maintenance) return res.status(404).json({ error: 'Maintenance record not found' });
+    res.status(200).json(maintenance);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch maintenance record', details: err.message });
+  }
+});
+
+// Update maintenance record (PUT)
+app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
+
+  try {
+    const maintenance = req.body;
+    validateMaintenance(maintenance);
+
+    const db = await connectDB();
+
+    // Confirm asset exists
+    const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
+    if (!asset) return res.status(404).json({ error: 'Asset not found' });
+
+    const updatedDoc = {
+      assetId: new ObjectId(maintenance.assetId),
+      assetName: asset.name,
+      maintenanceType: maintenance.maintenanceType.trim(),
+      description: maintenance.description ? maintenance.description.trim() : '',
+      scheduledDate: new Date(maintenance.scheduledDate),
+      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
+      status: maintenance.status.trim(),
+      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
+      description: maintenance.description ? maintenance.description.trim() : '',
+    };
+
+    const result = await db.collection(maintenanceCollection).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedDoc }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Maintenance record not found' });
+    res.status(200).json({ message: 'Maintenance record updated successfully' });
+  } catch (err) {
+    res.status(400).json({ error: 'Failed to update maintenance record', details: err.message });
+  }
+});
+
+// PATCH maintenance record (partial update)
+app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
+
+  const updates = req.body;
+
+  // Optional: Validate fields if you want, here minimal check
+  if (updates.assetId && !ObjectId.isValid(updates.assetId)) {
+    return res.status(400).json({ error: 'Invalid assetId' });
+  }
+
+  if (updates.status) {
+    const validStatuses = ['scheduled', 'in_progress', 'completed'];
+    if (!validStatuses.includes(updates.status)) {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
+  }
+
+  if (updates.maintenanceType) {
+    const validTypes = ['preventive', 'corrective'];
+    if (!validTypes.includes(updates.maintenanceType)) {
+      return res.status(400).json({ error: 'Invalid maintenanceType value' });
+    }
+  }
+
+  try {
+    const db = await connectDB();
+
+    // If assetId is being updated, verify asset exists and get name
+    if (updates.assetId) {
+      const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updates.assetId) });
+      if (!asset) return res.status(404).json({ error: 'Asset not found' });
+      updates.assetName = asset.name;
+      updates.assetId = new ObjectId(updates.assetId);
+    }
+
+    // Convert dates if present
+    if (updates.scheduledDate) {
+      if (isNaN(Date.parse(updates.scheduledDate))) {
+        return res.status(400).json({ error: 'Invalid scheduledDate' });
+      }
+      updates.scheduledDate = new Date(updates.scheduledDate);
+    }
+
+    if (updates.completedDate) {
+      if (isNaN(Date.parse(updates.completedDate))) {
+        return res.status(400).json({ error: 'Invalid completedDate' });
+      }
+      updates.completedDate = new Date(updates.completedDate);
+    }
+
+    // Trim string fields if present
+    ['maintenanceType', 'status', 'description', 'performedBy', 'description'].forEach(field => {
+      if (updates[field] && typeof updates[field] === 'string') {
+        updates[field] = updates[field].trim();
+      }
+    });
+
+    const result = await db.collection(maintenanceCollection).findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: updates },
+      { returnDocument: 'after' }
+    );
+
+    if (!result.value) return res.status(404).json({ error: 'Maintenance record not found' });
+
+    res.status(200).json({ message: 'Maintenance record updated successfully', maintenance: result.value });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update maintenance record', details: err.message });
+  }
+});
+
+
+// Delete maintenance record
+app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
+
+  try {
+    const db = await connectDB();
+    const result = await db.collection(maintenanceCollection).deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Maintenance record not found' });
+    res.status(200).json({ message: 'Maintenance record deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete maintenance record', details: err.message });
   }
 });
 

@@ -14,7 +14,7 @@ const AddAsset = () => {
     condition: '',
     serialNumber: '',
     assignedTo: '',
-    notes: ''
+    description: ''
   });
 
   // 2. Handle form submission
@@ -38,7 +38,9 @@ const AddAsset = () => {
       condition: formData.condition.trim(),
       serialNumber: formData.serialNumber.trim(),
       assignedTo: formData.assignedTo.trim(),
-      notes: formData.notes.trim()
+      description: formData.description.trim(),
+      status: formData.status.trim(),
+
     };
 
     try {
@@ -59,7 +61,8 @@ const AddAsset = () => {
         condition: '',
         serialNumber: '',
         assignedTo: '',
-        notes: ''
+        description: '',
+        status: ''
       });
     } catch (err) {
       console.error(err);
@@ -88,7 +91,13 @@ const AddAsset = () => {
       <input name="condition" value={formData.condition} onChange={handleChange} placeholder="Condition" />
       <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} placeholder="Serial Number" />
       <input name="assignedTo" value={formData.assignedTo} onChange={handleChange} placeholder="Assigned To" />
-      <textarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Notes" />
+      <textarea name="description" value={formData.description} onChange={handleChange} placeholder="description" />
+      <select name="status" value={formData.status} onChange={handleChange} required>
+      <option value="">Select Status</option>
+      <option value="active">Active</option>
+      <option value="in_repair">In Repair</option>
+      <option value="disposed">Disposed</option>
+      </select>
       <button type="submit">Add Asset</button>
     </form>
   );

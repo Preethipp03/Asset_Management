@@ -13,7 +13,7 @@ const AddMovement = () => {
     date: '',
     returnable: false,
     expectedReturnDate: '',
-    notes: '',
+    description: '',
   });
 
   const token = localStorage.getItem('token');
@@ -84,7 +84,7 @@ const AddMovement = () => {
           date: isoDate,
           returnable: formData.returnable,
           expectedReturnDate: formData.returnable ? isoExpectedReturnDate : null,
-          notes: formData.notes.trim(),
+          description: formData.description.trim(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -99,7 +99,7 @@ const AddMovement = () => {
         date: '',
         returnable: false,
         expectedReturnDate: '',
-        notes: '',
+        description: '',
       });
     } catch (err) {
       console.error('Failed to record movement', err);
@@ -214,8 +214,8 @@ const AddMovement = () => {
       )}
 
       <label>
-        Notes:
-        <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} />
+        description:
+        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
       </label>
 
       <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>Add Movement</button>

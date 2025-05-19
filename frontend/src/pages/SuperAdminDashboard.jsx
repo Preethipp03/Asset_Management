@@ -6,6 +6,7 @@ const SuperAdminDashboard = () => {
     <div style={{ padding: '20px' }}>
       <h1>Super Admin Dashboard</h1>
 
+      {/* User Management */}
       <div style={{ marginTop: '20px' }}>
         <h2>User Management</h2>
         <Link to="/users" style={{ marginRight: '10px' }}>
@@ -16,6 +17,7 @@ const SuperAdminDashboard = () => {
         </Link>
       </div>
 
+      {/* Asset Management */}
       <div style={{ marginTop: '20px' }}>
         <h2>Asset Management</h2>
         <Link to="/assets" style={{ marginRight: '10px' }}>
@@ -26,6 +28,7 @@ const SuperAdminDashboard = () => {
         </Link>
       </div>
 
+      {/* Movement Management */}
       <div style={{ marginTop: '20px' }}>
         <h2>Movement Management</h2>
         <Link to="/movements" style={{ marginRight: '10px' }}>
@@ -33,6 +36,17 @@ const SuperAdminDashboard = () => {
         </Link>
         <Link to="/movements/add">
           <button>Add Movement</button>
+        </Link>
+      </div>
+
+      {/* Maintenance Management */}
+      <div style={{ marginTop: '20px' }}>
+        <h2>Maintenance Management</h2>
+        <Link to="/maintenance" style={{ marginRight: '10px' }}>
+          <button>View Maintenance</button>
+        </Link>
+        <Link to="/maintenance/add">
+          <button>Add Maintenance</button>
         </Link>
       </div>
     </div>

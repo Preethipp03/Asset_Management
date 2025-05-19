@@ -16,7 +16,7 @@ const EditMovement = () => {
     date: '',
     returnable: false,
     expectedReturnDate: '',
-    notes: '',
+    description: '',
   });
 
   const token = localStorage.getItem('token');
@@ -51,7 +51,7 @@ const EditMovement = () => {
           date: data.date ? new Date(data.date).toISOString().slice(0, 10) : '',
           returnable: data.returnable,
           expectedReturnDate: data.expectedReturnDate ? new Date(data.expectedReturnDate).toISOString().slice(0, 10) : '',
-          notes: data.notes || '',
+          description: data.description || '',
         });
       } catch (err) {
         console.error('Failed to fetch movement', err);
@@ -114,7 +114,7 @@ const EditMovement = () => {
           date: new Date(formData.date),
           returnable: formData.returnable,
           expectedReturnDate: formData.returnable ? new Date(formData.expectedReturnDate) : null,
-          notes: formData.notes.trim(),
+          description: formData.description.trim(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -237,8 +237,8 @@ const EditMovement = () => {
       )}
 
       <label>
-        Notes:
-        <textarea name="notes" value={formData.notes} onChange={handleChange} />
+        description:
+        <textarea name="description" value={formData.description} onChange={handleChange} />
       </label>
 
       <button type="submit">Update Movement</button>

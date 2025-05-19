@@ -15,7 +15,7 @@ const EditAsset = () => {
     serialNumber: '',
     assignedTo: '',
     status: '',
-    notes: ''
+    description: ''
   });
 
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const EditAsset = () => {
           serialNumber: data.serialNumber || '',
           assignedTo: data.assignedTo || '',
           status:data.status || '',
-          notes: data.notes || ''
+          description: data.description || ''
         });
       } catch (err) {
         console.error('Error fetching asset:', err);
@@ -92,7 +92,7 @@ const EditAsset = () => {
         <option value="in_repair">In Repair</option>
         <option value="disposed">Disposed</option>
       </select>
-      <textarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Notes" />
+      <textarea name="description" value={formData.description} onChange={handleChange} placeholder="description" />
       <button type="submit">Update Asset</button>
     </form>
   );

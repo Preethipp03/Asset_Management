@@ -40,7 +40,7 @@ const ViewAsset = () => {
       <p><strong>Serial Number:</strong> {asset.serialNumber}</p>
       <p><strong>Assigned To:</strong> {asset.assignedTo}</p>
       <p><strong>Status:</strong> {asset.status}</p>
-      <p><strong>Notes:</strong> {asset.notes}</p>
+      <p><strong>description:</strong> {asset.description}</p>
     </div>
   );
 };

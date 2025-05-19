@@ -45,6 +45,7 @@ const MovementList = () => {
             <th>Received By</th>
             <th>Returnable</th>
             <th>Expected Return</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -60,6 +61,7 @@ const MovementList = () => {
               <td>{m.receivedBy}</td>
               <td>{m.returnable ? 'Yes' : 'No'}</td>
               <td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td>
+              <td>{m.description}</td>
               <td>
                 <Link to={`/movements/edit/${m._id}`}>
                   <button>Edit</button>

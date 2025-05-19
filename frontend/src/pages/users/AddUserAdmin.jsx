@@ -1,35 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // Needed to check role
 
-const AddUser = () => {
+const AddUserAdmin = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'user', // Default to user
+    // no role in form data, fixed to 'user'
   });
   const [message, setMessage] = useState('');
-  const [currentRole, setCurrentRole] = useState('');
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setCurrentRole(decoded.role);
-        // Super admin can default to 'admin', others to 'user'
-        setFormData((prev) => ({
-          ...prev,
-          role: decoded.role === 'super_admin' ? 'admin' : 'user',
-        }));
-      } catch (err) {
-        console.error('Token decoding failed:', err);
-      }
-    }
-  }, [token]);
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -50,10 +32,8 @@ const AddUser = () => {
     try {
       await axios.post(
         'http://localhost:5000/users',
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { ...formData, role: 'user' }, // force role to user
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       navigate('/users');
     } catch (error) {
@@ -63,7 +43,7 @@ const AddUser = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: 400 }}>
-      <h2>Add User</h2>
+      <h2>Add User (Admin)</h2>
       <form onSubmit={handleSubmit}>
         <input
           name="name"
@@ -92,22 +72,7 @@ const AddUser = () => {
           style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
         />
 
-        <select
-  name="role"
-  value={formData.role}
-  onChange={handleChange}
-  style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
->
-  {currentRole === 'super_admin' && (
-    <>
-      <option value="super_admin">Super Admin</option>
-      <option value="admin">Admin</option>
-    </>
-  )}
-  {(currentRole === 'super_admin' || currentRole === 'admin') && (
-    <option value="user">User</option>
-  )}
-</select>
+        {/* No role dropdown here, role is fixed to 'user' */}
 
         <button type="submit" style={{ padding: '10px 20px' }}>Create User</button>
       </form>
@@ -116,4 +81,4 @@ const AddUser = () => {
   );
 };
 
-export default AddUser;
+export default AddUserAdmin;
