@@ -28,11 +28,15 @@ const AdminDashboard = () => {
     <div style={{ padding: '20px' }}>
       <h2>Admin Dashboard</h2>
 
-      {/* Admin or Super Admin can add users */}
       {(role === 'admin' || role === 'super_admin') && (
-        <button onClick={handleAddUser} style={{ marginBottom: '16px' }}>
-          Add User
-        </button>
+        <>
+          <button onClick={handleAddUser} style={{ marginBottom: '16px', marginRight: '10px' }}>
+            Add User
+          </button>
+          <Link to="/users">
+            <button>View Users</button>
+          </Link>
+        </>
       )}
 
       <div style={{ marginTop: '20px' }}>

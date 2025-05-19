@@ -1,12 +1,12 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
-import {jwtDecode} from 'jwt-decode';  // Fixed import: default import, not named
-
 
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import Unauthorized from './pages/Unauthorized'; 
 
 // User pages
 import UserList from './pages/users/UserList';
@@ -20,38 +20,24 @@ import AddAsset from './pages/assets/AddAsset';
 import EditAsset from './pages/assets/EditAsset';
 import ViewAsset from './pages/assets/ViewAsset';
 
-// Movement Pages
+// Movement pages
 import MovementList from './pages/movements/MovementList';
 import AddMovement from './pages/movements/AddMovement';
 import EditMovement from './pages/movements/EditMovement';
 import ViewMovement from './pages/movements/ViewMovement';
 
-//Maintenance Pages
+// Maintenance pages
 import MaintenanceList from './pages/maintenance/MaintenanceList';
 import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
-
-// Protected Route component (defined inline)
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const token = localStorage.getItem('token');
-  if (!token) return <Navigate to="/" />;
-  try {
-    const decoded = jwtDecode(token);
-    if (!allowedRoles.includes(decoded.role)) {
-      return <Navigate to="/" />;
-    }
-    return children;
-  } catch (err) {
-    console.error('Invalid token:', err);
-    return <Navigate to="/" />;
-  }
-};
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} /> {/* ✅ Unauthorized route */}
 
         {/* Dashboards */}
         <Route
@@ -79,11 +65,11 @@ const App = () => {
           }
         />
 
-        {/* User Management Routes */}
+        {/* User Management */}
         <Route
           path="/users"
           element={
-            <ProtectedRoute allowedRoles={['super_admin']}>
+            <ProtectedRoute allowedRoles={['super_admin','admin']}>
               <UserList />
             </ProtectedRoute>
           }
@@ -96,25 +82,24 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/users/add-user"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <AddUserAdmin /> 
+              <AddUserAdmin />
             </ProtectedRoute>
           }
         />
         <Route
           path="/users/edit/:id"
           element={
-            <ProtectedRoute allowedRoles={['super_admin']}>
+            <ProtectedRoute allowedRoles={['super_admin','admin']}>
               <EditUser />
             </ProtectedRoute>
           }
         />
 
-        {/* Asset Management Routes */}
+        {/* Asset Management */}
         <Route
           path="/assets"
           element={
@@ -148,7 +133,7 @@ const App = () => {
           }
         />
 
-        {/* Movement Management Routes */}
+        {/* Movement Management */}
         <Route
           path="/movements"
           element={
@@ -165,7 +150,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-                <Route
+        <Route
           path="/movements/view/:id"
           element={
             <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
@@ -181,30 +166,32 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route 
-          path="/maintenance" 
-            element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
-              <MaintenanceList /> 
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-          path="/maintenance/add" 
-            element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
-              <AddMaintenance /> 
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-          path="/maintenance/edit/:id" 
-            element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
-              <EditMaintenance /> 
-              </ProtectedRoute>
-            }
-          />
+
+        {/* Maintenance Management */}
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <MaintenanceList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/add"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <AddMaintenance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/edit/:id"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+              <EditMaintenance />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -106,6 +106,18 @@ app.post('/users', authMiddleware, roleMiddleware(['admin', 'super_admin']), asy
     res.status(500).json({ error: 'Failed to create user', details: err.message });
   }
 });
+// Get all users (admin and super_admin only)
+app.get('/users', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const db = await connectDB();
+    const users = await db.collection(usersCollection).find({}).toArray();
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users', details: err.message });
+  }
+});
+
 
 // Get user by ID (self or admin)
 app.get('/users/:id', authMiddleware, isSelfOrAdmin, async (req, res) => {
@@ -356,7 +368,7 @@ function validateMovement(movement) {
 
 
 // Create a new asset movement (transfer)
-app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   try {
     const movement = req.body;
     validateMovement(movement);
@@ -396,7 +408,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin']),
 });
 
 // Get all movements (admin and super_admin only)
-app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   try {
     const db = await connectDB();
     const movements = await db.collection(movementsCollection).find().toArray();
@@ -420,7 +432,7 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
@@ -472,7 +484,7 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 });
 
 // Partial update movement
-app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
@@ -516,25 +528,28 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
     res.status(500).json({ error: 'Server error' });
   }
 });
-app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
-  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid movement ID' });
+  }
 
   try {
-    const assetId = req.params.id;
+    const db = await connectDB();
+    const result = await db.collection(movementsCollection).deleteOne({ _id: new ObjectId(id) });
 
-    const deletedAsset = await Asset.findByIdAndDelete(assetId);
-
-    if (!deletedAsset) {
-      return res.status(404).json({ error: 'Asset not found' });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Movement not found' });
     }
 
-    res.json({ message: 'Asset deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting asset:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(200).json({ message: 'Movement deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting movement:', err);
+    res.status(500).json({ error: 'Failed to delete movement', details: err.message });
   }
 });
+
 
 
 // Validate maintenance input
@@ -574,7 +589,7 @@ function validateMaintenance(maintenance) {
 
 
 /// Create maintenance record
-app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   try {
     const maintenance = req.body;
     validateMaintenance(maintenance);
@@ -605,7 +620,7 @@ app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']
 });
 
 // Get all maintenance records (admin and super_admin only)
-app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   try {
     const db = await connectDB();
     const maintenance = await db.collection(maintenanceCollection).find().toArray();
@@ -631,7 +646,7 @@ app.get('/maintenance/:id', authMiddleware, async (req, res) => {
 });
 
 // Update maintenance record (PUT)
-app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
@@ -670,7 +685,7 @@ app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 });
 
 // PATCH maintenance record (partial update)
-app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
@@ -744,7 +759,7 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
 
 
 // Delete maintenance record
-app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
