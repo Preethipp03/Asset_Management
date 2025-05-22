@@ -1,19 +1,60 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './SuperAdminDashboard.css'; // Reusing existing CSS
-import { FaUserCircle, FaHome, FaFileAlt, FaEnvelope, FaBell, FaMapMarkerAlt, FaChartBar } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './SuperAdminDashboard.css';
+import {
+  FaUserCircle,
+  FaHome,
+  FaFileAlt,
+  FaEnvelope,
+  FaBell,
+  FaMapMarkerAlt,
+  FaChartBar,
+  FaCog,
+} from 'react-icons/fa';
 
 const UserDashboard = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();  // <-- get navigate function
+
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/api/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');  // <-- navigate to home or login page on logout
+  };
+
   return (
     <div className="dashboard-container">
-      {/* Sidebar copied from SuperAdmin */}
+      {/* Sidebar */}
       <div className="sidebar">
         <div className="user-profile">
           <div className="user-avatar">
             <FaUserCircle className="avatar-icon" />
           </div>
-          <h3 className="user-name">User</h3>
-          <p className="user-email">user@company.com</p>
+          <h3 className="user-name">{user?.name || 'User Name'}</h3>
+          <p className="user-email">{user?.email || 'user@example.com'}</p>
         </div>
 
         <nav className="navigation">
@@ -48,11 +89,22 @@ const UserDashboard = () => {
                 <FaChartBar className="nav-icon" /> Graph
               </Link>
             </li>
+            <li className="nav-item">
+              <Link to="/profile" className="nav-link">
+                <FaCog className="nav-icon" /> Profile
+              </Link>
+            </li>
+            {/* Logout Button */}
+                        <li className="nav-item logout">
+                          <button onClick={handleLogout} className="nav-link logout-button">
+                            <FaUserCircle className="nav-icon" /> Logout
+                          </button>
+                        </li>
           </ul>
         </nav>
       </div>
 
-      {/* Main content — only the features from your original code */}
+      {/* Main content */}
       <div className="main-content">
         <h1>User Dashboard</h1>
         <p>Welcome! Limited access for users.</p>

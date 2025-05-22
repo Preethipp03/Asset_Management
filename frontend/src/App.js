@@ -31,13 +31,26 @@ import MaintenanceList from './pages/maintenance/MaintenanceList';
 import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
 
+//Profile pages
+import Profile from './pages/profile';
+
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
-        <Route path="/unauthorized" element={<Unauthorized />} /> {/* ✅ Unauthorized route */}
+        <Route path="/unauthorized" element={<Unauthorized />} /> 
+
+        
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+            <Profile />
+            </ProtectedRoute>
+  }
+/>
 
         {/* Dashboards */}
         <Route

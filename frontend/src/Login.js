@@ -70,8 +70,9 @@ const Login = () => {
                 </p>
 
               <button onClick={handleDisclaimerAccept} className="got-it-button">
-                Got It
+                Agree
               </button>
+              
             </div>
           </div>
         </div>
