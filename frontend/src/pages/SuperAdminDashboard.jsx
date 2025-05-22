@@ -58,14 +58,7 @@ const SuperAdminDashboard = () => {
 
       {/* ----------------- MAIN CONTENT ----------------- */}
       <div className="main-content">
-        <header className="dashboard-header">
-          <h2>Dashboard User</h2>
-          <div className="header-icons">
-            <FaCog className="header-icon" />
-            <FaEllipsisV className="header-icon" />
-          </div>
-        </header>
-
+    
         {/* ----------------- YOUR ORIGINAL CODE ----------------- */}
         <div className="your-original-links-section">
           <h1>Super Admin Dashboard</h1>
