@@ -31,10 +31,9 @@ import MaintenanceList from './pages/maintenance/MaintenanceList';
 import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
 
-// Forgot/Reset Password
-// Forgot/Reset Password
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+
+//Profile pages
+import Profile from './pages/profile';
 
 
 const App = () => {
@@ -43,10 +42,18 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/ForgotPassword" element={<ForgotPassword />} />
-       <Route path="/ResetPassword" element={<ResetPassword />} />
 
+       <Route path="/unauthorized" element={<Unauthorized />} /> 
+
+        
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+            <Profile />
+            </ProtectedRoute>
+  }
+/>
 
         {/* Dashboards */}
         <Route

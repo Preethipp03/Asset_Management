@@ -231,7 +231,9 @@ body, html {
     line-height: 1.4;
     margin-bottom: 1.5rem;
 }
-
+.close-it-button{
+    background: linear-gradient(to right, #851919, #9b1e17);
+}
 .got-it-button {
     background: linear-gradient(to right, #28a745, #32c86e);
     border: none;

@@ -1,53 +1,158 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';  // <-- import useNavigate
+import axios from 'axios';
+import {
+  FaHome, FaFileAlt, FaEnvelope, FaBell, FaMapMarkerAlt,
+  FaChartBar, FaCog, FaUserCircle
+} from 'react-icons/fa';
 
 const SuperAdminDashboard = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();  // <-- get navigate function
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser(res.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');  // <-- navigate to home or login page on logout
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Super Admin Dashboard</h1>
+    <div className="dashboard-container">
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="user-profile">
+          <div className="user-avatar">
+            <FaUserCircle className="avatar-icon" />
+          </div>
+          <h3 className="user-name">{user?.name || 'User Name'}</h3>
+          <p className="user-email">{user?.email || 'user@example.com'}</p>
+        </div>
+        
+        <nav className="navigation">
+          <ul className="nav-list">
+            <li className="nav-item">
+              <Link to="/" className="nav-link">
+                <FaHome className="nav-icon" /> Home
+              </Link>
+            </li>
 
-      {/* User Management */}
-      <div style={{ marginTop: '20px' }}>
-        <h2>User Management</h2>
-        <Link to="/users" style={{ marginRight: '10px' }}>
-          <button>View Users</button>
-        </Link>
-        <Link to="/users/add">
-          <button>Add User</button>
-        </Link>
+            <li className="nav-item">
+              <Link to="/file" className="nav-link">
+                <FaFileAlt className="nav-icon" /> File
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/messages" className="nav-link">
+                <FaEnvelope className="nav-icon" /> Messages
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/notification" className="nav-link">
+                <FaBell className="nav-icon" /> Notification
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/location" className="nav-link">
+                <FaMapMarkerAlt className="nav-icon" /> Location
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/graph" className="nav-link">
+                <FaChartBar className="nav-icon" /> Graph
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link to="/profile" className="nav-link">
+                <FaCog className="nav-icon" /> Profile
+              </Link>
+            </li>
+            {/* Logout Button */}
+            <li className="nav-item logout">
+              <button onClick={handleLogout} className="nav-link logout-button">
+                <FaUserCircle className="nav-icon" /> Logout
+              </button>
+            </li>
+          </ul>
+        </nav>
       </div>
 
-      {/* Asset Management */}
-      <div style={{ marginTop: '20px' }}>
-        <h2>Asset Management</h2>
-        <Link to="/assets" style={{ marginRight: '10px' }}>
-          <button>View Assets</button>
-        </Link>
-        <Link to="/assets/add">
-          <button>Add Asset</button>
-        </Link>
-      </div>
+      {/* MAIN CONTENT */}
+      <div className="main-content">
+        <h1>Super Admin Dashboard</h1>
 
-      {/* Movement Management */}
-      <div style={{ marginTop: '20px' }}>
-        <h2>Movement Management</h2>
-        <Link to="/movements" style={{ marginRight: '10px' }}>
-          <button>View Movements</button>
-        </Link>
-        <Link to="/movements/add">
-          <button>Add Movement</button>
-        </Link>
-      </div>
+        {/* User Management */}
+        <section className="management-section">
+          <h2>User Management</h2>
+          <div className="management-buttons">
+            <Link to="/users">
+              <button className="styled-button">View Users</button>
+            </Link>
+            <Link to="/users/add">
+              <button className="styled-button">Add User</button>
+            </Link>
+          </div>
+        </section>
 
-      {/* Maintenance Management */}
-      <div style={{ marginTop: '20px' }}>
-        <h2>Maintenance Management</h2>
-        <Link to="/maintenance" style={{ marginRight: '10px' }}>
-          <button>View Maintenance</button>
-        </Link>
-        <Link to="/maintenance/add">
-          <button>Add Maintenance</button>
-        </Link>
+        {/* Asset Management */}
+        <section className="management-section">
+          <h2>Asset Management</h2>
+          <div className="management-buttons">
+            <Link to="/assets">
+              <button className="styled-button">View Assets</button>
+            </Link>
+            <Link to="/assets/add">
+              <button className="styled-button">Add Asset</button>
+            </Link>
+          </div>
+        </section>
+
+        {/* Movement Management */}
+        <section className="management-section">
+          <h2>Movement Management</h2>
+          <div className="management-buttons">
+            <Link to="/movements">
+              <button className="styled-button">View Movements</button>
+            </Link>
+            <Link to="/movements/add">
+              <button className="styled-button">Add Movement</button>
+            </Link>
+          </div>
+        </section>
+
+        {/* Maintenance Management */}
+        <section className="management-section">
+          <h2>Maintenance Management</h2>
+          <div className="management-buttons">
+            <Link to="/maintenance">
+              <button className="styled-button">View Maintenance</button>
+            </Link>
+            <Link to="/maintenance/add">
+              <button className="styled-button">Add Maintenance</button>
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -33,6 +33,47 @@ app.get('/me', authMiddleware, (req, res) => {
   });
 });
 
+
+//Profile route
+app.get('/api/profile', authMiddleware, async (req, res) => {
+  try {
+    const db = await connectDB();
+    const user = await db.collection(usersCollection).findOne(
+      { _id: new ObjectId(req.user.id) },
+      { projection: { password: 0 } }
+    );
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch profile', details: err.message });
+  }
+});
+
+// PUT /api/profile
+app.put('/api/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    const db = await connectDB();
+
+    await db.collection(usersCollection).updateOne(
+      { _id: new ObjectId(req.user.id) },
+      { $set: { name } }
+    );
+
+    const updatedUser = await db.collection(usersCollection).findOne(
+      { _id: new ObjectId(req.user.id) },
+      { projection: { password: 0 } }
+    );
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update profile', details: err.message });
+  }
+});
+
 // Login route
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
@@ -50,10 +91,15 @@ app.post('/auth/login', async (req, res) => {
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { id: user._id.toString(), role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-    );
+  {
+    id: user._id.toString(),
+    user_name: user.name,  // inside the payload object
+    role: user.role
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRES_IN || '365d' } 
+);
+
 
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
