@@ -41,9 +41,13 @@ const UserDashboard = () => {
     return <div>Loading dashboard...</div>;
   }
   const handleLogout = () => {
+  const confirmed = window.confirm('Are you sure you want to log out?');
+  if (confirmed) {
     localStorage.removeItem('token');
-    navigate('/');  // <-- navigate to home or login page on logout
-  };
+    navigate('/');
+  }
+};
+
 
   return (
     <div className="dashboard-container">
