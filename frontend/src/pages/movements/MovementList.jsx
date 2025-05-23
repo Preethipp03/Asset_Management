@@ -11,11 +11,13 @@ const MovementList = () => {
     const fetchMovements = async () => {
       try {
         setLoading(true);
+        // Make sure your backend expects a GET request to /movements without query params
         const res = await api.get('/movements');
         setMovements(res.data);
         setError('');
       } catch (err) {
-        setError('Failed to fetch movements.');
+        // More descriptive error logging
+        setError(err.response?.data?.error || err.message || 'Failed to fetch movements.');
       } finally {
         setLoading(false);
       }
@@ -51,21 +53,7 @@ const MovementList = () => {
       >
         <thead>
           <tr>
-            <th scope="col">S.No.</th>
-            <th scope="col">Asset Name</th>
-            <th scope="col">Serial Number</th> {/* Now included */}
-            <th scope="col">Movement From</th>
-            <th scope="col">Movement To</th>
-            <th scope="col">Movement Type</th>
-            <th scope="col">Dispatched By</th>
-            <th scope="col">Received By</th>
-            <th scope="col">Movement Date</th>
-            <th scope="col">Returnable</th>
-            <th scope="col">Expected Return Date</th>
-            <th scope="col">Returned Date &amp; Time</th>
-            <th scope="col">Asset Condition</th>
-            <th scope="col">Description</th>
-            <th scope="col">Actions</th>
+            <th scope="col">S.No.</th><th scope="col">Asset Name</th><th scope="col">Serial Number</th><th scope="col">Movement From</th><th scope="col">Movement To</th><th scope="col">Movement Type</th><th scope="col">Dispatched By</th><th scope="col">Received By</th><th scope="col">Movement Date</th><th scope="col">Returnable</th><th scope="col">Expected Return Date</th><th scope="col">Returned Date &amp; Time</th><th scope="col">Asset Condition</th><th scope="col">Description</th><th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -78,26 +66,10 @@ const MovementList = () => {
           ) : (
             movements.map((m, index) => (
               <tr key={m._id}>
-                <td>{index + 1}</td>
-                <td>{m.assetName}</td>
-                <td>{m.serialNumber || '-'}</td>
-                <td>{m.movementFrom}</td>
-                <td>{m.movementTo}</td>
-                <td>{m.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</td>
-                <td>{m.dispatchedBy}</td>
-                <td>{m.receivedBy}</td>
-                <td>{new Date(m.date).toLocaleString()}</td>
-                <td>{m.returnable ? 'Yes' : 'No'}</td>
-                <td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td>
-                <td>{m.returnedDateTime ? new Date(m.returnedDateTime).toLocaleString() : '-'}</td>
-                <td>{m.assetCondition || '-'}</td>
-                <td>{m.description || '-'}</td>
+                <td>{index + 1}</td><td>{m.assetName}</td><td>{m.serialNumber || '-'}</td><td>{m.movementFrom}</td><td>{m.movementTo}</td><td>{m.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</td><td>{m.dispatchedBy}</td><td>{m.receivedBy}</td><td>{new Date(m.date).toLocaleString()}</td><td>{m.returnable ? 'Yes' : 'No'}</td><td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td><td>{m.returnedDateTime ? new Date(m.returnedDateTime).toLocaleString() : '-'}</td><td>{m.assetCondition || '-'}</td><td>{m.description || '-'}</td>
                 <td>
                   <Link to={`/movements/edit/${m._id}`}>
-                    <button
-                      aria-label={`Edit movement for asset ${m.assetName}`}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <button aria-label={`Edit movement for asset ${m.assetName}`} style={{ cursor: 'pointer' }}>
                       Edit
                     </button>
                   </Link>

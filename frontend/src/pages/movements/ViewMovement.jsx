@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import api from '../../api/axios'; // Use your axios instance with interceptors
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../api/axios';
 
 const ViewMovement = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [movement, setMovement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,20 +33,51 @@ const ViewMovement = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '600px' }}>
       <h2>Movement Details</h2>
-      <p><strong>Asset Name:</strong> {movement.assetName || movement.assetId || 'N/A'}</p>
-      <p><strong>From:</strong> {movement.movementFrom || 'N/A'}</p>
-      <p><strong>To:</strong> {movement.movementTo || 'N/A'}</p>
-      <p><strong>Movement Type:</strong> {movement.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</p>
-      <p><strong>Dispatched By:</strong> {movement.dispatchedBy || 'N/A'}</p>
-      <p><strong>Received By:</strong> {movement.receivedBy || 'N/A'}</p>
-      <p><strong>Movement Date:</strong> {movement.date ? new Date(movement.date).toLocaleString() : 'N/A'}</p>
-      <p><strong>Returnable:</strong> {movement.returnable ? 'Yes' : 'No'}</p>
-      {movement.returnable && (
-        <p><strong>Expected Return Date:</strong> {movement.expectedReturnDate ? new Date(movement.expectedReturnDate).toLocaleDateString() : '-'}</p>
-      )}
-      <p><strong>Returned Date & Time:</strong> {movement.returnedDateTime ? new Date(movement.returnedDateTime).toLocaleString() : '-'}</p>
-      <p><strong>Asset Condition:</strong> {movement.assetCondition || '-'}</p>
-      <p><strong>Description:</strong> {movement.description || 'N/A'}</p>
+      <dl>
+        <dt><strong>Asset Name:</strong></dt>
+        <dd>{movement.assetName || movement.assetId || 'N/A'}</dd>
+
+        <dt><strong>From:</strong></dt>
+        <dd>{movement.movementFrom || 'N/A'}</dd>
+
+        <dt><strong>To:</strong></dt>
+        <dd>{movement.movementTo || 'N/A'}</dd>
+
+        <dt><strong>Movement Type:</strong></dt>
+        <dd>{movement.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</dd>
+
+        <dt><strong>Dispatched By:</strong></dt>
+        <dd>{movement.dispatchedBy || 'N/A'}</dd>
+
+        <dt><strong>Received By:</strong></dt>
+        <dd>{movement.receivedBy || 'N/A'}</dd>
+
+        <dt><strong>Movement Date:</strong></dt>
+        <dd>{movement.date ? new Date(movement.date).toLocaleString() : 'N/A'}</dd>
+
+        <dt><strong>Returnable:</strong></dt>
+        <dd>{movement.returnable ? 'Yes' : 'No'}</dd>
+
+        {movement.returnable && (
+          <>
+            <dt><strong>Expected Return Date:</strong></dt>
+            <dd>{movement.expectedReturnDate ? new Date(movement.expectedReturnDate).toLocaleDateString() : 'N/A'}</dd>
+          </>
+        )}
+
+        <dt><strong>Returned Date & Time:</strong></dt>
+        <dd>{movement.returnedDateTime ? new Date(movement.returnedDateTime).toLocaleString() : 'N/A'}</dd>
+
+        <dt><strong>Asset Condition:</strong></dt>
+        <dd>{movement.assetCondition || 'N/A'}</dd>
+
+        <dt><strong>Description:</strong></dt>
+        <dd>{movement.description || 'N/A'}</dd>
+      </dl>
+
+      <button onClick={() => navigate(-1)} style={{ marginTop: '20px', cursor: 'pointer' }}>
+        Back
+      </button>
     </div>
   );
 };

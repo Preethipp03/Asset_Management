@@ -33,24 +33,25 @@ const EditMovement = () => {
       return;
     }
 
-    const fetchAssets = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/assets', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAssets(res.data);
-      } catch (err) {
-        console.error('Failed to fetch assets', err);
-        alert('Failed to fetch assets');
-      }
-    };
+    if (!token) {
+      alert('Not authorized. Please login.');
+      navigate('/login');
+      return;
+    }
 
-    const fetchMovement = async () => {
-      try {
-        const res = await axios.get(`http://localhost:5000/movements/${movementId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = res.data;
+    setFetching(true);
+
+    const fetchAssets = axios.get('http://localhost:5000/assets', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const fetchMovement = axios.get(`http://localhost:5000/movements/${movementId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    Promise.all([fetchAssets, fetchMovement])
+      .then(([assetsRes, movementRes]) => {
+        setAssets(assetsRes.data);
+        const data = movementRes.data;
         setFormData({
           assetId: data.assetId,
           movementFrom: data.movementFrom,
@@ -65,22 +66,13 @@ const EditMovement = () => {
           assetCondition: data.assetCondition || '',
           description: data.description || '',
         });
-      } catch (err) {
-        console.error('Failed to fetch movement', err);
-        alert('Failed to fetch movement data');
+      })
+      .catch((err) => {
+        console.error('Failed to fetch data', err);
+        alert('Failed to load movement or assets data');
         navigate('/movements');
-      } finally {
-        setFetching(false);
-      }
-    };
-
-    if (token) {
-      fetchAssets();
-      fetchMovement();
-    } else {
-      alert('Not authorized. Please login.');
-      navigate('/login');
-    }
+      })
+      .finally(() => setFetching(false));
   }, [movementId, token, navigate]);
 
   useEffect(() => {
@@ -154,10 +146,12 @@ const EditMovement = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}
+    >
       <label>
         Asset:
-        {/* Show asset name as disabled input so user cannot change */}
         <input
           type="text"
           value={assetName}
@@ -282,10 +276,19 @@ const EditMovement = () => {
 
       <label>
         Description:
-        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows={3}
+        />
       </label>
 
-      <button type="submit" disabled={loading} style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}>
+      <button
+        type="submit"
+        disabled={loading}
+        style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}
+      >
         {loading ? 'Updating...' : 'Update Movement'}
       </button>
     </form>

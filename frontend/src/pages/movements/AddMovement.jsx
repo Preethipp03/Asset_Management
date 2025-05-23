@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AddMovement = () => {
-  const [assets, setAssets] = useState([]);
+  const [assetNameBySerial, setAssetNameBySerial] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     assetId: '',
-    serialNumber: '',  // Added here
+    serialNumber: '',
     movementFrom: '',
     movementTo: '',
     movementType: '',
@@ -21,19 +22,39 @@ const AddMovement = () => {
 
   const token = localStorage.getItem('token');
 
+  // Fetch asset by serial number
   useEffect(() => {
-    const fetchAssets = async () => {
+    const fetchAssetBySerial = async () => {
+      const serial = formData.serialNumber.trim();
+      if (!serial) {
+        setFormData((prev) => ({ ...prev, assetId: '' }));
+        setAssetNameBySerial('');
+        return;
+      }
       try {
-        const res = await axios.get('http://localhost:5000/assets', {
+        const res = await axios.get(`http://localhost:5000/assets/serial/${serial}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setAssets(res.data);
-      } catch (err) {
-        console.error('Failed to fetch assets', err);
+        if (res.data && res.data.length > 0) {
+          const asset = res.data[0];
+          setFormData((prev) => ({
+            ...prev,
+            assetId: asset._id || '',
+          }));
+          setAssetNameBySerial(asset.name || '');
+        } else {
+          setFormData((prev) => ({ ...prev, assetId: '' }));
+          setAssetNameBySerial('');
+        }
+      } catch (error) {
+        console.error('Asset not found for serial number', error);
+        setFormData((prev) => ({ ...prev, assetId: '' }));
+        setAssetNameBySerial('');
       }
     };
-    if (token) fetchAssets();
-  }, [token]);
+
+    fetchAssetBySerial();
+  }, [formData.serialNumber, token]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,10 +67,9 @@ const AddMovement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic required fields validation including serialNumber (if required)
     if (
       !formData.assetId ||
-      !formData.serialNumber.trim() ||  // validate serialNumber if required
+      !formData.serialNumber.trim() ||
       !formData.movementFrom.trim() ||
       !formData.movementTo.trim() ||
       !formData.movementType ||
@@ -66,7 +86,6 @@ const AddMovement = () => {
       return;
     }
 
-    // Validate date inputs before formatting
     if (isNaN(new Date(formData.date).getTime())) {
       alert('Invalid date and time.');
       return;
@@ -80,38 +99,37 @@ const AddMovement = () => {
       return;
     }
 
-    const isoDate = new Date(formData.date).toISOString();
-    const isoExpectedReturnDate = formData.expectedReturnDate
-      ? new Date(formData.expectedReturnDate).toISOString()
-      : null;
-    const isoReturnedDateTime = formData.returnedDateTime
-      ? new Date(formData.returnedDateTime).toISOString()
-      : null;
+    setLoading(true);
 
     try {
       await axios.post(
         'http://localhost:5000/movements',
         {
           assetId: formData.assetId,
-          serialNumber: formData.serialNumber.trim(),  // Include serialNumber here
+          serialNumber: formData.serialNumber.trim(),
           movementFrom: formData.movementFrom.trim(),
           movementTo: formData.movementTo.trim(),
           movementType: formData.movementType,
           dispatchedBy: formData.dispatchedBy.trim(),
           receivedBy: formData.receivedBy.trim(),
-          date: isoDate,
+          date: new Date(formData.date).toISOString(),
           returnable: formData.returnable,
-          expectedReturnDate: formData.returnable ? isoExpectedReturnDate : null,
-          returnedDateTime: isoReturnedDateTime,
+          expectedReturnDate: formData.returnable
+            ? new Date(formData.expectedReturnDate).toISOString()
+            : null,
+          returnedDateTime: formData.returnedDateTime
+            ? new Date(formData.returnedDateTime).toISOString()
+            : null,
           assetCondition: formData.assetCondition.trim() || '',
           description: formData.description.trim() || '',
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Movement recorded successfully');
+
       setFormData({
         assetId: '',
-        serialNumber: '', // reset serialNumber
+        serialNumber: '',
         movementFrom: '',
         movementTo: '',
         movementType: '',
@@ -124,9 +142,12 @@ const AddMovement = () => {
         assetCondition: '',
         description: '',
       });
+      setAssetNameBySerial('');
     } catch (err) {
       console.error('Failed to record movement', err);
       alert('Failed to record movement');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -142,18 +163,6 @@ const AddMovement = () => {
       }}
     >
       <label>
-        Asset:
-        <select name="assetId" value={formData.assetId} onChange={handleChange} required>
-          <option value="">Select Asset</option>
-          {assets.map((asset) => (
-            <option key={asset._id} value={asset._id}>
-              {asset.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
         Serial Number:
         <input
           type="text"
@@ -161,7 +170,13 @@ const AddMovement = () => {
           value={formData.serialNumber}
           onChange={handleChange}
           required
+          autoComplete="off"
         />
+      </label>
+
+      <label>
+        Asset Name:
+        <input type="text" value={assetNameBySerial} readOnly />
       </label>
 
       <label>
@@ -224,12 +239,23 @@ const AddMovement = () => {
 
       <label>
         Date & Time:
-        <input type="datetime-local" name="date" value={formData.date} onChange={handleChange} required />
+        <input
+          type="datetime-local"
+          name="date"
+          value={formData.date}
+          onChange={handleChange}
+          required
+        />
       </label>
 
       <label>
         Returnable:
-        <input type="checkbox" name="returnable" checked={formData.returnable} onChange={handleChange} />
+        <input
+          type="checkbox"
+          name="returnable"
+          checked={formData.returnable}
+          onChange={handleChange}
+        />
       </label>
 
       {formData.returnable && (
@@ -244,6 +270,7 @@ const AddMovement = () => {
               required
             />
           </label>
+
           <label>
             Returned Date & Time:
             <input
@@ -258,16 +285,30 @@ const AddMovement = () => {
 
       <label>
         Asset Condition:
-        <input type="text" name="assetCondition" value={formData.assetCondition} onChange={handleChange} />
+        <input
+          type="text"
+          name="assetCondition"
+          value={formData.assetCondition}
+          onChange={handleChange}
+        />
       </label>
 
       <label>
         Description:
-        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows={3}
+        />
       </label>
 
-      <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>
-        Add Movement
+      <button
+        type="submit"
+        style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}
+        disabled={loading}
+      >
+        {loading ? 'Submitting...' : 'Add Movement'}
       </button>
     </form>
   );

@@ -382,7 +382,10 @@ res.status(500).json({ error: 'Failed to delete asset', details: err.message });
 
 
 
-// Validate movement data
+
+
+
+
 function validateMovement(movement) {
   const validTypes = ['inside_building', 'outside_building'];
 
@@ -420,7 +423,7 @@ function validateMovement(movement) {
   }
 }
 
-// POST /movements - Create new movement
+// Create new movement
 app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const movement = req.body;
@@ -434,7 +437,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', '
     const movementDoc = {
       assetId: new ObjectId(movement.assetId),
       assetName: asset.name,
-      serialNumber: asset.serialNumber || '',  // <-- Added serialNumber here
+      serialNumber: asset.serialNumber || '',
       movementFrom: movement.movementFrom.trim(),
       movementTo: movement.movementTo.trim(),
       movementType: movement.movementType.trim(),
@@ -461,7 +464,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', '
   }
 });
 
-// GET /movements - Get all movements
+// Get all movements
 app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
@@ -475,22 +478,9 @@ app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'u
           as: "assetInfo"
         }
       },
-      {
-        $unwind: {
-          path: "$assetInfo",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $addFields: {
-          serialNumber: "$assetInfo.serialNumber"
-        }
-      },
-      {
-        $project: {
-          assetInfo: 0 // Remove the extra assetInfo object from the result
-        }
-      }
+      { $unwind: { path: "$assetInfo", preserveNullAndEmptyArrays: true } },
+      { $addFields: { serialNumber: "$assetInfo.serialNumber" } },
+      { $project: { assetInfo: 0 } }
     ]).toArray();
 
     res.json(movements);
@@ -499,8 +489,7 @@ app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'u
   }
 });
 
-
-// GET /movements/:id - Get movement by ID
+// Get movement by ID
 app.get('/movements/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -518,22 +507,14 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
           as: "assetInfo"
         }
       },
-      {
-        $unwind: {
-          path: "$assetInfo",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $unwind: { path: "$assetInfo", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
+          assetName: "$assetInfo.name",
           serialNumber: "$assetInfo.serialNumber"
         }
       },
-      {
-        $project: {
-          assetInfo: 0
-        }
-      }
+      { $project: { assetInfo: 0 } }
     ]).next();
 
     if (!movement) return res.status(404).json({ error: 'Movement not found' });
@@ -544,8 +525,7 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
   }
 });
 
-
-// PUT /movements/:id - Update full movement
+// Update full movement
 app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -563,7 +543,7 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
     const updateDoc = {
       assetId: new ObjectId(updatedMovement.assetId),
       assetName: assetExists.name,
-      serialNumber: assetExists.serialNumber || '',  // <-- Added serialNumber here
+      serialNumber: assetExists.serialNumber || '',
       movementFrom: updatedMovement.movementFrom.trim(),
       movementTo: updatedMovement.movementTo.trim(),
       movementType: updatedMovement.movementType.trim(),
@@ -595,7 +575,7 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
   }
 });
 
-// PATCH /movements/:id - Partial update movement
+// Partial update movement
 app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -633,7 +613,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
       if (!asset) return res.status(404).json({ error: 'Asset not found' });
       updateData.assetId = new ObjectId(updateData.assetId);
       updateData.assetName = asset.name;
-      updateData.serialNumber = asset.serialNumber || '';  // <-- Added serialNumber here
+      updateData.serialNumber = asset.serialNumber || '';
     }
 
     // Convert dates to Date objects
@@ -660,7 +640,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    // Optionally update asset location if movementTo and assetId changed
+    // Update asset location if movementTo and assetId changed
     if (updateData.assetId && updateData.movementTo) {
       await db.collection(assetsCollection).updateOne(
         { _id: updateData.assetId },
@@ -675,7 +655,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
   }
 });
 
-// DELETE /movements/:id - Delete movement
+// Delete movement
 app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
 
@@ -697,6 +677,35 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
     res.status(500).json({ error: 'Failed to delete movement', details: err.message });
   }
 });
+app.get('/assets/serial/:serialNumber', authMiddleware, async (req, res) => {
+  const serialNumber = req.params.serialNumber.trim();
+  console.log('Serial number param:', serialNumber);
+
+  // Escape regex special chars
+  const escapeRegex = text => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  const escapedSerialNumber = escapeRegex(serialNumber);
+
+  try {
+    const db = await connectDB();
+    const assets = await db.collection(assetsCollection).find({
+      serialNumber: { $regex: `^${escapedSerialNumber}$`, $options: 'i' }
+    }).toArray();
+
+    if (assets.length === 0) {
+      return res.status(404).json({ message: 'No assets found with this serial number' });
+    }
+
+    res.status(200).json(assets);
+  } catch (err) {
+    console.error('Error fetching asset by serial number:', err);
+    res.status(500).json({ error: 'Failed to fetch assets by serial number', details: err.message });
+  }
+});
+
+
+
+
+
 
    ///MAINTENANCE  APIs
 
