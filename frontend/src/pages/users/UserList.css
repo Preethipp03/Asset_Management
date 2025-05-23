@@ -1,0 +1,96 @@
+/* Full-page gradient background */
+body, html {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  font-family: sans-serif;
+}
+
+/* Centering and spacing */
+.user-list-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+}
+
+/* Card container */
+.user-list-card {
+  background-color: #f5f5f5; /* Light grey background */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Header layout */
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.user-list-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1a2b4c;
+}
+
+.user-list-header button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.user-list-header button:hover {
+  background-color: #2980b9;
+}
+
+/* Table styling */
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.user-table th,
+.user-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.user-table th {
+  background-color: #eaeaea;
+  color: #333;
+}
+
+/* Button styles */
+.user-table td button {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-table td button:hover {
+  background-color: #e67e22;
+}
+
+.user-table td button:last-child {
+  margin-left: 10px;
+  background-color: #e74c3c;
+}
+
+.user-table td button:last-child:hover {
+  background-color: #c0392b;
+}

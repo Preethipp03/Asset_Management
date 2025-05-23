@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // Needed to check role
+import { jwtDecode } from 'jwt-decode';
+import './AddUser.css'; // ✅ Make sure this matches your folder structure
 
 const AddUser = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'user', // Default to user
+    role: 'user',
   });
   const [message, setMessage] = useState('');
   const [currentRole, setCurrentRole] = useState('');
@@ -20,7 +21,6 @@ const AddUser = () => {
       try {
         const decoded = jwtDecode(token);
         setCurrentRole(decoded.role);
-        // Super admin can default to 'admin', others to 'user'
         setFormData((prev) => ({
           ...prev,
           role: decoded.role === 'super_admin' ? 'admin' : 'user',
@@ -32,7 +32,7 @@ const AddUser = () => {
   }, [token]);
 
   const handleChange = (e) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -62,56 +62,58 @@ const AddUser = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: 400 }}>
-      <h2>Add User</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
+    <div className="add-user-container">
+      <div className="add-user-card">
+        <h2 className="add-user-title">Add User</h2>
+        <form className="add-user-form" onSubmit={handleSubmit}>
+          <input
+            className="add-user-input"
+            name="name"
+            placeholder="Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className="add-user-input"
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className="add-user-input"
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <select
+            className="add-user-input"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+          >
+            {currentRole === 'super_admin' && (
+              <>
+                <option className="add-user-input" placeholder="Select" value="super_admin">Super Admin</option>
+                <option className="add-user-input" placeholder="Select" value="admin">Admin</option>
+                
+              </>
+            )}
+            {(currentRole === 'super_admin' || currentRole === 'admin') && (
+              <option className="add-user-input" placeholder="Select" value="user">User</option>
+            )}
+          </select>
 
-        <select
-  name="role"
-  value={formData.role}
-  onChange={handleChange}
-  style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
->
-  {currentRole === 'super_admin' && (
-    <>
-      <option value="super_admin">Super Admin</option>
-      <option value="admin">Admin</option>
-    </>
-  )}
-  {(currentRole === 'super_admin' || currentRole === 'admin') && (
-    <option value="user">User</option>
-  )}
-</select>
-
-        <button type="submit" style={{ padding: '10px 20px' }}>Create User</button>
-      </form>
-      {message && <p style={{ marginTop: 10, color: 'red' }}>{message}</p>}
+          <button type="submit" className="add-user-button">Create User</button>
+          {message && <p className="add-user-message">{message}</p>}
+        </form>
+      </div>
     </div>
   );
 };
