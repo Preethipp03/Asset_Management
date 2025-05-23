@@ -7,6 +7,8 @@ const EditMovement = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState([]);
   const [assetName, setAssetName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [formData, setFormData] = useState({
     assetId: '',
     movementFrom: '',
@@ -25,6 +27,12 @@ const EditMovement = () => {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    if (!movementId) {
+      alert('Invalid movement ID');
+      navigate('/movements');
+      return;
+    }
+
     const fetchAssets = async () => {
       try {
         const res = await axios.get('http://localhost:5000/assets', {
@@ -33,13 +41,12 @@ const EditMovement = () => {
         setAssets(res.data);
       } catch (err) {
         console.error('Failed to fetch assets', err);
+        alert('Failed to fetch assets');
       }
     };
 
     const fetchMovement = async () => {
       try {
-        if (!movementId) return;
-
         const res = await axios.get(`http://localhost:5000/movements/${movementId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -60,14 +67,21 @@ const EditMovement = () => {
         });
       } catch (err) {
         console.error('Failed to fetch movement', err);
+        alert('Failed to fetch movement data');
+        navigate('/movements');
+      } finally {
+        setFetching(false);
       }
     };
 
     if (token) {
       fetchAssets();
       fetchMovement();
+    } else {
+      alert('Not authorized. Please login.');
+      navigate('/login');
     }
-  }, [movementId, token]);
+  }, [movementId, token, navigate]);
 
   useEffect(() => {
     if (formData.assetId && assets.length) {
@@ -105,6 +119,7 @@ const EditMovement = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await axios.put(
         `http://localhost:5000/movements/${movementId}`,
@@ -129,26 +144,27 @@ const EditMovement = () => {
     } catch (err) {
       console.error('Failed to update movement', err);
       alert('Failed to update movement');
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (fetching) {
+    return <p>Loading movement data...</p>;
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <label>
         Asset:
-        <select name="assetId" value={formData.assetId} onChange={handleChange} required>
-          <option value="">Select Asset</option>
-          {assets.map((asset) => (
-            <option key={asset._id} value={asset._id}>
-              {asset.name}
-            </option>
-          ))}
-        </select>
+        {/* Show asset name as disabled input so user cannot change */}
+        <input
+          type="text"
+          value={assetName}
+          disabled
+          style={{ backgroundColor: '#f0f0f0', border: '1px solid #ccc', padding: '6px' }}
+        />
       </label>
-
-      {assetName && (
-        <p><strong>Asset Name:</strong> {assetName}</p>
-      )}
 
       <label>
         Movement From:
@@ -209,7 +225,7 @@ const EditMovement = () => {
       </label>
 
       <label>
-        Date:
+        Date & Time:
         <input
           type="datetime-local"
           name="date"
@@ -266,10 +282,12 @@ const EditMovement = () => {
 
       <label>
         Description:
-        <textarea name="description" value={formData.description} onChange={handleChange} />
+        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
       </label>
 
-      <button type="submit">Update Movement</button>
+      <button type="submit" disabled={loading} style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}>
+        {loading ? 'Updating...' : 'Update Movement'}
+      </button>
     </form>
   );
 };

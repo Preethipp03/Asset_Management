@@ -434,13 +434,13 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', '
     const movementDoc = {
       assetId: new ObjectId(movement.assetId),
       assetName: asset.name,
+      serialNumber: asset.serialNumber || '',  // <-- Added serialNumber here
       movementFrom: movement.movementFrom.trim(),
       movementTo: movement.movementTo.trim(),
       movementType: movement.movementType.trim(),
       dispatchedBy: movement.dispatchedBy.trim(),
       receivedBy: movement.receivedBy.trim(),
       date: new Date(movement.date),
-      // Correct returnable handling
       returnable: typeof movement.returnable === 'boolean' ? movement.returnable : false,
       expectedReturnDate: movement.returnable ? new Date(movement.expectedReturnDate) : null,
       returnedDateTime: movement.returnedDateTime ? new Date(movement.returnedDateTime) : null,
@@ -460,29 +460,90 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', '
     res.status(400).json({ error: 'Failed to record movement', details: err.message });
   }
 });
+
+// GET /movements - Get all movements
 app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
-    const movements = await db.collection(movementsCollection).find().toArray();
+
+    const movements = await db.collection(movementsCollection).aggregate([
+      {
+        $lookup: {
+          from: assetsCollection,
+          localField: "assetId",
+          foreignField: "_id",
+          as: "assetInfo"
+        }
+      },
+      {
+        $unwind: {
+          path: "$assetInfo",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serialNumber: "$assetInfo.serialNumber"
+        }
+      },
+      {
+        $project: {
+          assetInfo: 0 // Remove the extra assetInfo object from the result
+        }
+      }
+    ]).toArray();
+
     res.json(movements);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch movements', details: err.message });
   }
 });
 
+
 // GET /movements/:id - Get movement by ID
 app.get('/movements/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
+
   try {
     const db = await connectDB();
-    const movement = await db.collection(movementsCollection).findOne({ _id: new ObjectId(id) });
+
+    const movement = await db.collection(movementsCollection).aggregate([
+      { $match: { _id: new ObjectId(id) } },
+      {
+        $lookup: {
+          from: assetsCollection,
+          localField: "assetId",
+          foreignField: "_id",
+          as: "assetInfo"
+        }
+      },
+      {
+        $unwind: {
+          path: "$assetInfo",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serialNumber: "$assetInfo.serialNumber"
+        }
+      },
+      {
+        $project: {
+          assetInfo: 0
+        }
+      }
+    ]).next();
+
     if (!movement) return res.status(404).json({ error: 'Movement not found' });
+
     res.json(movement);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch movement' });
+    res.status(500).json({ error: 'Failed to fetch movement', details: err.message });
   }
 });
+
 
 // PUT /movements/:id - Update full movement
 app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
@@ -502,6 +563,7 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
     const updateDoc = {
       assetId: new ObjectId(updatedMovement.assetId),
       assetName: assetExists.name,
+      serialNumber: assetExists.serialNumber || '',  // <-- Added serialNumber here
       movementFrom: updatedMovement.movementFrom.trim(),
       movementTo: updatedMovement.movementTo.trim(),
       movementType: updatedMovement.movementType.trim(),
@@ -562,7 +624,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
       updateData.movementType = updateData.movementType.trim();
     }
 
-    // If assetId provided, verify asset exists & add assetName
+    // If assetId provided, verify asset exists & add assetName and serialNumber
     if (updateData.assetId) {
       if (!ObjectId.isValid(updateData.assetId)) {
         return res.status(400).json({ error: 'Invalid assetId' });
@@ -571,6 +633,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
       if (!asset) return res.status(404).json({ error: 'Asset not found' });
       updateData.assetId = new ObjectId(updateData.assetId);
       updateData.assetName = asset.name;
+      updateData.serialNumber = asset.serialNumber || '';  // <-- Added serialNumber here
     }
 
     // Convert dates to Date objects
@@ -634,8 +697,6 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
     res.status(500).json({ error: 'Failed to delete movement', details: err.message });
   }
 });
-
-
 
 
 // Validate maintenance input

@@ -5,6 +5,7 @@ const AddMovement = () => {
   const [assets, setAssets] = useState([]);
   const [formData, setFormData] = useState({
     assetId: '',
+    serialNumber: '',  // Added here
     movementFrom: '',
     movementTo: '',
     movementType: '',
@@ -45,9 +46,10 @@ const AddMovement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic required fields validation
+    // Basic required fields validation including serialNumber (if required)
     if (
       !formData.assetId ||
+      !formData.serialNumber.trim() ||  // validate serialNumber if required
       !formData.movementFrom.trim() ||
       !formData.movementTo.trim() ||
       !formData.movementType ||
@@ -91,6 +93,7 @@ const AddMovement = () => {
         'http://localhost:5000/movements',
         {
           assetId: formData.assetId,
+          serialNumber: formData.serialNumber.trim(),  // Include serialNumber here
           movementFrom: formData.movementFrom.trim(),
           movementTo: formData.movementTo.trim(),
           movementType: formData.movementType,
@@ -108,6 +111,7 @@ const AddMovement = () => {
       alert('Movement recorded successfully');
       setFormData({
         assetId: '',
+        serialNumber: '', // reset serialNumber
         movementFrom: '',
         movementTo: '',
         movementType: '',
@@ -147,6 +151,17 @@ const AddMovement = () => {
             </option>
           ))}
         </select>
+      </label>
+
+      <label>
+        Serial Number:
+        <input
+          type="text"
+          name="serialNumber"
+          value={formData.serialNumber}
+          onChange={handleChange}
+          required
+        />
       </label>
 
       <label>
