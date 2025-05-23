@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../api/axios'; // Make sure this path is correct
+import api from '../../api/axios';
 
 const MovementList = () => {
   const [movements, setMovements] = useState([]);
@@ -33,18 +33,20 @@ const MovementList = () => {
       <Link to="/movements/add">
         <button>Add Movement</button>
       </Link>
-      <table border="1" cellPadding="8" style={{ marginTop: '20px', width: '100%', maxWidth: 1000 }}>
+      <table border="1" cellPadding="8" style={{ marginTop: '20px', width: '100%', maxWidth: 1300 }}>
         <thead>
           <tr>
             <th>Asset Name</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Inside/Outside</th>
-            <th>DateTime</th>
+            <th>Movement From</th>
+            <th>Movement To</th>
+            <th>Movement Type</th>
             <th>Dispatched By</th>
             <th>Received By</th>
+            <th>Movement Date</th>
             <th>Returnable</th>
-            <th>Expected Return</th>
+            <th>Expected Return Date</th>
+            <th>Returned Date & Time</th>
+            <th>Asset Condition</th>
             <th>Description</th>
             <th>Actions</th>
           </tr>
@@ -56,11 +58,13 @@ const MovementList = () => {
               <td>{m.movementFrom}</td>
               <td>{m.movementTo}</td>
               <td>{m.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</td>
-              <td>{new Date(m.date).toLocaleString()}</td>
               <td>{m.dispatchedBy}</td>
               <td>{m.receivedBy}</td>
+              <td>{new Date(m.date).toLocaleString()}</td>
               <td>{m.returnable ? 'Yes' : 'No'}</td>
               <td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td>
+              <td>{m.returnedDateTime ? new Date(m.returnedDateTime).toLocaleString() : '-'}</td>
+              <td>{m.assetCondition || '-'}</td>
               <td>{m.description}</td>
               <td>
                 <Link to={`/movements/edit/${m._id}`}>
@@ -74,7 +78,7 @@ const MovementList = () => {
           ))}
           {movements.length === 0 && (
             <tr>
-              <td colSpan="10" style={{ textAlign: 'center' }}>No movements found</td>
+              <td colSpan="13" style={{ textAlign: 'center' }}>No movements found</td>
             </tr>
           )}
         </tbody>

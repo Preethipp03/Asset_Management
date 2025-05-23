@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const EditMovement = () => {
   const { id: movementId } = useParams();
+  const navigate = useNavigate();
   const [assets, setAssets] = useState([]);
   const [assetName, setAssetName] = useState('');
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ const EditMovement = () => {
     date: '',
     returnable: false,
     expectedReturnDate: '',
+    returnedDateTime: '',
+    assetCondition: '',
     description: '',
   });
 
@@ -48,9 +51,11 @@ const EditMovement = () => {
           movementType: data.movementType,
           dispatchedBy: data.dispatchedBy,
           receivedBy: data.receivedBy,
-          date: data.date ? new Date(data.date).toISOString().slice(0, 10) : '',
+          date: data.date ? new Date(data.date).toISOString().slice(0, 16) : '',
           returnable: data.returnable,
           expectedReturnDate: data.expectedReturnDate ? new Date(data.expectedReturnDate).toISOString().slice(0, 10) : '',
+          returnedDateTime: data.returnedDateTime ? new Date(data.returnedDateTime).toISOString().slice(0, 16) : '',
+          assetCondition: data.assetCondition || '',
           description: data.description || '',
         });
       } catch (err) {
@@ -64,7 +69,6 @@ const EditMovement = () => {
     }
   }, [movementId, token]);
 
-  // Update assetName when assetId or assets list changes
   useEffect(() => {
     if (formData.assetId && assets.length) {
       const foundAsset = assets.find(a => a._id === formData.assetId);
@@ -114,11 +118,14 @@ const EditMovement = () => {
           date: new Date(formData.date),
           returnable: formData.returnable,
           expectedReturnDate: formData.returnable ? new Date(formData.expectedReturnDate) : null,
+          returnedDateTime: formData.returnedDateTime ? new Date(formData.returnedDateTime) : null,
+          assetCondition: formData.assetCondition.trim(),
           description: formData.description.trim(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Movement updated successfully');
+      navigate('/movements');
     } catch (err) {
       console.error('Failed to update movement', err);
       alert('Failed to update movement');
@@ -139,7 +146,6 @@ const EditMovement = () => {
         </select>
       </label>
 
-      {/* Show asset name read-only */}
       {assetName && (
         <p><strong>Asset Name:</strong> {assetName}</p>
       )}
@@ -205,7 +211,7 @@ const EditMovement = () => {
       <label>
         Date:
         <input
-          type="date"
+          type="datetime-local"
           name="date"
           value={formData.date}
           onChange={handleChange}
@@ -224,20 +230,42 @@ const EditMovement = () => {
       </label>
 
       {formData.returnable && (
-        <label>
-          Expected Return Date:
-          <input
-            type="date"
-            name="expectedReturnDate"
-            value={formData.expectedReturnDate}
-            onChange={handleChange}
-            required={formData.returnable}
-          />
-        </label>
+        <>
+          <label>
+            Expected Return Date:
+            <input
+              type="date"
+              name="expectedReturnDate"
+              value={formData.expectedReturnDate}
+              onChange={handleChange}
+              required
+            />
+          </label>
+
+          <label>
+            Returned Date & Time:
+            <input
+              type="datetime-local"
+              name="returnedDateTime"
+              value={formData.returnedDateTime}
+              onChange={handleChange}
+            />
+          </label>
+
+          <label>
+            Asset Condition:
+            <input
+              type="text"
+              name="assetCondition"
+              value={formData.assetCondition}
+              onChange={handleChange}
+            />
+          </label>
+        </>
       )}
 
       <label>
-        description:
+        Description:
         <textarea name="description" value={formData.description} onChange={handleChange} />
       </label>
 

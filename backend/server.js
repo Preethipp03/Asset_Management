@@ -250,7 +250,6 @@ function validateAsset(asset) {
     !asset.name || typeof asset.name !== 'string' ||
     !asset.type || typeof asset.type !== 'string' ||
     !asset.category || typeof asset.category !== 'string' ||
-    asset.price === undefined || typeof asset.price !== 'number' ||
     !asset.purchaseDate || isNaN(Date.parse(asset.purchaseDate)) ||
     !asset.location || typeof asset.location !== 'string' ||
     !asset.condition || typeof asset.condition !== 'string'
@@ -288,7 +287,6 @@ app.post('/assets', authMiddleware, roleMiddleware(['admin', 'super_admin']), as
       name: asset.name.trim(),
       type: asset.type.trim(),
       category:asset.category.trim(),
-      price: asset.price,
       purchaseDate: new Date(asset.purchaseDate),
       location: asset.location.trim(),
       condition: asset.condition.trim(),
@@ -343,7 +341,6 @@ const formattedAsset = {
   name: asset.name.trim(),
   type: asset.type.trim(),
   category: asset.category.trim(),
-  price: asset.price,
   purchaseDate: new Date(asset.purchaseDate),
   location: asset.location.trim(),
   condition: asset.condition.trim(),
@@ -382,6 +379,7 @@ res.status(500).json({ error: 'Failed to delete asset', details: err.message });
 
 
 
+
 // Validate movement data
 function validateMovement(movement) {
   const validTypes = ['inside_building', 'outside_building'];
@@ -391,7 +389,7 @@ function validateMovement(movement) {
     !ObjectId.isValid(movement.assetId) ||
     !movement.movementFrom ||
     !movement.movementTo ||
-    !movement.movementType || // required
+    !movement.movementType ||
     !movement.dispatchedBy ||
     !movement.receivedBy ||
     !movement.date
@@ -410,33 +408,41 @@ function validateMovement(movement) {
   if (movement.returnable && !movement.expectedReturnDate) {
     throw new Error('Expected return date required if returnable is true');
   }
+
+  if (movement.returnedDateTime && isNaN(Date.parse(movement.returnedDateTime))) {
+    throw new Error('returnedDateTime must be a valid date-time string');
+  }
+
+  if (movement.expectedReturnDate && isNaN(Date.parse(movement.expectedReturnDate))) {
+    throw new Error('expectedReturnDate must be a valid date string');
+  }
 }
 
-
-// Create a new asset movement (transfer)
-app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// POST /movements - Create new movement
+app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const movement = req.body;
     validateMovement(movement);
 
     const db = await connectDB();
 
-    // Confirm asset exists
     const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(movement.assetId) });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
-    // Fix: set assetName from found asset
     const movementDoc = {
       assetId: new ObjectId(movement.assetId),
-      assetName: asset.name,  // <-- use asset.name (or asset.assetName) depending on your schema
+      assetName: asset.name,
       movementFrom: movement.movementFrom.trim(),
       movementTo: movement.movementTo.trim(),
       movementType: movement.movementType.trim(),
       dispatchedBy: movement.dispatchedBy.trim(),
       receivedBy: movement.receivedBy.trim(),
-      returnable: movement.returnable || false,
+      date: new Date(movement.date),
+      // Correct returnable handling
+      returnable: typeof movement.returnable === 'boolean' ? movement.returnable : false,
       expectedReturnDate: movement.returnable ? new Date(movement.expectedReturnDate) : null,
-      date: new Date(movement.date),  // Ensure frontend sends ISO or parseable date string
+      returnedDateTime: movement.returnedDateTime ? new Date(movement.returnedDateTime) : null,
+      assetCondition: movement.assetCondition ? movement.assetCondition.trim() : '',
       description: movement.description ? movement.description.trim() : ''
     };
 
@@ -444,7 +450,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','u
 
     await db.collection(assetsCollection).updateOne(
       { _id: new ObjectId(movement.assetId) },
-      { $set: { location: movement.movementTo } }
+      { $set: { location: movement.movementTo.trim() } }
     );
 
     res.status(201).json({ message: 'Asset movement recorded', movementId: result.insertedId });
@@ -452,19 +458,17 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','u
     res.status(400).json({ error: 'Failed to record movement', details: err.message });
   }
 });
-
-// Get all movements (admin and super_admin only)
-app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
     const movements = await db.collection(movementsCollection).find().toArray();
-    res.status(200).json(movements);
+    res.json(movements);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch movements', details: err.message });
   }
 });
 
-// Get movements by asset ID
+// GET /movements/:id - Get movement by ID
 app.get('/movements/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -478,23 +482,21 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// PUT /movements/:id - Update full movement
+app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
   const updatedMovement = req.body;
 
   try {
-    // Validate movement data (must have assetId and other required fields)
     validateMovement(updatedMovement);
 
     const db = await connectDB();
 
-    // Confirm asset exists for the given assetId
     const assetExists = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updatedMovement.assetId) });
     if (!assetExists) return res.status(404).json({ error: 'Asset not found' });
 
-    // Prepare the update document
     const updateDoc = {
       assetId: new ObjectId(updatedMovement.assetId),
       assetName: assetExists.name,
@@ -503,13 +505,14 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
       movementType: updatedMovement.movementType.trim(),
       dispatchedBy: updatedMovement.dispatchedBy.trim(),
       receivedBy: updatedMovement.receivedBy.trim(),
-      returnable: updatedMovement.returnable || false,
-      expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
       date: new Date(updatedMovement.date),
-      description: updatedMovement.description ? updatedMovement.description.trim() : '',
+      returnable: typeof updatedMovement.returnable === 'boolean' ? updatedMovement.returnable : false,
+      expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
+      returnedDateTime: updatedMovement.returnedDateTime ? new Date(updatedMovement.returnedDateTime) : null,
+      assetCondition: updatedMovement.assetCondition ? updatedMovement.assetCondition.trim() : '',
+      description: updatedMovement.description ? updatedMovement.description.trim() : ''
     };
 
-    // Update movement document
     const result = await db.collection(movementsCollection).updateOne(
       { _id: new ObjectId(id) },
       { $set: updateDoc }
@@ -517,10 +520,9 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    // Update asset location according to movementTo
     await db.collection(assetsCollection).updateOne(
       { _id: new ObjectId(updatedMovement.assetId) },
-      { $set: { location: updatedMovement.movementTo } }
+      { $set: { location: updatedMovement.movementTo.trim() } }
     );
 
     res.status(200).json({ message: 'Movement updated successfully' });
@@ -529,52 +531,87 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
   }
 });
 
-// Partial update movement
-app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// PATCH /movements/:id - Partial update movement
+app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
-  const updateData = req.body;
-
   try {
-    const assetId = req.params.id;
-    const updateData = req.body;
+    const db = await connectDB();
+    const updateData = { ...req.body };
 
-    // Validate and parse date if present
-    if (updateData.date) {
-      const parsedDate = new Date(updateData.date);
-      if (isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ error: 'Invalid date format' });
-      }
-      updateData.date = parsedDate;
+    // Validate dates if present
+    if (updateData.date && isNaN(Date.parse(updateData.date))) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    if (updateData.expectedReturnDate && isNaN(Date.parse(updateData.expectedReturnDate))) {
+      return res.status(400).json({ error: 'Invalid expectedReturnDate format' });
+    }
+    if (updateData.returnedDateTime && isNaN(Date.parse(updateData.returnedDateTime))) {
+      return res.status(400).json({ error: 'Invalid returnedDateTime format' });
     }
 
     // Validate movementType if present
     if (updateData.movementType) {
-      const validTypes = ['inside building', 'outside building'];
+      const validTypes = ['inside_building', 'outside_building'];
       if (!validTypes.includes(updateData.movementType.trim())) {
         return res.status(400).json({ error: 'Invalid movementType value' });
       }
       updateData.movementType = updateData.movementType.trim();
     }
 
-    // Update the asset document
-    const updatedAsset = await Asset.findByIdAndUpdate(assetId, updateData, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!updatedAsset) {
-      return res.status(404).json({ error: 'Asset not found' });
+    // If assetId provided, verify asset exists & add assetName
+    if (updateData.assetId) {
+      if (!ObjectId.isValid(updateData.assetId)) {
+        return res.status(400).json({ error: 'Invalid assetId' });
+      }
+      const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updateData.assetId) });
+      if (!asset) return res.status(404).json({ error: 'Asset not found' });
+      updateData.assetId = new ObjectId(updateData.assetId);
+      updateData.assetName = asset.name;
     }
 
-    res.json(updatedAsset);
+    // Convert dates to Date objects
+    if (updateData.date) updateData.date = new Date(updateData.date);
+    if (updateData.expectedReturnDate) updateData.expectedReturnDate = new Date(updateData.expectedReturnDate);
+    if (updateData.returnedDateTime) updateData.returnedDateTime = new Date(updateData.returnedDateTime);
+
+    // Correct returnable type if present
+    if (updateData.returnable !== undefined) {
+      if (typeof updateData.returnable !== 'boolean') {
+        return res.status(400).json({ error: 'returnable must be a boolean' });
+      }
+    }
+
+    // Trim string fields
+    ['movementFrom', 'movementTo', 'dispatchedBy', 'receivedBy', 'assetCondition', 'description'].forEach(field => {
+      if (updateData[field]) updateData[field] = updateData[field].trim();
+    });
+
+    const result = await db.collection(movementsCollection).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
+
+    // Optionally update asset location if movementTo and assetId changed
+    if (updateData.assetId && updateData.movementTo) {
+      await db.collection(assetsCollection).updateOne(
+        { _id: updateData.assetId },
+        { $set: { location: updateData.movementTo } }
+      );
+    }
+
+    res.json({ message: 'Movement updated successfully' });
   } catch (error) {
-    console.error('Error updating asset:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error updating movement:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
-app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+
+// DELETE /movements/:id - Delete movement
+app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
 
   if (!ObjectId.isValid(id)) {
@@ -595,6 +632,7 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
     res.status(500).json({ error: 'Failed to delete movement', details: err.message });
   }
 });
+
 
 
 

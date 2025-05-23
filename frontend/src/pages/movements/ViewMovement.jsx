@@ -33,20 +33,26 @@ const ViewMovement = () => {
   if (!movement) return <div>No movement found.</div>;
 
   return (
-    <div>
+    <div style={{ padding: '20px', maxWidth: '600px' }}>
       <h2>Movement Details</h2>
-      <p><strong>Asset ID:</strong> {movement.assetId}</p>
+      <p><strong>Asset Name:</strong> {movement.assetName || movement.assetId}</p>
       <p><strong>From:</strong> {movement.movementFrom}</p>
       <p><strong>To:</strong> {movement.movementTo}</p>
-      <p><strong>Movement Type:</strong> {movement.movementType}</p>
+      <p><strong>Movement Type:</strong> {movement.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</p>
       <p><strong>Dispatched By:</strong> {movement.dispatchedBy}</p>
       <p><strong>Received By:</strong> {movement.receivedBy}</p>
-      <p><strong>Date:</strong> {new Date(movement.date).toLocaleString()}</p>
+      <p><strong>Movement Date:</strong> {new Date(movement.date).toLocaleString()}</p>
       <p><strong>Returnable:</strong> {movement.returnable ? 'Yes' : 'No'}</p>
       {movement.returnable && (
-        <p><strong>Expected Return Date:</strong> {new Date(movement.expectedReturnDate).toLocaleDateString()}</p>
+        <p><strong>Expected Return Date:</strong> {movement.expectedReturnDate ? new Date(movement.expectedReturnDate).toLocaleDateString() : '-'}</p>
       )}
-      <p><strong>description:</strong> {movement.description || 'N/A'}</p>
+      {movement.returnedDateTime && (
+        <p><strong>Returned Date & Time:</strong> {new Date(movement.returnedDateTime).toLocaleString()}</p>
+      )}
+      {movement.assetCondition && (
+        <p><strong>Asset Condition:</strong> {movement.assetCondition}</p>
+      )}
+      <p><strong>Description:</strong> {movement.description || 'N/A'}</p>
     </div>
   );
 };
