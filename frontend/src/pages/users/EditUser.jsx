@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './EditUser.css';
 
 const EditUser = () => {
   const { id } = useParams();
@@ -43,27 +44,50 @@ const EditUser = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '400px' }}>
-      <h2>Edit User</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" value={formData.name} onChange={handleChange} required /><br /><br />
-        <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required /><br /><br />
-        <input
-          type="password"
-          name="password"
-          placeholder="Leave blank to keep current password"
-          value={formData.password}
-          onChange={handleChange}
-        /><br /><br />
-        <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="admin">Admin</option>
-<option value="user">User</option>
-</select><br /><br />
-<button type="submit">Update User</button>
-</form>
-{message && <p>{message}</p>}
-</div>
-);
+    <div className="edit-user-container">
+      <div className="edit-user-card">
+        <h2 className="edit-user-title">Edit User</h2>
+        <form onSubmit={handleSubmit} className="edit-user-form">
+          <input
+            name="name"
+            placeholder="Name"
+            value={formData.name}
+            onChange={handleChange}
+            className="edit-user-input"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="edit-user-input"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Leave blank to keep current password"
+            value={formData.password}
+            onChange={handleChange}
+            className="edit-user-input"
+          />
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="edit-user-input"
+          >
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+          </select>
+          <button type="submit" className="edit-user-button">Update User</button>
+        </form>
+        {message && <p className="edit-user-message">{message}</p>}
+      </div>
+    </div>
+  );
 };
 
 export default EditUser;
