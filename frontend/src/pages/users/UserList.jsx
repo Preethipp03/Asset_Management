@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import './UserList.css'; // Import the CSS file
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -33,38 +34,40 @@ const UserList = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Users</h2>
-      <Link to="/users/add">
-        <button>Add User</button>
-      </Link>
-      <table border="1" cellPadding="8" style={{ marginTop: '20px', width: '100%', maxWidth: 600 }}>
-        <thead>
-          <tr>
-            <th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u._id}>
-              <td>{u.name}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>
-                <Link to={`/users/edit/${u._id}`}>
-                  <button>Edit</button>
-                </Link>
-                <button onClick={() => deleteUser(u._id)} style={{ marginLeft: '10px' }}>
-                  Delete
-                </button>
-              </td>
+    <div className="user-list-container">
+      <div className="user-list-card">
+        <div className="user-list-header">
+          <h2>Users</h2>
+          <Link to="/users/add">
+            <button>Add User</button>
+          </Link>
+        </div>
+        <table className="user-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
             </tr>
-          ))}
-          {users.length === 0 && (
-            <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found</td></tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u._id}>
+                <td>{u.name}</td>
+                <td>{u.email}</td>
+                <td>{u.role}</td>
+                <td>
+                  <Link to={`/users/edit/${u._id}`}>
+                    <button>Edit</button>
+                  </Link>
+                  <button onClick={() => deleteUser(u._id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+            {users.length === 0 && (
+              <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
