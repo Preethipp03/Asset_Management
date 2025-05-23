@@ -8,12 +8,13 @@ const AddMaintenance = () => {
     assetId: '',
     maintenanceType: 'preventive',
     scheduledDate: '',
-    status: 'scheduled',       // Fixed status default value
+    frequency: 'monthly',          // Changed from maintenanceFrequency -> frequency
+    nextMaintenanceDate: '',
+    status: 'scheduled',
     performedBy: '',
-    description: '',           // Changed from description to description
+    description: '',
   });
   const navigate = useNavigate();
-
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -30,6 +31,28 @@ const AddMaintenance = () => {
     if (token) fetchAssets();
   }, [token]);
 
+  // Auto-calculate next maintenance date
+  useEffect(() => {
+    if (form.scheduledDate && form.frequency) {
+      const scheduled = new Date(form.scheduledDate);
+      let nextDate;
+
+      if (form.frequency === 'weekly') {
+        nextDate = new Date(scheduled);
+        nextDate.setDate(scheduled.getDate() + 7);
+      } else if (form.frequency === 'monthly') {
+        nextDate = new Date(scheduled);
+        nextDate.setMonth(scheduled.getMonth() + 1);
+      } else if (form.frequency === 'quarterly') {
+        nextDate = new Date(scheduled);
+        nextDate.setMonth(scheduled.getMonth() + 3);
+      }
+
+      const formatted = nextDate.toISOString().split('T')[0];
+      setForm((prev) => ({ ...prev, nextMaintenanceDate: formatted }));
+    }
+  }, [form.scheduledDate, form.frequency]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -38,9 +61,6 @@ const AddMaintenance = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Debug log to check submitted data before sending
-      console.log('Submitting maintenance:', form);
-
       await axios.post('http://localhost:5000/maintenance', form, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -84,10 +104,25 @@ const AddMaintenance = () => {
       </label>
 
       <label>
+        Frequency:
+        <select name="frequency" value={form.frequency} onChange={handleChange} required>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+        </select>
+      </label>
+
+      {form.nextMaintenanceDate && (
+        <div>
+          <strong>Next Maintenance Date:</strong> {form.nextMaintenanceDate}
+        </div>
+      )}
+
+      <label>
         Status:
         <select name="status" value={form.status} onChange={handleChange} required>
-          <option value="scheduled">Scheduled</option>          {/* Fixed values */}
-          <option value="in_progress">In Progress</option>      {/* Fixed values */}
+          <option value="scheduled">Scheduled</option>
+          <option value="in_progress">In Progress</option>
           <option value="completed">Completed</option>
         </select>
       </label>

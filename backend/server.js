@@ -1,18 +1,20 @@
 const express = require('express');
+const app = express();
+const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { connectDB, ObjectId } = require('./db');
 const { authMiddleware, roleMiddleware, isSelfOrAdmin } = require('./middleware/auth');
-const cors = require('cors');
-require('dotenv').config();
+const authRoutes = require('./routes/auth');
 
-const app = express();
+require('dotenv').config();
 
 app.use(cors({
   origin: 'http://localhost:3000',
 }));
 
 app.use(express.json());
+app.use('/auth', authRoutes);
 
 const usersCollection = 'users';
 const assetsCollection = 'assets';
@@ -250,7 +252,6 @@ function validateAsset(asset) {
     !asset.name || typeof asset.name !== 'string' ||
     !asset.type || typeof asset.type !== 'string' ||
     !asset.category || typeof asset.category !== 'string' ||
-    asset.price === undefined || typeof asset.price !== 'number' ||
     !asset.purchaseDate || isNaN(Date.parse(asset.purchaseDate)) ||
     !asset.location || typeof asset.location !== 'string' ||
     !asset.condition || typeof asset.condition !== 'string'
@@ -288,7 +289,6 @@ app.post('/assets', authMiddleware, roleMiddleware(['admin', 'super_admin']), as
       name: asset.name.trim(),
       type: asset.type.trim(),
       category:asset.category.trim(),
-      price: asset.price,
       purchaseDate: new Date(asset.purchaseDate),
       location: asset.location.trim(),
       condition: asset.condition.trim(),
@@ -343,7 +343,6 @@ const formattedAsset = {
   name: asset.name.trim(),
   type: asset.type.trim(),
   category: asset.category.trim(),
-  price: asset.price,
   purchaseDate: new Date(asset.purchaseDate),
   location: asset.location.trim(),
   condition: asset.condition.trim(),
@@ -382,6 +381,7 @@ res.status(500).json({ error: 'Failed to delete asset', details: err.message });
 
 
 
+
 // Validate movement data
 function validateMovement(movement) {
   const validTypes = ['inside_building', 'outside_building'];
@@ -391,7 +391,7 @@ function validateMovement(movement) {
     !ObjectId.isValid(movement.assetId) ||
     !movement.movementFrom ||
     !movement.movementTo ||
-    !movement.movementType || // required
+    !movement.movementType ||
     !movement.dispatchedBy ||
     !movement.receivedBy ||
     !movement.date
@@ -410,33 +410,41 @@ function validateMovement(movement) {
   if (movement.returnable && !movement.expectedReturnDate) {
     throw new Error('Expected return date required if returnable is true');
   }
+
+  if (movement.returnedDateTime && isNaN(Date.parse(movement.returnedDateTime))) {
+    throw new Error('returnedDateTime must be a valid date-time string');
+  }
+
+  if (movement.expectedReturnDate && isNaN(Date.parse(movement.expectedReturnDate))) {
+    throw new Error('expectedReturnDate must be a valid date string');
+  }
 }
 
-
-// Create a new asset movement (transfer)
-app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// POST /movements - Create new movement
+app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const movement = req.body;
     validateMovement(movement);
 
     const db = await connectDB();
 
-    // Confirm asset exists
     const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(movement.assetId) });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
 
-    // Fix: set assetName from found asset
     const movementDoc = {
       assetId: new ObjectId(movement.assetId),
-      assetName: asset.name,  // <-- use asset.name (or asset.assetName) depending on your schema
+      assetName: asset.name,
+      serialNumber: asset.serialNumber || '',  // <-- Added serialNumber here
       movementFrom: movement.movementFrom.trim(),
       movementTo: movement.movementTo.trim(),
       movementType: movement.movementType.trim(),
       dispatchedBy: movement.dispatchedBy.trim(),
       receivedBy: movement.receivedBy.trim(),
-      returnable: movement.returnable || false,
+      date: new Date(movement.date),
+      returnable: typeof movement.returnable === 'boolean' ? movement.returnable : false,
       expectedReturnDate: movement.returnable ? new Date(movement.expectedReturnDate) : null,
-      date: new Date(movement.date),  // Ensure frontend sends ISO or parseable date string
+      returnedDateTime: movement.returnedDateTime ? new Date(movement.returnedDateTime) : null,
+      assetCondition: movement.assetCondition ? movement.assetCondition.trim() : '',
       description: movement.description ? movement.description.trim() : ''
     };
 
@@ -444,7 +452,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','u
 
     await db.collection(assetsCollection).updateOne(
       { _id: new ObjectId(movement.assetId) },
-      { $set: { location: movement.movementTo } }
+      { $set: { location: movement.movementTo.trim() } }
     );
 
     res.status(201).json({ message: 'Asset movement recorded', movementId: result.insertedId });
@@ -453,63 +461,122 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','u
   }
 });
 
-// Get all movements (admin and super_admin only)
-app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// GET /movements - Get all movements
+app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
-    const movements = await db.collection(movementsCollection).find().toArray();
-    res.status(200).json(movements);
+
+    const movements = await db.collection(movementsCollection).aggregate([
+      {
+        $lookup: {
+          from: assetsCollection,
+          localField: "assetId",
+          foreignField: "_id",
+          as: "assetInfo"
+        }
+      },
+      {
+        $unwind: {
+          path: "$assetInfo",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serialNumber: "$assetInfo.serialNumber"
+        }
+      },
+      {
+        $project: {
+          assetInfo: 0 // Remove the extra assetInfo object from the result
+        }
+      }
+    ]).toArray();
+
+    res.json(movements);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch movements', details: err.message });
   }
 });
 
-// Get movements by asset ID
+
+// GET /movements/:id - Get movement by ID
 app.get('/movements/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
+
   try {
     const db = await connectDB();
-    const movement = await db.collection(movementsCollection).findOne({ _id: new ObjectId(id) });
+
+    const movement = await db.collection(movementsCollection).aggregate([
+      { $match: { _id: new ObjectId(id) } },
+      {
+        $lookup: {
+          from: assetsCollection,
+          localField: "assetId",
+          foreignField: "_id",
+          as: "assetInfo"
+        }
+      },
+      {
+        $unwind: {
+          path: "$assetInfo",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serialNumber: "$assetInfo.serialNumber"
+        }
+      },
+      {
+        $project: {
+          assetInfo: 0
+        }
+      }
+    ]).next();
+
     if (!movement) return res.status(404).json({ error: 'Movement not found' });
+
     res.json(movement);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch movement' });
+    res.status(500).json({ error: 'Failed to fetch movement', details: err.message });
   }
 });
 
-app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+
+// PUT /movements/:id - Update full movement
+app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
   const updatedMovement = req.body;
 
   try {
-    // Validate movement data (must have assetId and other required fields)
     validateMovement(updatedMovement);
 
     const db = await connectDB();
 
-    // Confirm asset exists for the given assetId
     const assetExists = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updatedMovement.assetId) });
     if (!assetExists) return res.status(404).json({ error: 'Asset not found' });
 
-    // Prepare the update document
     const updateDoc = {
       assetId: new ObjectId(updatedMovement.assetId),
       assetName: assetExists.name,
+      serialNumber: assetExists.serialNumber || '',  // <-- Added serialNumber here
       movementFrom: updatedMovement.movementFrom.trim(),
       movementTo: updatedMovement.movementTo.trim(),
       movementType: updatedMovement.movementType.trim(),
       dispatchedBy: updatedMovement.dispatchedBy.trim(),
       receivedBy: updatedMovement.receivedBy.trim(),
-      returnable: updatedMovement.returnable || false,
-      expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
       date: new Date(updatedMovement.date),
-      description: updatedMovement.description ? updatedMovement.description.trim() : '',
+      returnable: typeof updatedMovement.returnable === 'boolean' ? updatedMovement.returnable : false,
+      expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
+      returnedDateTime: updatedMovement.returnedDateTime ? new Date(updatedMovement.returnedDateTime) : null,
+      assetCondition: updatedMovement.assetCondition ? updatedMovement.assetCondition.trim() : '',
+      description: updatedMovement.description ? updatedMovement.description.trim() : ''
     };
 
-    // Update movement document
     const result = await db.collection(movementsCollection).updateOne(
       { _id: new ObjectId(id) },
       { $set: updateDoc }
@@ -517,10 +584,9 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    // Update asset location according to movementTo
     await db.collection(assetsCollection).updateOne(
       { _id: new ObjectId(updatedMovement.assetId) },
-      { $set: { location: updatedMovement.movementTo } }
+      { $set: { location: updatedMovement.movementTo.trim() } }
     );
 
     res.status(200).json({ message: 'Movement updated successfully' });
@@ -529,52 +595,88 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
   }
 });
 
-// Partial update movement
-app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// PATCH /movements/:id - Partial update movement
+app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
 
-  const updateData = req.body;
-
   try {
-    const assetId = req.params.id;
-    const updateData = req.body;
+    const db = await connectDB();
+    const updateData = { ...req.body };
 
-    // Validate and parse date if present
-    if (updateData.date) {
-      const parsedDate = new Date(updateData.date);
-      if (isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ error: 'Invalid date format' });
-      }
-      updateData.date = parsedDate;
+    // Validate dates if present
+    if (updateData.date && isNaN(Date.parse(updateData.date))) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    if (updateData.expectedReturnDate && isNaN(Date.parse(updateData.expectedReturnDate))) {
+      return res.status(400).json({ error: 'Invalid expectedReturnDate format' });
+    }
+    if (updateData.returnedDateTime && isNaN(Date.parse(updateData.returnedDateTime))) {
+      return res.status(400).json({ error: 'Invalid returnedDateTime format' });
     }
 
     // Validate movementType if present
     if (updateData.movementType) {
-      const validTypes = ['inside building', 'outside building'];
+      const validTypes = ['inside_building', 'outside_building'];
       if (!validTypes.includes(updateData.movementType.trim())) {
         return res.status(400).json({ error: 'Invalid movementType value' });
       }
       updateData.movementType = updateData.movementType.trim();
     }
 
-    // Update the asset document
-    const updatedAsset = await Asset.findByIdAndUpdate(assetId, updateData, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!updatedAsset) {
-      return res.status(404).json({ error: 'Asset not found' });
+    // If assetId provided, verify asset exists & add assetName and serialNumber
+    if (updateData.assetId) {
+      if (!ObjectId.isValid(updateData.assetId)) {
+        return res.status(400).json({ error: 'Invalid assetId' });
+      }
+      const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updateData.assetId) });
+      if (!asset) return res.status(404).json({ error: 'Asset not found' });
+      updateData.assetId = new ObjectId(updateData.assetId);
+      updateData.assetName = asset.name;
+      updateData.serialNumber = asset.serialNumber || '';  // <-- Added serialNumber here
     }
 
-    res.json(updatedAsset);
+    // Convert dates to Date objects
+    if (updateData.date) updateData.date = new Date(updateData.date);
+    if (updateData.expectedReturnDate) updateData.expectedReturnDate = new Date(updateData.expectedReturnDate);
+    if (updateData.returnedDateTime) updateData.returnedDateTime = new Date(updateData.returnedDateTime);
+
+    // Correct returnable type if present
+    if (updateData.returnable !== undefined) {
+      if (typeof updateData.returnable !== 'boolean') {
+        return res.status(400).json({ error: 'returnable must be a boolean' });
+      }
+    }
+
+    // Trim string fields
+    ['movementFrom', 'movementTo', 'dispatchedBy', 'receivedBy', 'assetCondition', 'description'].forEach(field => {
+      if (updateData[field]) updateData[field] = updateData[field].trim();
+    });
+
+    const result = await db.collection(movementsCollection).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
+
+    // Optionally update asset location if movementTo and assetId changed
+    if (updateData.assetId && updateData.movementTo) {
+      await db.collection(assetsCollection).updateOne(
+        { _id: updateData.assetId },
+        { $set: { location: updateData.movementTo } }
+      );
+    }
+
+    res.json({ message: 'Movement updated successfully' });
   } catch (error) {
-    console.error('Error updating asset:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error updating movement:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
-app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+
+// DELETE /movements/:id - Delete movement
+app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
 
   if (!ObjectId.isValid(id)) {
@@ -596,9 +698,20 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
   }
 });
 
+   ///MAINTENANCE  APIs
 
+function calculateNextDate(scheduledDate, frequency) {
+  if (!scheduledDate || !frequency) return null;
+  const date = new Date(scheduledDate);
+  if (frequency === 'weekly') date.setDate(date.getDate() + 7);
+  else if (frequency === 'monthly') date.setMonth(date.getMonth() + 1);
+  else if (frequency === 'quarterly') date.setMonth(date.getMonth() + 3);
+  else return null;
+  return date;
+}
 
-// Validate maintenance input
+const validFrequencies = ['weekly', 'monthly', 'quarterly'];
+
 function validateMaintenance(maintenance) {
   const validStatuses = ['scheduled', 'in_progress', 'completed'];
   const validTypes = ['preventive', 'corrective'];
@@ -611,7 +724,9 @@ function validateMaintenance(maintenance) {
     !maintenance.scheduledDate ||
     isNaN(Date.parse(maintenance.scheduledDate)) ||
     !maintenance.status ||
-    !validStatuses.includes(maintenance.status)
+    !validStatuses.includes(maintenance.status) ||
+    !maintenance.frequency ||
+    !validFrequencies.includes(maintenance.frequency)
   ) {
     throw new Error('Missing or invalid required fields for maintenance');
   }
@@ -621,41 +736,38 @@ function validateMaintenance(maintenance) {
   }
 
   if (maintenance.description && typeof maintenance.description !== 'string') {
-    throw new Error('Description should be a string');
+    throw new Error('description should be a string');
   }
 
   if (maintenance.performedBy && typeof maintenance.performedBy !== 'string') {
     throw new Error('performedBy should be a string');
   }
-
-  if (maintenance.description && typeof maintenance.description !== 'string') {
-    throw new Error('description should be a string');
-  }
 }
 
-
-/// Create maintenance record
-app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// CREATE maintenance
+app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const maintenance = req.body;
     validateMaintenance(maintenance);
 
     const db = await connectDB();
 
-    // Confirm asset exists
     const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
+
+    const nextMaintenanceDate = calculateNextDate(maintenance.scheduledDate, maintenance.frequency);
 
     const maintenanceDoc = {
       assetId: new ObjectId(maintenance.assetId),
       assetName: asset.name,
       maintenanceType: maintenance.maintenanceType.trim(),
-      description: maintenance.description ? maintenance.description.trim() : '',
+      description: maintenance.description?.trim() || '',
       scheduledDate: new Date(maintenance.scheduledDate),
       completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
       status: maintenance.status.trim(),
-      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
-      description: maintenance.description ? maintenance.description.trim() : '',
+      performedBy: maintenance.performedBy?.trim() || '',
+      frequency: maintenance.frequency.trim(),
+      nextMaintenanceDate,
     };
 
     const result = await db.collection(maintenanceCollection).insertOne(maintenanceDoc);
@@ -665,8 +777,8 @@ app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin',
   }
 });
 
-// Get all maintenance records (admin and super_admin only)
-app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// GET all maintenance
+app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
     const maintenance = await db.collection(maintenanceCollection).find().toArray();
@@ -676,7 +788,7 @@ app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin','
   }
 });
 
-// Get maintenance by ID
+// GET maintenance by ID
 app.get('/maintenance/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
@@ -691,8 +803,8 @@ app.get('/maintenance/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Update maintenance record (PUT)
-app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// UPDATE (full) maintenance by ID
+app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
@@ -702,20 +814,22 @@ app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 
     const db = await connectDB();
 
-    // Confirm asset exists
     const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
+
+    const nextMaintenanceDate = calculateNextDate(maintenance.scheduledDate, maintenance.frequency);
 
     const updatedDoc = {
       assetId: new ObjectId(maintenance.assetId),
       assetName: asset.name,
       maintenanceType: maintenance.maintenanceType.trim(),
-      description: maintenance.description ? maintenance.description.trim() : '',
+      description: maintenance.description?.trim() || '',
       scheduledDate: new Date(maintenance.scheduledDate),
       completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
       status: maintenance.status.trim(),
-      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
-      description: maintenance.description ? maintenance.description.trim() : '',
+      performedBy: maintenance.performedBy?.trim() || '',
+      frequency: maintenance.frequency.trim(),
+      nextMaintenanceDate,
     };
 
     const result = await db.collection(maintenanceCollection).updateOne(
@@ -730,36 +844,35 @@ app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
   }
 });
 
-// PATCH maintenance record (partial update)
-app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// PATCH (partial update) maintenance by ID
+app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
   const updates = req.body;
+  const validStatuses = ['scheduled', 'in_progress', 'completed'];
+  const validTypes = ['preventive', 'corrective'];
+  const validFrequencies = ['weekly', 'monthly', 'quarterly'];
 
-  // Optional: Validate fields if you want, here minimal check
   if (updates.assetId && !ObjectId.isValid(updates.assetId)) {
     return res.status(400).json({ error: 'Invalid assetId' });
   }
 
-  if (updates.status) {
-    const validStatuses = ['scheduled', 'in_progress', 'completed'];
-    if (!validStatuses.includes(updates.status)) {
-      return res.status(400).json({ error: 'Invalid status value' });
-    }
+  if (updates.status && !validStatuses.includes(updates.status)) {
+    return res.status(400).json({ error: 'Invalid status value' });
   }
 
-  if (updates.maintenanceType) {
-    const validTypes = ['preventive', 'corrective'];
-    if (!validTypes.includes(updates.maintenanceType)) {
-      return res.status(400).json({ error: 'Invalid maintenanceType value' });
-    }
+  if (updates.maintenanceType && !validTypes.includes(updates.maintenanceType)) {
+    return res.status(400).json({ error: 'Invalid maintenanceType value' });
+  }
+
+  if (updates.frequency && !validFrequencies.includes(updates.frequency)) {
+    return res.status(400).json({ error: 'Invalid frequency value' });
   }
 
   try {
     const db = await connectDB();
 
-    // If assetId is being updated, verify asset exists and get name
     if (updates.assetId) {
       const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updates.assetId) });
       if (!asset) return res.status(404).json({ error: 'Asset not found' });
@@ -767,27 +880,34 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
       updates.assetId = new ObjectId(updates.assetId);
     }
 
-    // Convert dates if present
-    if (updates.scheduledDate) {
-      if (isNaN(Date.parse(updates.scheduledDate))) {
-        return res.status(400).json({ error: 'Invalid scheduledDate' });
-      }
-      updates.scheduledDate = new Date(updates.scheduledDate);
+    if (updates.scheduledDate && isNaN(Date.parse(updates.scheduledDate))) {
+      return res.status(400).json({ error: 'Invalid scheduledDate' });
     }
 
-    if (updates.completedDate) {
-      if (isNaN(Date.parse(updates.completedDate))) {
-        return res.status(400).json({ error: 'Invalid completedDate' });
-      }
-      updates.completedDate = new Date(updates.completedDate);
+    if (updates.completedDate && isNaN(Date.parse(updates.completedDate))) {
+      return res.status(400).json({ error: 'Invalid completedDate' });
     }
 
-    // Trim string fields if present
-    ['maintenanceType', 'status', 'description', 'performedBy', 'description'].forEach(field => {
+    if (updates.scheduledDate) updates.scheduledDate = new Date(updates.scheduledDate);
+    if (updates.completedDate) updates.completedDate = new Date(updates.completedDate);
+
+    ['maintenanceType', 'status', 'description', 'performedBy', 'frequency'].forEach(field => {
       if (updates[field] && typeof updates[field] === 'string') {
         updates[field] = updates[field].trim();
       }
     });
+
+    // Recalculate nextMaintenanceDate if scheduledDate or frequency is updated
+    if (updates.scheduledDate || updates.frequency) {
+      const current = await db.collection(maintenanceCollection).findOne({ _id: new ObjectId(id) });
+      if (!current) return res.status(404).json({ error: 'Maintenance record not found' });
+
+      const scheduledDate = updates.scheduledDate || current.scheduledDate;
+      const frequency = updates.frequency || current.frequency;
+
+      const nextMaintenanceDate = calculateNextDate(scheduledDate, frequency);
+      updates.nextMaintenanceDate = nextMaintenanceDate;
+    }
 
     const result = await db.collection(maintenanceCollection).findOneAndUpdate(
       { _id: new ObjectId(id) },
@@ -799,19 +919,19 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
 
     res.status(200).json({ message: 'Maintenance record updated successfully', maintenance: result.value });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update maintenance record', details: err.message });
+    res.status(400).json({ error: 'Failed to update maintenance record', details: err.message });
   }
 });
 
-
-// Delete maintenance record
-app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+// DELETE maintenance by ID
+app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
   try {
     const db = await connectDB();
     const result = await db.collection(maintenanceCollection).deleteOne({ _id: new ObjectId(id) });
+
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Maintenance record not found' });
     res.status(200).json({ message: 'Maintenance record deleted successfully' });
   } catch (err) {

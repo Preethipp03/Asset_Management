@@ -5,6 +5,7 @@ const AddMovement = () => {
   const [assets, setAssets] = useState([]);
   const [formData, setFormData] = useState({
     assetId: '',
+    serialNumber: '',  // Added here
     movementFrom: '',
     movementTo: '',
     movementType: '',
@@ -13,6 +14,8 @@ const AddMovement = () => {
     date: '',
     returnable: false,
     expectedReturnDate: '',
+    returnedDateTime: '',
+    assetCondition: '',
     description: '',
   });
 
@@ -43,9 +46,10 @@ const AddMovement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
+    // Basic required fields validation including serialNumber (if required)
     if (
       !formData.assetId ||
+      !formData.serialNumber.trim() ||  // validate serialNumber if required
       !formData.movementFrom.trim() ||
       !formData.movementTo.trim() ||
       !formData.movementType ||
@@ -62,13 +66,26 @@ const AddMovement = () => {
       return;
     }
 
-    // Convert datetime-local string to ISO string
-    // formData.date is like "2025-05-18T14:30"
-    const isoDate = new Date(formData.date).toISOString();
+    // Validate date inputs before formatting
+    if (isNaN(new Date(formData.date).getTime())) {
+      alert('Invalid date and time.');
+      return;
+    }
+    if (formData.returnable && isNaN(new Date(formData.expectedReturnDate).getTime())) {
+      alert('Invalid expected return date.');
+      return;
+    }
+    if (formData.returnedDateTime && isNaN(new Date(formData.returnedDateTime).getTime())) {
+      alert('Invalid returned date and time.');
+      return;
+    }
 
-    // expectedReturnDate is date only "YYYY-MM-DD"
+    const isoDate = new Date(formData.date).toISOString();
     const isoExpectedReturnDate = formData.expectedReturnDate
       ? new Date(formData.expectedReturnDate).toISOString()
+      : null;
+    const isoReturnedDateTime = formData.returnedDateTime
+      ? new Date(formData.returnedDateTime).toISOString()
       : null;
 
     try {
@@ -76,21 +93,25 @@ const AddMovement = () => {
         'http://localhost:5000/movements',
         {
           assetId: formData.assetId,
+          serialNumber: formData.serialNumber.trim(),  // Include serialNumber here
           movementFrom: formData.movementFrom.trim(),
           movementTo: formData.movementTo.trim(),
-          movementType: formData.movementType, // send as 'inside_building' or 'outside_building'
+          movementType: formData.movementType,
           dispatchedBy: formData.dispatchedBy.trim(),
           receivedBy: formData.receivedBy.trim(),
           date: isoDate,
           returnable: formData.returnable,
           expectedReturnDate: formData.returnable ? isoExpectedReturnDate : null,
-          description: formData.description.trim(),
+          returnedDateTime: isoReturnedDateTime,
+          assetCondition: formData.assetCondition.trim() || '',
+          description: formData.description.trim() || '',
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Movement recorded successfully');
       setFormData({
         assetId: '',
+        serialNumber: '', // reset serialNumber
         movementFrom: '',
         movementTo: '',
         movementType: '',
@@ -99,6 +120,8 @@ const AddMovement = () => {
         date: '',
         returnable: false,
         expectedReturnDate: '',
+        returnedDateTime: '',
+        assetCondition: '',
         description: '',
       });
     } catch (err) {
@@ -108,7 +131,16 @@ const AddMovement = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        maxWidth: 600,
+        margin: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}
+    >
       <label>
         Asset:
         <select name="assetId" value={formData.assetId} onChange={handleChange} required>
@@ -119,6 +151,17 @@ const AddMovement = () => {
             </option>
           ))}
         </select>
+      </label>
+
+      <label>
+        Serial Number:
+        <input
+          type="text"
+          name="serialNumber"
+          value={formData.serialNumber}
+          onChange={handleChange}
+          required
+        />
       </label>
 
       <label>
@@ -181,44 +224,51 @@ const AddMovement = () => {
 
       <label>
         Date & Time:
-        <input
-          type="datetime-local"
-          name="date"
-          value={formData.date}
-          onChange={handleChange}
-          required
-        />
+        <input type="datetime-local" name="date" value={formData.date} onChange={handleChange} required />
       </label>
 
       <label>
         Returnable:
-        <input
-          type="checkbox"
-          name="returnable"
-          checked={formData.returnable}
-          onChange={handleChange}
-        />
+        <input type="checkbox" name="returnable" checked={formData.returnable} onChange={handleChange} />
       </label>
 
       {formData.returnable && (
-        <label>
-          Expected Return Date:
-          <input
-            type="date"
-            name="expectedReturnDate"
-            value={formData.expectedReturnDate}
-            onChange={handleChange}
-            required={formData.returnable}
-          />
-        </label>
+        <>
+          <label>
+            Expected Return Date:
+            <input
+              type="date"
+              name="expectedReturnDate"
+              value={formData.expectedReturnDate}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <label>
+            Returned Date & Time:
+            <input
+              type="datetime-local"
+              name="returnedDateTime"
+              value={formData.returnedDateTime}
+              onChange={handleChange}
+            />
+          </label>
+        </>
       )}
 
       <label>
-        description:
+        Asset Condition:
+        <input type="text" name="assetCondition" value={formData.assetCondition} onChange={handleChange} />
+      </label>
+
+      <label>
+        Description:
         <textarea name="description" value={formData.description} onChange={handleChange} rows={3} />
       </label>
 
-      <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>Add Movement</button>
+      <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>
+        Add Movement
+      </button>
     </form>
   );
 };

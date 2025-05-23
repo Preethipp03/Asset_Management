@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../api/axios'; // Make sure this path is correct
+import api from '../../api/axios';
 
 const MovementList = () => {
   const [movements, setMovements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchMovements = async () => {
       try {
+        setLoading(true);
         const res = await api.get('/movements');
         setMovements(res.data);
+        setError('');
       } catch (err) {
-        alert('Failed to fetch movements.');
+        setError('Failed to fetch movements.');
+      } finally {
+        setLoading(false);
       }
     };
     fetchMovements();
@@ -21,61 +27,90 @@ const MovementList = () => {
     if (!window.confirm('Are you sure to delete this movement?')) return;
     try {
       await api.delete(`/movements/${id}`);
-      setMovements(movements.filter((m) => m._id !== id));
+      setMovements((prev) => prev.filter((m) => m._id !== id));
     } catch {
       alert('Failed to delete movement.');
     }
   };
 
+  if (loading) {
+    return <p>Loading movements...</p>;
+  }
+
   return (
     <div style={{ padding: '20px' }}>
       <h2>Asset Movements</h2>
       <Link to="/movements/add">
-        <button>Add Movement</button>
+        <button style={{ cursor: 'pointer' }}>Add Movement</button>
       </Link>
-      <table border="1" cellPadding="8" style={{ marginTop: '20px', width: '100%', maxWidth: 1000 }}>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <table
+        border="1"
+        cellPadding="8"
+        style={{ marginTop: '20px', width: '100%', maxWidth: 1300, borderCollapse: 'collapse' }}
+      >
         <thead>
           <tr>
-            <th>Asset Name</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Inside/Outside</th>
-            <th>DateTime</th>
-            <th>Dispatched By</th>
-            <th>Received By</th>
-            <th>Returnable</th>
-            <th>Expected Return</th>
-            <th>Description</th>
-            <th>Actions</th>
+            <th scope="col">S.No.</th>
+            <th scope="col">Asset Name</th>
+            <th scope="col">Serial Number</th> {/* Now included */}
+            <th scope="col">Movement From</th>
+            <th scope="col">Movement To</th>
+            <th scope="col">Movement Type</th>
+            <th scope="col">Dispatched By</th>
+            <th scope="col">Received By</th>
+            <th scope="col">Movement Date</th>
+            <th scope="col">Returnable</th>
+            <th scope="col">Expected Return Date</th>
+            <th scope="col">Returned Date &amp; Time</th>
+            <th scope="col">Asset Condition</th>
+            <th scope="col">Description</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {movements.map((m) => (
-            <tr key={m._id}>
-              <td>{m.assetName}</td>
-              <td>{m.movementFrom}</td>
-              <td>{m.movementTo}</td>
-              <td>{m.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</td>
-              <td>{new Date(m.date).toLocaleString()}</td>
-              <td>{m.dispatchedBy}</td>
-              <td>{m.receivedBy}</td>
-              <td>{m.returnable ? 'Yes' : 'No'}</td>
-              <td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td>
-              <td>{m.description}</td>
-              <td>
-                <Link to={`/movements/edit/${m._id}`}>
-                  <button>Edit</button>
-                </Link>
-                <button onClick={() => deleteMovement(m._id)} style={{ marginLeft: '10px' }}>
-                  Delete
-                </button>
+          {movements.length === 0 ? (
+            <tr>
+              <td colSpan="15" style={{ textAlign: 'center' }}>
+                No movements found
               </td>
             </tr>
-          ))}
-          {movements.length === 0 && (
-            <tr>
-              <td colSpan="10" style={{ textAlign: 'center' }}>No movements found</td>
-            </tr>
+          ) : (
+            movements.map((m, index) => (
+              <tr key={m._id}>
+                <td>{index + 1}</td>
+                <td>{m.assetName}</td>
+                <td>{m.serialNumber || '-'}</td>
+                <td>{m.movementFrom}</td>
+                <td>{m.movementTo}</td>
+                <td>{m.movementType === 'inside_building' ? 'Inside Building' : 'Outside Building'}</td>
+                <td>{m.dispatchedBy}</td>
+                <td>{m.receivedBy}</td>
+                <td>{new Date(m.date).toLocaleString()}</td>
+                <td>{m.returnable ? 'Yes' : 'No'}</td>
+                <td>{m.returnable && m.expectedReturnDate ? new Date(m.expectedReturnDate).toLocaleDateString() : '-'}</td>
+                <td>{m.returnedDateTime ? new Date(m.returnedDateTime).toLocaleString() : '-'}</td>
+                <td>{m.assetCondition || '-'}</td>
+                <td>{m.description || '-'}</td>
+                <td>
+                  <Link to={`/movements/edit/${m._id}`}>
+                    <button
+                      aria-label={`Edit movement for asset ${m.assetName}`}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Edit
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => deleteMovement(m._id)}
+                    aria-label={`Delete movement for asset ${m.assetName}`}
+                    style={{ marginLeft: '10px', cursor: 'pointer' }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
           )}
         </tbody>
       </table>

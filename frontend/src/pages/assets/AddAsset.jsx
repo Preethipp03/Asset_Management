@@ -7,7 +7,6 @@ const AddAsset = () => {
     name: '',
     type: '',
     category: '',
-    price: '',
     purchaseDate: '',
     warranty: '',
     location: '',
@@ -31,7 +30,6 @@ const AddAsset = () => {
       name: formData.name.trim(),
       type: formData.type.trim(),
       category: formData.category.trim(),
-      price: Number(formData.price),
       purchaseDate: formData.purchaseDate,
       warranty: formData.warranty.trim(),
       location: formData.location.trim(),
@@ -54,7 +52,6 @@ const AddAsset = () => {
         name: '',
         type: '',
         category: '',
-        price: '',
         purchaseDate: '',
         warranty: '',
         location: '',
@@ -84,7 +81,6 @@ const AddAsset = () => {
       <input name="name" value={formData.name} onChange={handleChange} placeholder="Name" required />
       <input name="type" value={formData.type} onChange={handleChange} placeholder="Type" required />
       <input name="category" value={formData.category} onChange={handleChange} placeholder="Category" required />
-      <input name="price" value={formData.price} onChange={handleChange} type="number" placeholder="Price" required />
       <input name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} type="date" placeholder="Purchase Date" required />
       <input name="warranty" value={formData.warranty} onChange={handleChange} placeholder="Warranty" />
       <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" />
