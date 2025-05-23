@@ -49,10 +49,7 @@ const Login = () => {
     setDisclaimerClosed(true);
   };
 
-  const handleNonNavigatingLinkClick = (e) => {
-    e.preventDefault();
-    console.log('Action for this link should be implemented!');
-  };
+
 
   return (
     <>
@@ -126,13 +123,14 @@ const Login = () => {
                         onChange={() => setShowPassword(!showPassword)}
                     /> Show Password
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleNonNavigatingLinkClick}
-                      className="forgot-password-button"
-                    >
+                     <button
+                       type="button"
+                       onClick={() => navigate('/ForgotPassword')}
+                       className="forgot-password-button"
+                     >
                       Forgot password?
-                    </button>
+                      </button>
+
                   </div>
 
                   <button type="submit" className="login-button">

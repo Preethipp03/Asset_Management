@@ -31,13 +31,22 @@ import MaintenanceList from './pages/maintenance/MaintenanceList';
 import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
 
+// Forgot/Reset Password
+// Forgot/Reset Password
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />
-        <Route path="/unauthorized" element={<Unauthorized />} /> {/* ✅ Unauthorized route */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/ForgotPassword" element={<ForgotPassword />} />
+       <Route path="/ResetPassword" element={<ResetPassword />} />
+
 
         {/* Dashboards */}
         <Route
@@ -69,7 +78,7 @@ const App = () => {
         <Route
           path="/users"
           element={
-            <ProtectedRoute allowedRoles={['super_admin','admin']}>
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <UserList />
             </ProtectedRoute>
           }
@@ -93,7 +102,7 @@ const App = () => {
         <Route
           path="/users/edit/:id"
           element={
-            <ProtectedRoute allowedRoles={['super_admin','admin']}>
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <EditUser />
             </ProtectedRoute>
           }
