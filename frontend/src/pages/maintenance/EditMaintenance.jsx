@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './AddMaintenance.css'; // Reusing same CSS for consistent design
 
 const EditMaintenance = () => {
   const { id } = useParams();
@@ -10,16 +11,15 @@ const EditMaintenance = () => {
   const [assets, setAssets] = useState([]);
   const [formData, setFormData] = useState({
     assetId: '',
-    maintenanceType: '',
+    maintenanceType: 'preventive',
     scheduledDate: '',
-    frequency: 'monthly',   // Changed from maintenanceFrequency to frequency
+    frequency: 'monthly',
     nextMaintenanceDate: '',
-    status: '',
+    status: 'scheduled',
     performedBy: '',
     description: ''
   });
 
-  // Fetch assets and maintenance details
   useEffect(() => {
     const fetchAssets = async () => {
       try {
@@ -40,11 +40,11 @@ const EditMaintenance = () => {
         const data = res.data;
         setFormData({
           assetId: data.assetId || '',
-          maintenanceType: data.maintenanceType || '',
+          maintenanceType: data.maintenanceType || 'preventive',
           scheduledDate: data.scheduledDate ? data.scheduledDate.split('T')[0] : '',
-          frequency: data.frequency || 'monthly',  // Updated here as well
+          frequency: data.frequency || 'monthly',
           nextMaintenanceDate: data.nextMaintenanceDate ? data.nextMaintenanceDate.split('T')[0] : '',
-          status: data.status || '',
+          status: data.status || 'scheduled',
           performedBy: data.performedBy || '',
           description: data.description || ''
         });
@@ -60,7 +60,6 @@ const EditMaintenance = () => {
     }
   }, [id, token]);
 
-  // Update nextMaintenanceDate whenever scheduledDate or frequency changes
   useEffect(() => {
     if (formData.scheduledDate && formData.frequency) {
       const scheduled = new Date(formData.scheduledDate);
@@ -99,12 +98,17 @@ const EditMaintenance = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: 'auto' }}>
-      <h2>Edit Maintenance</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <label>
-          Asset:
-          <select name="assetId" value={formData.assetId} onChange={handleChange} required>
+    <div className="add-maintenance-container">
+      <div className="add-maintenance-card">
+        <h2 className="add-maintenance-title">Edit Maintenance</h2>
+        <form className="add-maintenance-form" onSubmit={handleSubmit}>
+          <select
+            className="add-maintenance-select"
+            name="assetId"
+            value={formData.assetId}
+            onChange={handleChange}
+            required
+          >
             <option value="">-- Select Asset --</option>
             {assets.map((a) => (
               <option key={a._id} value={a._id}>
@@ -112,76 +116,78 @@ const EditMaintenance = () => {
               </option>
             ))}
           </select>
-        </label>
 
-        <label>
-          Maintenance Type:
-          <select name="maintenanceType" value={formData.maintenanceType} onChange={handleChange} required>
-            <option value="">Select Type</option>
+          <select
+            className="add-maintenance-select"
+            name="maintenanceType"
+            value={formData.maintenanceType}
+            onChange={handleChange}
+            required
+          >
             <option value="preventive">Preventive</option>
             <option value="corrective">Corrective</option>
           </select>
-        </label>
 
-        <label>
-          Scheduled Date:
           <input
+            className="add-maintenance-input"
             type="date"
             name="scheduledDate"
             value={formData.scheduledDate}
             onChange={handleChange}
             required
           />
-        </label>
 
-        <label>
-          Frequency:
-          <select name="frequency" value={formData.frequency} onChange={handleChange} required>
+          <select
+            className="add-maintenance-select"
+            name="frequency"
+            value={formData.frequency}
+            onChange={handleChange}
+            required
+          >
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="quarterly">Quarterly</option>
           </select>
-        </label>
 
-        {formData.nextMaintenanceDate && (
-          <div>
-            <strong>Next Maintenance Date:</strong> {formData.nextMaintenanceDate}
-          </div>
-        )}
+          {formData.nextMaintenanceDate && (
+            <div className="next-date-display">
+              Next Maintenance: {formData.nextMaintenanceDate}
+            </div>
+          )}
 
-        <label>
-          Status:
-          <select name="status" value={formData.status} onChange={handleChange} required>
-            <option value="">Select Status</option>
+          <select
+            className="add-maintenance-select"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            required
+          >
             <option value="scheduled">Scheduled</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
           </select>
-        </label>
 
-        <label>
-          Performed By (Technician):
           <input
+            className="add-maintenance-input"
             type="text"
             name="performedBy"
             value={formData.performedBy}
             onChange={handleChange}
+            placeholder="Technician Name"
+            required
           />
-        </label>
 
-        <label>
-          Description:
           <textarea
+            className="add-maintenance-textarea"
             name="description"
             value={formData.description}
             onChange={handleChange}
+            placeholder="Description (optional)"
           />
-        </label>
 
-        <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>
-          Update Maintenance
-        </button>
-      </form>
+          <button type="submit" className="add-maintenance-button">Update</button>
+        </form>
+      </div>
     </div>
   );
 };

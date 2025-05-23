@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './AddAssets.css';
 
 const AddAsset = () => {
-  // 1. Declare state for formData
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -13,10 +13,10 @@ const AddAsset = () => {
     condition: '',
     serialNumber: '',
     assignedTo: '',
-    description: ''
+    description: '',
+    status: ''
   });
 
-  // 2. Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -38,7 +38,6 @@ const AddAsset = () => {
       assignedTo: formData.assignedTo.trim(),
       description: formData.description.trim(),
       status: formData.status.trim(),
-
     };
 
     try {
@@ -67,7 +66,6 @@ const AddAsset = () => {
     }
   };
 
-  // 3. Handle input changes to update formData state
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -77,25 +75,30 @@ const AddAsset = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input name="name" value={formData.name} onChange={handleChange} placeholder="Name" required />
-      <input name="type" value={formData.type} onChange={handleChange} placeholder="Type" required />
-      <input name="category" value={formData.category} onChange={handleChange} placeholder="Category" required />
-      <input name="purchaseDate" value={formData.purchaseDate} onChange={handleChange} type="date" placeholder="Purchase Date" required />
-      <input name="warranty" value={formData.warranty} onChange={handleChange} placeholder="Warranty" />
-      <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" />
-      <input name="condition" value={formData.condition} onChange={handleChange} placeholder="Condition" />
-      <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} placeholder="Serial Number" />
-      <input name="assignedTo" value={formData.assignedTo} onChange={handleChange} placeholder="Assigned To" />
-      <textarea name="description" value={formData.description} onChange={handleChange} placeholder="description" />
-      <select name="status" value={formData.status} onChange={handleChange} required>
-      <option value="">Select Status</option>
-      <option value="active">Active</option>
-      <option value="in_repair">In Repair</option>
-      <option value="disposed">Disposed</option>
-      </select>
-      <button type="submit">Add Asset</button>
-    </form>
+    <div className="add-asset-container">
+      <div className="add-asset-card">
+        <h2 className="add-asset-title">Add Asset</h2>
+        <form className="add-asset-form" onSubmit={handleSubmit}>
+          <input name="name" className="add-asset-input" value={formData.name} onChange={handleChange} placeholder="Name" required />
+          <input name="type" className="add-asset-input" value={formData.type} onChange={handleChange} placeholder="Type" required />
+          <input name="category" className="add-asset-input" value={formData.category} onChange={handleChange} placeholder="Category" required />
+          <input name="purchaseDate" type="date" className="add-asset-input" value={formData.purchaseDate} onChange={handleChange} required />
+          <input name="warranty" className="add-asset-input" value={formData.warranty} onChange={handleChange} placeholder="Warranty" />
+          <input name="location" className="add-asset-input" value={formData.location} onChange={handleChange} placeholder="Location" />
+          <input name="condition" className="add-asset-input" value={formData.condition} onChange={handleChange} placeholder="Condition" />
+          <input name="serialNumber" className="add-asset-input" value={formData.serialNumber} onChange={handleChange} placeholder="Serial Number" />
+          <input name="assignedTo" className="add-asset-input" value={formData.assignedTo} onChange={handleChange} placeholder="Assigned To" />
+          <textarea name="description" className="add-asset-textarea" value={formData.description} onChange={handleChange} placeholder="Description" />
+          <select name="status" className="add-asset-select" value={formData.status} onChange={handleChange} required>
+            <option value="">Select Status</option>
+            <option value="active">Active</option>
+            <option value="in_repair">In Repair</option>
+            <option value="disposed">Disposed</option>
+          </select>
+          <button type="submit" className="add-asset-button">Add Asset</button>
+        </form>
+      </div>
+    </div>
   );
 };
 

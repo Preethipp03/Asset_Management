@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './AssetManagement.css';
 
 const AssetManagement = () => {
   const [assets, setAssets] = useState([]);
@@ -61,39 +62,44 @@ const AssetManagement = () => {
   };
 
   return (
-    <div>
-      <h3>{editingId ? 'Edit Asset' : 'Add Asset'}</h3>
-      <form onSubmit={handleSubmit}>
-        <input name="name" value={formData.name} onChange={handleChange} placeholder="Name" required /><br />
-        <input name="description" value={formData.description} onChange={handleChange} placeholder="Description" required /><br />
-        <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" required /><br />
-        <input name="price" value={formData.price} onChange={handleChange} placeholder="Price" type="number" required /><br />
-        <select name="status" value={formData.status} onChange={handleChange}>
-          <option value="available">Available</option>
-          <option value="in_use">In Use</option>
-          <option value="maintenance">Maintenance</option>
-        </select><br />
-        <button type="submit">{editingId ? 'Update' : 'Add'} Asset</button>
-        {editingId && <button onClick={resetForm}>Cancel</button>}
-      </form>
+    <div className="asset-container">
+      <div className="asset-card">
+        <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
+        <h2 className="asset-title">{editingId ? 'Edit Asset' : 'Add Asset'}</h2>
+        <form className="asset-form" onSubmit={handleSubmit}>
+          <input className="asset-input" name="name" value={formData.name} onChange={handleChange} placeholder="Name" required />
+          <input className="asset-input" name="description" value={formData.description} onChange={handleChange} placeholder="Description" required />
+          <input className="asset-input" name="location" value={formData.location} onChange={handleChange} placeholder="Location" required />
+          <input className="asset-input" name="price" value={formData.price} onChange={handleChange} placeholder="Price" type="number" required />
+          <select className="asset-select" name="status" value={formData.status} onChange={handleChange}>
+            <option value="available">Available</option>
+            <option value="in_use">In Use</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+          <button className="asset-button" type="submit">{editingId ? 'Update' : 'Add'} Asset</button>
+          {editingId && <button className="cancel-button" type="button" onClick={resetForm}>Cancel</button>}
+        </form>
 
-      <h3>All Assets</h3>
-      <table border="1" cellPadding="6">
-        <thead>
-          <tr><th>Name</th><th>Location</th><th>Price</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-          {assets.map((asset) => (
-            <tr key={asset._id}>
-              <td>{asset.name}</td><td>{asset.location}</td><td>{asset.price}</td><td>{asset.status}</td>
-              <td>
-                <button onClick={() => handleEdit(asset)}>Edit</button>
-                <button onClick={() => deleteAsset(asset._id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <h2 className="asset-title">All Assets</h2>
+        <div className="asset-table-wrapper">
+          <table className="asset-table">
+            <thead>
+              <tr><th>Name</th><th>Location</th><th>Price</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {assets.map((asset) => (
+                <tr key={asset._id}>
+                  <td>{asset.name}</td><td>{asset.location}</td><td>{asset.price}</td><td>{asset.status}</td>
+                  <td>
+                    <button onClick={() => handleEdit(asset)}>Edit</button>
+                    <button onClick={() => deleteAsset(asset._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

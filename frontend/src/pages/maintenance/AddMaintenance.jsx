@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './AddMaintenance.css';
 
 const AddMaintenance = () => {
   const [assets, setAssets] = useState([]);
@@ -8,7 +9,7 @@ const AddMaintenance = () => {
     assetId: '',
     maintenanceType: 'preventive',
     scheduledDate: '',
-    frequency: 'monthly',          // Changed from maintenanceFrequency -> frequency
+    frequency: 'monthly',
     nextMaintenanceDate: '',
     status: 'scheduled',
     performedBy: '',
@@ -31,22 +32,13 @@ const AddMaintenance = () => {
     if (token) fetchAssets();
   }, [token]);
 
-  // Auto-calculate next maintenance date
   useEffect(() => {
     if (form.scheduledDate && form.frequency) {
       const scheduled = new Date(form.scheduledDate);
-      let nextDate;
-
-      if (form.frequency === 'weekly') {
-        nextDate = new Date(scheduled);
-        nextDate.setDate(scheduled.getDate() + 7);
-      } else if (form.frequency === 'monthly') {
-        nextDate = new Date(scheduled);
-        nextDate.setMonth(scheduled.getMonth() + 1);
-      } else if (form.frequency === 'quarterly') {
-        nextDate = new Date(scheduled);
-        nextDate.setMonth(scheduled.getMonth() + 3);
-      }
+      let nextDate = new Date(scheduled);
+      if (form.frequency === 'weekly') nextDate.setDate(scheduled.getDate() + 7);
+      else if (form.frequency === 'monthly') nextDate.setMonth(scheduled.getMonth() + 1);
+      else if (form.frequency === 'quarterly') nextDate.setMonth(scheduled.getMonth() + 3);
 
       const formatted = nextDate.toISOString().split('T')[0];
       setForm((prev) => ({ ...prev, nextMaintenanceDate: formatted }));
@@ -72,87 +64,73 @@ const AddMaintenance = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}
-    >
-      <h2>Schedule Maintenance</h2>
+    <div className="add-maintenance-container">
+      <div className="add-maintenance-card">
+        <h2 className="add-maintenance-title">Schedule Maintenance</h2>
+        <form className="add-maintenance-form" onSubmit={handleSubmit}>
+          <select className="add-maintenance-select" name="assetId" value={form.assetId} onChange={handleChange} required>
+            <option value="">-- Select Asset --</option>
+            {assets.map((a) => (
+              <option key={a._id} value={a._id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
 
-      <label>
-        Select Asset:
-        <select name="assetId" value={form.assetId} onChange={handleChange} required>
-          <option value="">-- Select Asset --</option>
-          {assets.map((a) => (
-            <option key={a._id} value={a._id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          <select className="add-maintenance-select" name="maintenanceType" value={form.maintenanceType} onChange={handleChange} required>
+            <option value="preventive">Preventive</option>
+            <option value="corrective">Corrective</option>
+          </select>
 
-      <label>
-        Maintenance Type:
-        <select name="maintenanceType" value={form.maintenanceType} onChange={handleChange} required>
-          <option value="preventive">Preventive</option>
-          <option value="corrective">Corrective</option>
-        </select>
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="date"
+            name="scheduledDate"
+            value={form.scheduledDate}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Scheduled Date:
-        <input type="date" name="scheduledDate" value={form.scheduledDate} onChange={handleChange} required />
-      </label>
+          <select className="add-maintenance-select" name="frequency" value={form.frequency} onChange={handleChange} required>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
 
-      <label>
-        Frequency:
-        <select name="frequency" value={form.frequency} onChange={handleChange} required>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="quarterly">Quarterly</option>
-        </select>
-      </label>
+          {form.nextMaintenanceDate && (
+            <div className="next-date-display">
+              Next Maintenance: {form.nextMaintenanceDate}
+            </div>
+          )}
 
-      {form.nextMaintenanceDate && (
-        <div>
-          <strong>Next Maintenance Date:</strong> {form.nextMaintenanceDate}
-        </div>
-      )}
+          <select className="add-maintenance-select" name="status" value={form.status} onChange={handleChange} required>
+            <option value="scheduled">Scheduled</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
 
-      <label>
-        Status:
-        <select name="status" value={form.status} onChange={handleChange} required>
-          <option value="scheduled">Scheduled</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="performedBy"
+            value={form.performedBy}
+            onChange={handleChange}
+            placeholder="Technician Name"
+            required
+          />
 
-      <label>
-        Technician:
-        <input
-          type="text"
-          name="performedBy"
-          value={form.performedBy}
-          onChange={handleChange}
-          required
-          placeholder="Technician Name"
-        />
-      </label>
+          <textarea
+            className="add-maintenance-textarea"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Description (optional)"
+          />
 
-      <label>
-        Description:
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Description (optional)"
-        />
-      </label>
-
-      <button type="submit" style={{ padding: '8px 12px', cursor: 'pointer' }}>
-        Add
-      </button>
-    </form>
+          <button type="submit" className="add-maintenance-button">Add</button>
+        </form>
+      </div>
+    </div>
   );
 };
 

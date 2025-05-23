@@ -1,0 +1,296 @@
+.add-maintenance-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  padding: 20px;
+}
+
+.add-maintenance-card {
+  background-color: #f3f4f6;
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.add-maintenance-title {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.add-maintenance-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-maintenance-input,
+.add-maintenance-select,
+.add-maintenance-textarea {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 0 20px;
+  color: #111827;
+  margin-bottom: 16px;
+  font-size: 16px;
+  height: 48px;
+  line-height: 48px;
+}
+
+.add-maintenance-textarea {
+  height: 80px;
+  resize: vertical;
+  border-radius: 16px;
+  padding: 12px 20px;
+}
+
+.add-maintenance-button {
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 16px;
+  height: 48px;
+}
+
+.add-maintenance-button:hover {
+  background-color: #acb9f4;
+}
+
+.next-date-display {
+  color: #111827;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+
+/*MaintenanceList.css*/
+
+/* MaintenanceList.css */
+
+/* Full-page gradient background consistent with UserList */
+body, html {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  font-family: sans-serif;
+}
+
+/* Container similar to UserList */
+.maintenance-list-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+}
+
+/* Card container */
+.maintenance-list-card {
+  background-color: #f5f5f5; /* Light grey */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Header style */
+.maintenance-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.maintenance-list-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1a2b4c;
+}
+
+/* Filters container */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.filters label {
+  color: #1a2b4c;
+  font-weight: 600;
+}
+
+/* Select and input styling */
+.filters select,
+.filters input[type="text"] {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  min-width: 150px;
+}
+
+/* Reset button styling */
+.filters button {
+  cursor: pointer;
+  padding: 8px 16px;
+  background-color: #3498db;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.filters button:hover {
+  background-color: #2980b9;
+}
+
+/* Table styling consistent with UserList */
+.maintenance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.maintenance-table th,
+.maintenance-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.maintenance-table th {
+  background-color: #eaeaea;
+  color: #333;
+}
+
+/* Action buttons */
+.maintenance-table td button {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.maintenance-table td button:hover {
+  background-color: #e67e22;
+}
+
+.maintenance-table td button.delete {
+  background-color: #e74c3c;
+  margin-left: 10px;
+}
+
+.maintenance-table td button.delete:hover {
+  background-color: #c0392b;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters select,
+  .filters input[type="text"] {
+    min-width: 100%;
+  }
+
+  .maintenance-table th,
+  .maintenance-table td {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+
+/* EditMaintenance.css */
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.form-card {
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 600px;
+}
+
+.maintenance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.maintenance-form label {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.maintenance-form input,
+.maintenance-form select,
+.maintenance-form textarea {
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.3s;
+}
+
+.maintenance-form input:focus,
+.maintenance-form select:focus,
+.maintenance-form textarea:focus {
+  border-color: #3f51b5;
+  outline: none;
+}
+
+.maintenance-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.next-date {
+  font-weight: 500;
+  color: #444;
+}
+
+.maintenance-form button {
+  padding: 12px 16px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.maintenance-form button:hover {
+  background-color: #303f9f;
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import './AddMovement.css';
 
 const EditMovement = () => {
   const { id: movementId } = useParams();
@@ -142,156 +143,169 @@ const EditMovement = () => {
   };
 
   if (fetching) {
-    return <p>Loading movement data...</p>;
+    return <p style={{ textAlign: 'center', marginTop: '3rem' }}>Loading movement data...</p>;
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ maxWidth: 600, margin: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}
-    >
-      <label>
-        Asset:
-        <input
-          type="text"
-          value={assetName}
-          disabled
-          style={{ backgroundColor: '#f0f0f0', border: '1px solid #ccc', padding: '6px' }}
-        />
-      </label>
-
-      <label>
-        Movement From:
-        <input
-          type="text"
-          name="movementFrom"
-          value={formData.movementFrom}
-          onChange={handleChange}
-          required
-        />
-      </label>
-
-      <label>
-        Movement To:
-        <input
-          type="text"
-          name="movementTo"
-          value={formData.movementTo}
-          onChange={handleChange}
-          required
-        />
-      </label>
-
-      <label>
-        Movement Type:
-        <select
-          name="movementType"
-          value={formData.movementType}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Type</option>
-          <option value="inside_building">Inside Building</option>
-          <option value="outside_building">Outside Building</option>
-        </select>
-      </label>
-
-      <label>
-        Dispatched By:
-        <input
-          type="text"
-          name="dispatchedBy"
-          value={formData.dispatchedBy}
-          onChange={handleChange}
-          required
-        />
-      </label>
-
-      <label>
-        Received By:
-        <input
-          type="text"
-          name="receivedBy"
-          value={formData.receivedBy}
-          onChange={handleChange}
-          required
-        />
-      </label>
-
-      <label>
-        Date & Time:
-        <input
-          type="datetime-local"
-          name="date"
-          value={formData.date}
-          onChange={handleChange}
-          required
-        />
-      </label>
-
-      <label>
-        Returnable:
-        <input
-          type="checkbox"
-          name="returnable"
-          checked={formData.returnable}
-          onChange={handleChange}
-        />
-      </label>
-
-      {formData.returnable && (
-        <>
+    <div className="edit-movement-wrapper">
+      <div className="edit-movement-card">
+        <h2 className="edit-movement-title">Edit Movement</h2>
+        <form className="edit-movement-form" onSubmit={handleSubmit}>
           <label>
-            Expected Return Date:
-            <input
-              type="date"
-              name="expectedReturnDate"
-              value={formData.expectedReturnDate}
-              onChange={handleChange}
-              required
-            />
-          </label>
-
-          <label>
-            Returned Date & Time:
-            <input
-              type="datetime-local"
-              name="returnedDateTime"
-              value={formData.returnedDateTime}
-              onChange={handleChange}
-            />
-          </label>
-
-          <label>
-            Asset Condition:
+            Asset:
             <input
               type="text"
-              name="assetCondition"
-              value={formData.assetCondition}
-              onChange={handleChange}
+              value={assetName}
+              disabled
+              className="edit-movement-input"
             />
           </label>
-        </>
-      )}
 
-      <label>
-        Description:
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
-        />
-      </label>
+          <label>
+            Movement From:
+            <input
+              type="text"
+              name="movementFrom"
+              value={formData.movementFrom}
+              onChange={handleChange}
+              required
+              className="edit-movement-input"
+            />
+          </label>
 
-      <button
-        type="submit"
-        disabled={loading}
-        style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}
-      >
-        {loading ? 'Updating...' : 'Update Movement'}
-      </button>
-    </form>
+          <label>
+            Movement To:
+            <input
+              type="text"
+              name="movementTo"
+              value={formData.movementTo}
+              onChange={handleChange}
+              required
+              className="edit-movement-input"
+            />
+          </label>
+
+          <label>
+            Movement Type:
+            <select
+              name="movementType"
+              value={formData.movementType}
+              onChange={handleChange}
+              required
+              className="edit-movement-select"
+            >
+              <option value="">Select Type</option>
+              <option value="inside_building">Inside Building</option>
+              <option value="outside_building">Outside Building</option>
+            </select>
+          </label>
+
+          <label>
+            Dispatched By:
+            <input
+              type="text"
+              name="dispatchedBy"
+              value={formData.dispatchedBy}
+              onChange={handleChange}
+              required
+              className="edit-movement-input"
+            />
+          </label>
+
+          <label>
+            Received By:
+            <input
+              type="text"
+              name="receivedBy"
+              value={formData.receivedBy}
+              onChange={handleChange}
+              required
+              className="edit-movement-input"
+            />
+          </label>
+
+          <label>
+            Date & Time:
+            <input
+              type="datetime-local"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+              className="edit-movement-input"
+            />
+          </label>
+
+          <label className="edit-movement-checkbox-label">
+            <input
+              type="checkbox"
+              name="returnable"
+              checked={formData.returnable}
+              onChange={handleChange}
+              className="edit-movement-checkbox"
+            />
+            Returnable
+          </label>
+
+          {formData.returnable && (
+            <>
+              <label>
+                Expected Return Date:
+                <input
+                  type="date"
+                  name="expectedReturnDate"
+                  value={formData.expectedReturnDate}
+                  onChange={handleChange}
+                  required
+                  className="edit-movement-input"
+                />
+              </label>
+
+              <label>
+                Returned Date & Time:
+                <input
+                  type="datetime-local"
+                  name="returnedDateTime"
+                  value={formData.returnedDateTime}
+                  onChange={handleChange}
+                  className="edit-movement-input"
+                />
+              </label>
+
+              <label>
+                Asset Condition:
+                <input
+                  type="text"
+                  name="assetCondition"
+                  value={formData.assetCondition}
+                  onChange={handleChange}
+                  className="edit-movement-input"
+                />
+              </label>
+            </>
+          )}
+
+          <label>
+            Description:
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={3}
+              className="edit-movement-textarea"
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="edit-movement-button"
+          >
+            {loading ? 'Updating...' : 'Update Movement'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 

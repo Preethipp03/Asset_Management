@@ -22,7 +22,6 @@ const AddMovement = () => {
 
   const token = localStorage.getItem('token');
 
-  // Fetch asset by serial number
   useEffect(() => {
     const fetchAssetBySerial = async () => {
       const serial = formData.serialNumber.trim();
@@ -47,7 +46,6 @@ const AddMovement = () => {
           setAssetNameBySerial('');
         }
       } catch (error) {
-        console.error('Asset not found for serial number', error);
         setFormData((prev) => ({ ...prev, assetId: '' }));
         setAssetNameBySerial('');
       }
@@ -83,19 +81,6 @@ const AddMovement = () => {
 
     if (formData.returnable && !formData.expectedReturnDate) {
       alert('Expected return date is required when returnable is checked.');
-      return;
-    }
-
-    if (isNaN(new Date(formData.date).getTime())) {
-      alert('Invalid date and time.');
-      return;
-    }
-    if (formData.returnable && isNaN(new Date(formData.expectedReturnDate).getTime())) {
-      alert('Invalid expected return date.');
-      return;
-    }
-    if (formData.returnedDateTime && isNaN(new Date(formData.returnedDateTime).getTime())) {
-      alert('Invalid returned date and time.');
       return;
     }
 
@@ -144,7 +129,6 @@ const AddMovement = () => {
       });
       setAssetNameBySerial('');
     } catch (err) {
-      console.error('Failed to record movement', err);
       alert('Failed to record movement');
     } finally {
       setLoading(false);
@@ -152,165 +136,153 @@ const AddMovement = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        maxWidth: 600,
-        margin: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-      }}
-    >
-      <label>
-        Serial Number:
-        <input
-          type="text"
-          name="serialNumber"
-          value={formData.serialNumber}
-          onChange={handleChange}
-          required
-          autoComplete="off"
-        />
-      </label>
+    <div className="add-maintenance-container">
+      <div className="add-maintenance-card">
+        <h2 className="add-maintenance-title">Add Asset Movement</h2>
+        <form className="add-maintenance-form" onSubmit={handleSubmit}>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="serialNumber"
+            placeholder="Serial Number"
+            value={formData.serialNumber}
+            onChange={handleChange}
+            required
+            autoComplete="off"
+          />
 
-      <label>
-        Asset Name:
-        <input type="text" value={assetNameBySerial} readOnly />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            value={assetNameBySerial}
+            placeholder="Asset Name"
+            readOnly
+          />
 
-      <label>
-        Movement From:
-        <input
-          type="text"
-          name="movementFrom"
-          value={formData.movementFrom}
-          onChange={handleChange}
-          required
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="movementFrom"
+            placeholder="Movement From"
+            value={formData.movementFrom}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Movement To:
-        <input
-          type="text"
-          name="movementTo"
-          value={formData.movementTo}
-          onChange={handleChange}
-          required
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="movementTo"
+            placeholder="Movement To"
+            value={formData.movementTo}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Movement Type:
-        <select
-          name="movementType"
-          value={formData.movementType}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Type</option>
-          <option value="inside_building">Inside Building</option>
-          <option value="outside_building">Outside Building</option>
-        </select>
-      </label>
+          <select
+            className="add-maintenance-select"
+            name="movementType"
+            value={formData.movementType}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Movement Type</option>
+            <option value="inside_building">Inside Building</option>
+            <option value="outside_building">Outside Building</option>
+          </select>
 
-      <label>
-        Dispatched By:
-        <input
-          type="text"
-          name="dispatchedBy"
-          value={formData.dispatchedBy}
-          onChange={handleChange}
-          required
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="dispatchedBy"
+            placeholder="Dispatched By"
+            value={formData.dispatchedBy}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Received By:
-        <input
-          type="text"
-          name="receivedBy"
-          value={formData.receivedBy}
-          onChange={handleChange}
-          required
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="receivedBy"
+            placeholder="Received By"
+            value={formData.receivedBy}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Date & Time:
-        <input
-          type="datetime-local"
-          name="date"
-          value={formData.date}
-          onChange={handleChange}
-          required
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="datetime-local"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            required
+          />
 
-      <label>
-        Returnable:
-        <input
-          type="checkbox"
-          name="returnable"
-          checked={formData.returnable}
-          onChange={handleChange}
-        />
-      </label>
-
-      {formData.returnable && (
-        <>
-          <label>
-            Expected Return Date:
+          <label className="add-maintenance-checkbox-label">
             <input
-              type="date"
-              name="expectedReturnDate"
-              value={formData.expectedReturnDate}
+              type="checkbox"
+              name="returnable"
+              checked={formData.returnable}
               onChange={handleChange}
-              required
+              className="add-maintenance-checkbox"
             />
+            Returnable
           </label>
 
-          <label>
-            Returned Date & Time:
-            <input
-              type="datetime-local"
-              name="returnedDateTime"
-              value={formData.returnedDateTime}
-              onChange={handleChange}
-            />
-          </label>
-        </>
-      )}
+          {formData.returnable && (
+            <>
+              <input
+                className="add-maintenance-input"
+                type="date"
+                name="expectedReturnDate"
+                value={formData.expectedReturnDate}
+                onChange={handleChange}
+                required
+                placeholder="Expected Return Date"
+              />
 
-      <label>
-        Asset Condition:
-        <input
-          type="text"
-          name="assetCondition"
-          value={formData.assetCondition}
-          onChange={handleChange}
-        />
-      </label>
+              <input
+                className="add-maintenance-input"
+                type="datetime-local"
+                name="returnedDateTime"
+                value={formData.returnedDateTime}
+                onChange={handleChange}
+                placeholder="Returned Date & Time"
+              />
+            </>
+          )}
 
-      <label>
-        Description:
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
-        />
-      </label>
+          <input
+            className="add-maintenance-input"
+            type="text"
+            name="assetCondition"
+            placeholder="Asset Condition"
+            value={formData.assetCondition}
+            onChange={handleChange}
+          />
 
-      <button
-        type="submit"
-        style={{ padding: '8px 12px', cursor: loading ? 'not-allowed' : 'pointer' }}
-        disabled={loading}
-      >
-        {loading ? 'Submitting...' : 'Add Movement'}
-      </button>
-    </form>
+          <textarea
+            className="add-maintenance-textarea"
+            name="description"
+            placeholder="Description"
+            value={formData.description}
+            onChange={handleChange}
+            rows={3}
+          />
+
+          <button
+            className="add-maintenance-button"
+            type="submit"
+            disabled={loading}
+            style={{ cursor: loading ? 'not-allowed' : 'pointer' }}
+          >
+            {loading ? 'Submitting...' : 'Add Movement'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 

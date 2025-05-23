@@ -1,0 +1,395 @@
+/* Container centering with gradient background */
+.add-movement-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  padding: 20px;
+}
+
+/* Card styling similar to AddMaintenance */
+.add-movement-card {
+  background-color: #f3f4f6;
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form styles */
+.add-movement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Label styles */
+.add-movement-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #111827;
+  font-size: 16px;
+}
+
+/* Inputs, selects and textarea */
+.add-movement-input,
+.add-movement-select,
+.add-movement-textarea {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 0 20px;
+  color: #111827;
+  font-size: 16px;
+  height: 48px;
+  line-height: 48px;
+  margin-top: 6px;
+  outline-offset: 2px;
+  transition: border-color 0.3s ease;
+}
+
+.add-movement-input:focus,
+.add-movement-select:focus,
+.add-movement-textarea:focus {
+  border-color: #0f4881;
+}
+
+/* Textarea height and border radius */
+.add-movement-textarea {
+  height: 80px;
+  resize: vertical;
+  border-radius: 16px;
+  padding: 12px 20px;
+  line-height: normal;
+  height: auto;
+}
+
+/* Checkbox label styling */
+.add-movement-form input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 0;
+  padding: 0;
+  line-height: normal;
+  cursor: pointer;
+}
+
+/* Button styling matching AddMaintenance */
+.add-movement-button {
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 16px;
+  height: 48px;
+  margin-top: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.add-movement-button:hover:not(:disabled) {
+  background-color: #acb9f4;
+}
+
+.add-movement-button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+}
+
+
+
+/* Full-page gradient background */
+body, html {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  font-family: sans-serif;
+}
+
+/* Centering and spacing */
+.user-list-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+}
+
+/* Card container */
+.user-list-card {
+  background-color: #f5f5f5; /* Light grey background */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Header layout */
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.user-list-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1a2b4c;
+}
+
+.user-list-header button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.user-list-header button:hover {
+  background-color: #2980b9;
+}
+
+/* Table styling */
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.user-table th,
+.user-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.user-table th {
+  background-color: #eaeaea;
+  color: #333;
+}
+
+/* Button styles */
+.user-table td button {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-table td button:hover {
+  background-color: #e67e22;
+}
+
+.user-table td button:last-child {
+  margin-left: 10px;
+  background-color: #e74c3c;
+}
+
+.user-table td button:last-child:hover {
+  background-color: #c0392b;
+}
+
+
+.movement-list-container {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.movement-list-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 100%;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.movement-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.movement-list-header h2 {
+  margin: 0;
+}
+
+.movement-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.movement-table th,
+.movement-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.movement-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.movement-table-wrapper {
+  overflow-x: auto;
+}
+
+button {
+  padding: 6px 12px;
+  margin: 2px;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button.delete {
+  background-color: #dc3545;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.movement-error {
+  color: red;
+  margin-bottom: 15px;
+}
+
+
+
+
+.edit-movement-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  padding: 20px;
+}
+
+.edit-movement-card {
+  background-color: #f3f4f6;
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.edit-movement-title {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.edit-movement-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-movement-input,
+.edit-movement-select,
+.edit-movement-textarea {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 0 20px;
+  color: #111827;
+  margin-bottom: 16px;
+  font-size: 16px;
+  height: 48px;
+  line-height: 48px;
+  outline-offset: 2px;
+  transition: border-color 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-movement-input::placeholder,
+.edit-movement-select::placeholder,
+.edit-movement-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.edit-movement-input:focus,
+.edit-movement-select:focus,
+.edit-movement-textarea:focus {
+  border-color: #0f4881;
+}
+
+/* Textarea specific overrides */
+.edit-movement-textarea {
+  height: auto;
+  min-height: 80px;
+  line-height: normal;
+  padding: 12px 20px;
+  border-radius: 16px;
+  resize: vertical;
+}
+
+/* Button styling */
+.edit-movement-button {
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 16px;
+  height: 48px;
+  transition: background-color 0.3s ease;
+  font-weight: 600;
+}
+
+.edit-movement-button:hover {
+  background-color: #acb9f4;
+}
+
+.edit-movement-button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+}
+
+/* Checkbox */
+.edit-movement-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.edit-movement-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}

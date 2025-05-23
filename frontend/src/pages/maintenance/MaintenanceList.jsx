@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import './AddMaintenance.css'; // Reusing same CSS file
 
 const MaintenanceList = () => {
   const [maintenance, setMaintenance] = useState([]);
@@ -19,7 +20,7 @@ const MaintenanceList = () => {
         });
         setMaintenance(res.data);
       } catch (error) {
-        console.error('Error fetching maintenance data:', error);
+        alert('Failed to fetch maintenance records.');
       } finally {
         setLoading(false);
       }
@@ -29,15 +30,12 @@ const MaintenanceList = () => {
 
   useEffect(() => {
     let data = [...maintenance];
-
     if (filter.status) {
       data = data.filter(item => item.status === filter.status);
     }
-
     if (filter.type) {
       data = data.filter(item => item.maintenanceType === filter.type);
     }
-
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       data = data.filter(item =>
@@ -45,7 +43,6 @@ const MaintenanceList = () => {
         (item.performedBy?.toLowerCase().includes(term))
       );
     }
-
     setFiltered(data);
   }, [filter, maintenance, searchTerm]);
 
@@ -56,9 +53,8 @@ const MaintenanceList = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMaintenance(prev => prev.filter(m => m._id !== id));
-    } catch (error) {
-      console.error('Error deleting maintenance record:', error);
-      alert('Failed to delete maintenance record');
+    } catch {
+      alert('Failed to delete maintenance record.');
     }
   };
 
@@ -71,111 +67,110 @@ const MaintenanceList = () => {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: 'auto' }}>
-      <h2>Maintenance Records</h2>
+    <div className="user-list-container">
+      <div className="user-list-card">
+        <div className="user-list-header">
+          <h2>Maintenance Records</h2>
+          <Link to="/maintenance/add">
+            <button>Add Maintenance</button>
+          </Link>
+        </div>
 
-      <div style={{ margin: '10px 0', display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-        <label>
-          Status:{' '}
+        {/* Filters with simple selects and input styled inline */}
+        <div style={{ marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <select
             value={filter.status}
             onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
+            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc', minWidth: 140 }}
           >
-            <option value="">All</option>
+            <option value="">All Statuses</option>
             <option value="scheduled">Scheduled</option>
             <option value="in_progress">In Progress</option>
             <option value="completed">Completed</option>
           </select>
-        </label>
 
-        <label>
-          Type:{' '}
           <select
             value={filter.type}
             onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))}
+            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc', minWidth: 140 }}
           >
-            <option value="">All</option>
+            <option value="">All Types</option>
             <option value="preventive">Preventive</option>
             <option value="corrective">Corrective</option>
           </select>
-        </label>
 
-        <input
-          type="text"
-          placeholder="Search by asset or technician"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ padding: '5px', minWidth: '250px' }}
-        />
+          <input
+            type="text"
+            placeholder="Search by asset or technician"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc', minWidth: 220, flexGrow: 1 }}
+          />
 
-        <button
-          onClick={() => {
-            setFilter({ status: '', type: '' });
-            setSearchTerm('');
-          }}
-          style={{
-            cursor: 'pointer',
-            padding: '6px 12px',
-            backgroundColor: '#f0f0f0',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
-        >
-          Reset Filters
-        </button>
-      </div>
+          <button
+            onClick={() => {
+              setFilter({ status: '', type: '' });
+              setSearchTerm('');
+            }}
+            style={{ backgroundColor: '#e74c3c', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Reset
+          </button>
+        </div>
 
-      {loading ? (
-        <p>Loading maintenance records...</p>
-      ) : (
-        <table border="1" cellPadding="10" style={{ width: '100%', marginTop: '10px', borderCollapse: 'collapse' }}>
-          <thead style={{ backgroundColor: '#f9f9f9' }}>
-            <tr>
-              <th>Asset</th>
-              <th>Type</th>
-              <th>Technician</th>
-              <th>Scheduled Date</th>
-              <th>Next Maintenance</th>
-              <th>Status</th>
-              <th>Description</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length > 0 ? (
-              filtered.map((item) => (
-                <tr key={item._id}>
-                  <td>{item.assetName || 'Unknown'}</td>
-                  <td>{item.maintenanceType}</td>
-                  <td>{item.performedBy || '-'}</td>
-                  <td>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : '-'}</td>
-                  <td>{calculateNextDate(item.scheduledDate, item.frequency)}</td>
-                  <td>{item.status}</td>
-                  <td>{item.description || '-'}</td>
-                  <td>
-                    <Link to={`/maintenance/edit/${item._id}`}>
-                      <button type="button">Edit</button>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item._id)}
-                      style={{ marginLeft: '10px' }}
-                    >
-                      Delete
-                    </button>
+        {loading ? (
+          <p>Loading maintenance records...</p>
+        ) : (
+          <table className="user-table">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Type</th>
+                <th>Technician</th>
+                <th>Scheduled Date</th>
+                <th>Next Maintenance</th>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length > 0 ? (
+                filtered.map(item => (
+                  <tr key={item._id}>
+                    <td>{item.assetName || 'Unknown'}</td>
+                    <td>{item.maintenanceType}</td>
+                    <td>{item.performedBy || '-'}</td>
+                    <td>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : '-'}</td>
+                    <td>{calculateNextDate(item.scheduledDate, item.frequency)}</td>
+                    <td>{item.status}</td>
+                    <td>{item.description || '-'}</td>
+                    <td>
+                      <Link to={`/maintenance/edit/${item._id}`}>
+                        <button>Edit</button>
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        style={{ marginLeft: 10, backgroundColor: '#e74c3c' }}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: 'center' }}>
+                    {maintenance.length > 0
+                      ? 'No records match the current filters.'
+                      : 'No maintenance records found.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>
-                  {maintenance.length > 0 ? 'No records match the current filters.' : 'No maintenance records found.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      )}
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };

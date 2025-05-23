@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './AddUser.css';
 
 const AddUserAdmin = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    // no role in form data, fixed to 'user'
   });
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
   const handleChange = (e) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -32,7 +32,7 @@ const AddUserAdmin = () => {
     try {
       await axios.post(
         'http://localhost:5000/users',
-        { ...formData, role: 'user' }, // force role to user
+        { ...formData, role: 'user' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       navigate('/users');
@@ -42,41 +42,48 @@ const AddUserAdmin = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: 400 }}>
-      <h2>Add User (Admin)</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px', marginBottom: '12px' }}
-        />
-
-        {/* No role dropdown here, role is fixed to 'user' */}
-
-        <button type="submit" style={{ padding: '10px 20px' }}>Create User</button>
-      </form>
-      {message && <p style={{ marginTop: 10, color: 'red' }}>{message}</p>}
+    <div className="add-user-container">
+      <div className="add-user-card">
+        <h2 className="add-user-title">Add User (Admin)</h2>
+        <form className="add-user-form" onSubmit={handleSubmit}>
+          <input
+            className="add-user-input"
+            name="name"
+            placeholder="Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className="add-user-input"
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            className="add-user-input"
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <button type="submit" className="add-user-button">Create User</button>
+          <button
+          type="button"
+          className="add-user-button"
+          style={{ marginTop: '10px', background: '#6b7280' }}
+          onClick={() => navigate('/admin')}
+        >
+          Back
+        </button>
+          {message && <p className="add-user-message">{message}</p>}
+        </form>
+      </div>
     </div>
   );
 };

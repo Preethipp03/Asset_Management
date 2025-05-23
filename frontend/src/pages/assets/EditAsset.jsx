@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import './AddAssets.css'; // Use your AddAsset CSS
 
 const EditAsset = () => {
   const [formData, setFormData] = useState({
     name: '',
     type: '',
     category: '',
-    price: '',
     purchaseDate: '',
     warranty: '',
     location: '',
@@ -33,14 +33,13 @@ const EditAsset = () => {
           name: data.name || '',
           type: data.type || '',
           category: data.category || '',
-          price: data.price || '',
           purchaseDate: data.purchaseDate ? data.purchaseDate.split('T')[0] : '',
           warranty: data.warranty || '',
           location: data.location || '',
           condition: data.condition || '',
           serialNumber: data.serialNumber || '',
           assignedTo: data.assignedTo || '',
-          status:data.status || '',
+          status: data.status || '',
           description: data.description || ''
         });
       } catch (err) {
@@ -75,26 +74,101 @@ const EditAsset = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input name="name" value={formData.name} onChange={handleChange} placeholder="Name" required />
-      <input name="type" value={formData.type} onChange={handleChange} placeholder="Type" required />
-      <input name="category" value={formData.category} onChange={handleChange} placeholder="Category" required />
-      <input name="price" type="number" value={formData.price} onChange={handleChange} placeholder="Price" required />
-      <input name="purchaseDate" type="date" value={formData.purchaseDate} onChange={handleChange} placeholder="Purchase Date" required />
-      <input name="warranty" value={formData.warranty} onChange={handleChange} placeholder="Warranty" />
-      <input name="location" value={formData.location} onChange={handleChange} placeholder="Location" />
-      <input name="condition" value={formData.condition} onChange={handleChange} placeholder="Condition" />
-      <input name="serialNumber" value={formData.serialNumber} onChange={handleChange} placeholder="Serial Number" />
-      <input name="assignedTo" value={formData.assignedTo} onChange={handleChange} placeholder="Assigned To" />
-      <select name="status" value={formData.status} onChange={handleChange} required>
-        <option value="">Select Status</option>
-        <option value="active">Active</option>
-        <option value="in_repair">In Repair</option>
-        <option value="disposed">Disposed</option>
-      </select>
-      <textarea name="description" value={formData.description} onChange={handleChange} placeholder="description" />
-      <button type="submit">Update Asset</button>
-    </form>
+    <div className="add-asset-container">
+      <div className="add-asset-card">
+        <h2 className="add-asset-title">Edit Asset</h2>
+        <form className="add-asset-form" onSubmit={handleSubmit}>
+          <input
+            className="add-asset-input"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Name"
+            required
+          />
+          <input
+            className="add-asset-input"
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            placeholder="Type"
+            required
+          />
+          <input
+            className="add-asset-input"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            placeholder="Category"
+            required
+          />
+          <input
+            className="add-asset-input"
+            type="date"
+            name="purchaseDate"
+            value={formData.purchaseDate}
+            onChange={handleChange}
+            placeholder="Purchase Date"
+            required
+          />
+          <input
+            className="add-asset-input"
+            name="warranty"
+            value={formData.warranty}
+            onChange={handleChange}
+            placeholder="Warranty"
+          />
+          <input
+            className="add-asset-input"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Location"
+          />
+          <input
+            className="add-asset-input"
+            name="condition"
+            value={formData.condition}
+            onChange={handleChange}
+            placeholder="Condition"
+          />
+          <input
+            className="add-asset-input"
+            name="serialNumber"
+            value={formData.serialNumber}
+            onChange={handleChange}
+            placeholder="Serial Number"
+          />
+          <input
+            className="add-asset-input"
+            name="assignedTo"
+            value={formData.assignedTo}
+            onChange={handleChange}
+            placeholder="Assigned To"
+          />
+          <select
+            className="add-asset-select"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Status</option>
+            <option value="active">Active</option>
+            <option value="in_repair">In Repair</option>
+            <option value="disposed">Disposed</option>
+          </select>
+          <textarea
+            className="add-asset-textarea"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Description"
+          />
+          <button className="add-asset-button" type="submit">Update Asset</button>
+        </form>
+      </div>
+    </div>
   );
 };
 
