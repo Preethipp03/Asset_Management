@@ -383,15 +383,16 @@ res.status(500).json({ error: 'Failed to delete asset', details: err.message });
 
 
 
-
-
-
 function validateMovement(movement) {
   const validTypes = ['inside_building', 'outside_building'];
 
+  // assetId must be a valid ObjectId if provided
+  const hasAssetId = movement.assetId && ObjectId.isValid(movement.assetId);
+  // Or assetName and serialNumber must exist
+  const hasAssetInfo = movement.assetName && movement.serialNumber;
+
   if (
-    !movement.assetId ||
-    !ObjectId.isValid(movement.assetId) ||
+    (!hasAssetId && !hasAssetInfo) ||
     !movement.movementFrom ||
     !movement.movementTo ||
     !movement.movementType ||
@@ -414,53 +415,70 @@ function validateMovement(movement) {
     throw new Error('Expected return date required if returnable is true');
   }
 
-  if (movement.returnedDateTime && isNaN(Date.parse(movement.returnedDateTime))) {
-    throw new Error('returnedDateTime must be a valid date-time string');
-  }
-
   if (movement.expectedReturnDate && isNaN(Date.parse(movement.expectedReturnDate))) {
     throw new Error('expectedReturnDate must be a valid date string');
   }
 }
 
 // Create new movement
-app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
+app.post('/movements', authMiddleware, async (req, res) => {
   try {
-    const movement = req.body;
-    validateMovement(movement);
+    const {
+      assetName,
+      serialNumber,
+      movementFrom,
+      movementTo,
+      movementType,
+      dispatchedBy,
+      receivedBy,
+      date,
+      returnable,
+      expectedReturnDate,
+      assetCondition,
+      description,
+    } = req.body;
 
-    const db = await connectDB();
+    // Validate required fields
+    if (
+      !assetName ||
+      !serialNumber ||
+      !movementFrom ||
+      !movementTo ||
+      !movementType ||
+      !dispatchedBy ||
+      !receivedBy ||
+      !date
+    ) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
-    const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(movement.assetId) });
-    if (!asset) return res.status(404).json({ error: 'Asset not found' });
+    if (returnable && !expectedReturnDate) {
+      return res.status(400).json({ message: 'Expected return date required if returnable is true' });
+    }
 
-    const movementDoc = {
-      assetId: new ObjectId(movement.assetId),
-      assetName: asset.name,
-      serialNumber: asset.serialNumber || '',
-      movementFrom: movement.movementFrom.trim(),
-      movementTo: movement.movementTo.trim(),
-      movementType: movement.movementType.trim(),
-      dispatchedBy: movement.dispatchedBy.trim(),
-      receivedBy: movement.receivedBy.trim(),
-      date: new Date(movement.date),
-      returnable: typeof movement.returnable === 'boolean' ? movement.returnable : false,
-      expectedReturnDate: movement.returnable ? new Date(movement.expectedReturnDate) : null,
-      returnedDateTime: movement.returnedDateTime ? new Date(movement.returnedDateTime) : null,
-      assetCondition: movement.assetCondition ? movement.assetCondition.trim() : '',
-      description: movement.description ? movement.description.trim() : ''
+    const newMovement = {
+      assetName: assetName.trim(),
+      serialNumber: serialNumber.trim(),
+      movementFrom: movementFrom.trim(),
+      movementTo: movementTo.trim(),
+      movementType,
+      dispatchedBy: dispatchedBy.trim(),
+      receivedBy: receivedBy.trim(),
+      date: new Date(date),
+      returnable: Boolean(returnable),
+      expectedReturnDate: returnable ? new Date(expectedReturnDate) : null,
+      assetCondition: assetCondition?.trim() || '',
+      description: description?.trim() || '',
+      createdAt: new Date(),
     };
 
-    const result = await db.collection(movementsCollection).insertOne(movementDoc);
+    const db = await connectDB();
+    await db.collection(movementsCollection).insertOne(newMovement);
 
-    await db.collection(assetsCollection).updateOne(
-      { _id: new ObjectId(movement.assetId) },
-      { $set: { location: movement.movementTo.trim() } }
-    );
-
-    res.status(201).json({ message: 'Asset movement recorded', movementId: result.insertedId });
+    res.status(201).json({ message: 'Movement added successfully' });
   } catch (err) {
-    res.status(400).json({ error: 'Failed to record movement', details: err.message });
+    console.error('Error creating movement:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -468,21 +486,7 @@ app.post('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', '
 app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
-
-    const movements = await db.collection(movementsCollection).aggregate([
-      {
-        $lookup: {
-          from: assetsCollection,
-          localField: "assetId",
-          foreignField: "_id",
-          as: "assetInfo"
-        }
-      },
-      { $unwind: { path: "$assetInfo", preserveNullAndEmptyArrays: true } },
-      { $addFields: { serialNumber: "$assetInfo.serialNumber" } },
-      { $project: { assetInfo: 0 } }
-    ]).toArray();
-
+    const movements = await db.collection(movementsCollection).find({}).sort({ date: -1 }).toArray();
     res.json(movements);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch movements', details: err.message });
@@ -496,26 +500,7 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
 
   try {
     const db = await connectDB();
-
-    const movement = await db.collection(movementsCollection).aggregate([
-      { $match: { _id: new ObjectId(id) } },
-      {
-        $lookup: {
-          from: assetsCollection,
-          localField: "assetId",
-          foreignField: "_id",
-          as: "assetInfo"
-        }
-      },
-      { $unwind: { path: "$assetInfo", preserveNullAndEmptyArrays: true } },
-      {
-        $addFields: {
-          assetName: "$assetInfo.name",
-          serialNumber: "$assetInfo.serialNumber"
-        }
-      },
-      { $project: { assetInfo: 0 } }
-    ]).next();
+    const movement = await db.collection(movementsCollection).findOne({ _id: new ObjectId(id) });
 
     if (!movement) return res.status(404).json({ error: 'Movement not found' });
 
@@ -525,7 +510,7 @@ app.get('/movements/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Update full movement
+// Full update movement (PUT)
 app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -537,13 +522,14 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 
     const db = await connectDB();
 
-    const assetExists = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updatedMovement.assetId) });
-    if (!assetExists) return res.status(404).json({ error: 'Asset not found' });
+    const existingMovement = await db.collection(movementsCollection).findOne({ _id: new ObjectId(id) });
+    if (!existingMovement) return res.status(404).json({ error: 'Movement not found' });
 
+    // Don't override assetName from DB or assetId, use the one from request if given
     const updateDoc = {
-      assetId: new ObjectId(updatedMovement.assetId),
-      assetName: assetExists.name,
-      serialNumber: assetExists.serialNumber || '',
+      assetId: updatedMovement.assetId ? new ObjectId(updatedMovement.assetId) : existingMovement.assetId,
+      assetName: updatedMovement.assetName ? updatedMovement.assetName.trim() : existingMovement.assetName,
+      serialNumber: updatedMovement.serialNumber || existingMovement.serialNumber || '',
       movementFrom: updatedMovement.movementFrom.trim(),
       movementTo: updatedMovement.movementTo.trim(),
       movementType: updatedMovement.movementType.trim(),
@@ -553,8 +539,8 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
       returnable: typeof updatedMovement.returnable === 'boolean' ? updatedMovement.returnable : false,
       expectedReturnDate: updatedMovement.returnable ? new Date(updatedMovement.expectedReturnDate) : null,
       returnedDateTime: updatedMovement.returnedDateTime ? new Date(updatedMovement.returnedDateTime) : null,
-      assetCondition: updatedMovement.assetCondition ? updatedMovement.assetCondition.trim() : '',
-      description: updatedMovement.description ? updatedMovement.description.trim() : ''
+      assetCondition: updatedMovement.assetCondition?.trim() || '',
+      description: updatedMovement.description?.trim() || ''
     };
 
     const result = await db.collection(movementsCollection).updateOne(
@@ -564,18 +550,22 @@ app.put('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin'
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    await db.collection(assetsCollection).updateOne(
-      { _id: new ObjectId(updatedMovement.assetId) },
-      { $set: { location: updatedMovement.movementTo.trim() } }
-    );
+    // Update asset location if assetId and movementTo are present
+    if (updatedMovement.assetId && updatedMovement.movementTo) {
+      await db.collection(assetsCollection).updateOne(
+        { _id: new ObjectId(updatedMovement.assetId) },
+        { $set: { location: updatedMovement.movementTo.trim() } }
+      );
+    }
 
     res.status(200).json({ message: 'Movement updated successfully' });
+
   } catch (err) {
+    console.error('Error updating movement:', err);
     res.status(400).json({ error: 'Failed to update movement', details: err.message });
   }
 });
 
-// Partial update movement
 app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid movement ID' });
@@ -584,7 +574,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
     const db = await connectDB();
     const updateData = { ...req.body };
 
-    // Validate dates if present
+    // Validate date fields if present
     if (updateData.date && isNaN(Date.parse(updateData.date))) {
       return res.status(400).json({ error: 'Invalid date format' });
     }
@@ -604,7 +594,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
       updateData.movementType = updateData.movementType.trim();
     }
 
-    // If assetId provided, verify asset exists & add assetName and serialNumber
+    // If assetId provided, validate and set, but don't overwrite assetName forcibly
     if (updateData.assetId) {
       if (!ObjectId.isValid(updateData.assetId)) {
         return res.status(400).json({ error: 'Invalid assetId' });
@@ -612,24 +602,31 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
       const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updateData.assetId) });
       if (!asset) return res.status(404).json({ error: 'Asset not found' });
       updateData.assetId = new ObjectId(updateData.assetId);
-      updateData.assetName = asset.name;
-      updateData.serialNumber = asset.serialNumber || '';
+
+      // Only set assetName if not explicitly provided in the updateData
+      if (!updateData.assetName) {
+        updateData.assetName = asset.name;
+      }
+      // Similarly for serialNumber if not provided
+      if (!updateData.serialNumber) {
+        updateData.serialNumber = asset.serialNumber || '';
+      }
     }
 
-    // Convert dates to Date objects
+    // Convert date strings to Date objects
     if (updateData.date) updateData.date = new Date(updateData.date);
     if (updateData.expectedReturnDate) updateData.expectedReturnDate = new Date(updateData.expectedReturnDate);
     if (updateData.returnedDateTime) updateData.returnedDateTime = new Date(updateData.returnedDateTime);
 
-    // Correct returnable type if present
+    // Validate returnable if provided
     if (updateData.returnable !== undefined) {
       if (typeof updateData.returnable !== 'boolean') {
         return res.status(400).json({ error: 'returnable must be a boolean' });
       }
     }
 
-    // Trim string fields
-    ['movementFrom', 'movementTo', 'dispatchedBy', 'receivedBy', 'assetCondition', 'description'].forEach(field => {
+    // Trim string fields if present
+    ['movementFrom', 'movementTo', 'dispatchedBy', 'receivedBy', 'assetCondition', 'description', 'assetName'].forEach(field => {
       if (updateData[field]) updateData[field] = updateData[field].trim();
     });
 
@@ -640,7 +637,7 @@ app.patch('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 
     if (result.matchedCount === 0) return res.status(404).json({ error: 'Movement not found' });
 
-    // Update asset location if movementTo and assetId changed
+    // Update asset location if assetId and movementTo are present
     if (updateData.assetId && updateData.movementTo) {
       await db.collection(assetsCollection).updateOne(
         { _id: updateData.assetId },
@@ -677,35 +674,6 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
     res.status(500).json({ error: 'Failed to delete movement', details: err.message });
   }
 });
-app.get('/assets/serial/:serialNumber', authMiddleware, async (req, res) => {
-  const serialNumber = req.params.serialNumber.trim();
-  console.log('Serial number param:', serialNumber);
-
-  // Escape regex special chars
-  const escapeRegex = text => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-  const escapedSerialNumber = escapeRegex(serialNumber);
-
-  try {
-    const db = await connectDB();
-    const assets = await db.collection(assetsCollection).find({
-      serialNumber: { $regex: `^${escapedSerialNumber}$`, $options: 'i' }
-    }).toArray();
-
-    if (assets.length === 0) {
-      return res.status(404).json({ message: 'No assets found with this serial number' });
-    }
-
-    res.status(200).json(assets);
-  } catch (err) {
-    console.error('Error fetching asset by serial number:', err);
-    res.status(500).json({ error: 'Failed to fetch assets by serial number', details: err.message });
-  }
-});
-
-
-
-
-
 
    ///MAINTENANCE  APIs
 

@@ -1,8 +1,4 @@
-.dashboard-container {
-  display: flex;
-  height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
-}
+
 
 .sidebar {
   width: 240px;

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 const AddMovement = () => {
-  const [assetNameBySerial, setAssetNameBySerial] = useState('');
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    assetId: '',
     serialNumber: '',
+    assetName: '',
     movementFrom: '',
     movementTo: '',
     movementType: '',
@@ -15,44 +13,12 @@ const AddMovement = () => {
     date: '',
     returnable: false,
     expectedReturnDate: '',
-    returnedDateTime: '',
     assetCondition: '',
     description: '',
   });
 
+  const [loading, setLoading] = useState(false);
   const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    const fetchAssetBySerial = async () => {
-      const serial = formData.serialNumber.trim();
-      if (!serial) {
-        setFormData((prev) => ({ ...prev, assetId: '' }));
-        setAssetNameBySerial('');
-        return;
-      }
-      try {
-        const res = await axios.get(`http://localhost:5000/assets/serial/${serial}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.data && res.data.length > 0) {
-          const asset = res.data[0];
-          setFormData((prev) => ({
-            ...prev,
-            assetId: asset._id || '',
-          }));
-          setAssetNameBySerial(asset.name || '');
-        } else {
-          setFormData((prev) => ({ ...prev, assetId: '' }));
-          setAssetNameBySerial('');
-        }
-      } catch (error) {
-        setFormData((prev) => ({ ...prev, assetId: '' }));
-        setAssetNameBySerial('');
-      }
-    };
-
-    fetchAssetBySerial();
-  }, [formData.serialNumber, token]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -65,21 +31,34 @@ const AddMovement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const {
+      serialNumber,
+      assetName,
+      movementFrom,
+      movementTo,
+      movementType,
+      dispatchedBy,
+      receivedBy,
+      date,
+      returnable,
+      expectedReturnDate,
+    } = formData;
+
     if (
-      !formData.assetId ||
-      !formData.serialNumber.trim() ||
-      !formData.movementFrom.trim() ||
-      !formData.movementTo.trim() ||
-      !formData.movementType ||
-      !formData.dispatchedBy.trim() ||
-      !formData.receivedBy.trim() ||
-      !formData.date
+      !serialNumber.trim() ||
+      !assetName.trim() ||
+      !movementFrom.trim() ||
+      !movementTo.trim() ||
+      !movementType ||
+      !dispatchedBy.trim() ||
+      !receivedBy.trim() ||
+      !date
     ) {
       alert('Please fill in all required fields.');
       return;
     }
 
-    if (formData.returnable && !formData.expectedReturnDate) {
+    if (returnable && !expectedReturnDate) {
       alert('Expected return date is required when returnable is checked.');
       return;
     }
@@ -90,31 +69,29 @@ const AddMovement = () => {
       await axios.post(
         'http://localhost:5000/movements',
         {
-          assetId: formData.assetId,
-          serialNumber: formData.serialNumber.trim(),
-          movementFrom: formData.movementFrom.trim(),
-          movementTo: formData.movementTo.trim(),
-          movementType: formData.movementType,
-          dispatchedBy: formData.dispatchedBy.trim(),
-          receivedBy: formData.receivedBy.trim(),
-          date: new Date(formData.date).toISOString(),
-          returnable: formData.returnable,
-          expectedReturnDate: formData.returnable
-            ? new Date(formData.expectedReturnDate).toISOString()
-            : null,
-          returnedDateTime: formData.returnedDateTime
-            ? new Date(formData.returnedDateTime).toISOString()
-            : null,
-          assetCondition: formData.assetCondition.trim() || '',
-          description: formData.description.trim() || '',
+          serialNumber: serialNumber.trim(),
+          assetName: assetName.trim(),
+          movementFrom: movementFrom.trim(),
+          movementTo: movementTo.trim(),
+          movementType,
+          dispatchedBy: dispatchedBy.trim(),
+          receivedBy: receivedBy.trim(),
+          date: new Date(date).toISOString(),
+          returnable,
+          expectedReturnDate: returnable ? new Date(expectedReturnDate).toISOString() : null,
+          assetCondition: formData.assetCondition.trim(),
+          description: formData.description.trim(),
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+
       alert('Movement recorded successfully');
 
       setFormData({
-        assetId: '',
         serialNumber: '',
+        assetName: '',
         movementFrom: '',
         movementTo: '',
         movementType: '',
@@ -123,11 +100,9 @@ const AddMovement = () => {
         date: '',
         returnable: false,
         expectedReturnDate: '',
-        returnedDateTime: '',
         assetCondition: '',
         description: '',
       });
-      setAssetNameBySerial('');
     } catch (err) {
       alert('Failed to record movement');
     } finally {
@@ -154,9 +129,11 @@ const AddMovement = () => {
           <input
             className="add-maintenance-input"
             type="text"
-            value={assetNameBySerial}
+            name="assetName"
             placeholder="Asset Name"
-            readOnly
+            value={formData.assetName}
+            onChange={handleChange}
+            required
           />
 
           <input
@@ -232,26 +209,15 @@ const AddMovement = () => {
           </label>
 
           {formData.returnable && (
-            <>
-              <input
-                className="add-maintenance-input"
-                type="date"
-                name="expectedReturnDate"
-                value={formData.expectedReturnDate}
-                onChange={handleChange}
-                required
-                placeholder="Expected Return Date"
-              />
-
-              <input
-                className="add-maintenance-input"
-                type="datetime-local"
-                name="returnedDateTime"
-                value={formData.returnedDateTime}
-                onChange={handleChange}
-                placeholder="Returned Date & Time"
-              />
-            </>
+            <input
+              className="add-maintenance-input"
+              type="date"
+              name="expectedReturnDate"
+              value={formData.expectedReturnDate}
+              onChange={handleChange}
+              required
+              placeholder="Expected Return Date"
+            />
           )}
 
           <input

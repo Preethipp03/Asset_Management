@@ -204,85 +204,29 @@ body, html {
   background-color: #c0392b;
 }
 
+/*movement*/
 
-.movement-list-container {
+.form-container {
   padding: 20px;
   display: flex;
   justify-content: center;
+  overflow-x: auto; /* ensure scroll if screen smaller */
 }
 
-.movement-list-card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
+.form-card {
   max-width: 100%;
   width: 100%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
+  box-sizing: border-box;
 }
 
-.movement-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.movement-list-header h2 {
-  margin: 0;
-}
-
-.movement-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.movement-table th,
-.movement-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-.movement-table th {
-  background-color: #f4f4f4;
-  font-weight: bold;
-}
-
-.movement-table-wrapper {
-  overflow-x: auto;
-}
-
-button {
-  padding: 6px 12px;
-  margin: 2px;
-  border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-}
-
-button.delete {
-  background-color: #dc3545;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.movement-error {
-  color: red;
-  margin-bottom: 15px;
+.table-wrapper {
+  overflow-x: auto; /* scroll horizontally when needed */
+  -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
 }
 
 
 
-
+/*edit movement*/
 .edit-movement-wrapper {
   min-height: 100vh;
   display: flex;
@@ -392,4 +336,308 @@ button:hover {
   width: 20px;
   height: 20px;
   cursor: pointer;
+}
+
+
+
+/* Basic Reset & Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f2f5; /* Light gray background */
+    color: #333;
+}
+
+/* Main Container */
+
+/* Card Styling */
+
+
+/* Card Header (Top Bar) */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    gap: 15px; /* Space between items when wrapping */
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Add Movement Button */
+.add-movement-btn {
+    background-color: #007bff; /* Blue */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.add-movement-btn:hover {
+    background-color: #0056b3;
+}
+
+.add-movement-btn i {
+    font-size: 1em; /* Adjust icon size if needed */
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    padding: 8px 30px 8px 10px; /* Add space for icon */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.9em;
+    width: 200px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    color: #888;
+    font-size: 0.9em;
+}
+
+/* Rows Per Page Selector */
+.rows-per-page-selector {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.rows-per-page-selector select {
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+/* Filter Controls */
+.filter-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.9em;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.filter-select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Table Styles */
+.table-responsive {
+    overflow-x: auto; /* Allows horizontal scrolling for large tables */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #fff;
+    font-size: 0.9em;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap; /* Prevent wrapping in cells */
+}
+
+.data-table th {
+    background-color: #f8f9fa; /* Lighter header background */
+    color: #555;
+    font-weight: 600;
+    position: sticky; /* Keep header visible on scroll */
+    top: 0;
+    z-index: 10;
+}
+
+.data-table th span { /* For sort icons */
+    margin-left: 5px;
+    font-size: 0.8em;
+    color: #aaa;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f2f7fc; /* Subtle hover effect */
+}
+
+/* Asset Image/Icon */
+.asset-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* Actions Cell */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: center; /* Center buttons in action column */
+    align-items: center;
+}
+
+.action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    min-width: 32px; /* Ensure buttons have a minimum width */
+    height: 32px;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
+.edit-btn {
+    background-color: #ffc107; /* Yellow/Orange */
+}
+
+.delete-btn {
+    background-color: #dc3545; /* Red */
+}
+
+.action-btn i {
+    font-size: 1.1em;
+}
+
+/* No Data Message */
+.no-data-message {
+    text-align: center !important; /* Override default text-align */
+    padding: 20px;
+    color: #666;
+}
+
+/* Loading and Error Messages */
+.loading-message, .error-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1em;
+    color: #666;
+}
+
+.error-message {
+    color: #dc3545;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: flex-end; /* Align to right like the image */
+    align-items: center;
+    margin-top: 20px;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .data-table th, .data-table td {
+        padding: 8px 10px;
+    }
+
+    .pagination-controls {
+        justify-content: center;
+    }
 }

@@ -1,0 +1,101 @@
+
+
+.asset-card {
+  background-color: #f3f4f6;
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 1000px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.back-button {
+  background: transparent;
+  border: none;
+  color: #0f4881;
+  font-size: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.asset-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin: 20px 0;
+}
+
+.asset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.asset-input,
+.asset-select {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 0 20px;
+  color: #111827;
+  font-size: 16px;
+  height: 48px;
+  line-height: 48px;
+}
+
+.asset-button,
+.cancel-button {
+  background: linear-gradient(135deg, #1a2b4c, #0f4881);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  height: 48px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #9ca3af;
+  margin-top: 8px;
+}
+
+.asset-table-wrapper {
+  overflow-x: auto;
+}
+
+.asset-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.asset-table th,
+.asset-table td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.asset-table th {
+  background-color: #e0e7ff;
+  color: #1e3a8a;
+}
+
+.asset-table td button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: none;
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
+}
+
+.asset-table td button:last-child {
+  background-color: #ef4444;
+}
