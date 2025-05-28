@@ -67,14 +67,13 @@ const AdminDashboard = () => {
     return <div>Loading...</div>;
   }
 
-  const handleLogout = () => {
+ const handleLogout = () => {
   const confirmed = window.confirm('Are you sure you want to log out?');
   if (confirmed) {
     localStorage.removeItem('token');
     navigate('/');
   }
 };
-
 
   return (
     <div className="dashboard-container">

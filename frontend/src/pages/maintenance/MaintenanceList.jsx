@@ -63,8 +63,28 @@ const MaintenanceList = () => {
     };
 
     return (
+<<<<<<< HEAD
         <div className="maintenance-list-container"> {/* Main container */}
             <h2 className="maintenance-list-title">Maintenance Records</h2> {/* Title */}
+=======
+        <div className="movement-list-page"> {/* Main page container */}
+            <div className="fixed-header-section">
+                <div className="table-controls-header">
+                    <div className="header-left">
+                        <Link to="/maintenance/add" className="add-movement-btn">
+                            <i className="fa-solid fa-plus"></i> Add Maintenance
+                        </Link>
+                        <select
+                            value={filter.status}
+                            onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
+                            className="filter-select"
+                        >
+                            <option value="">All Status</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+>>>>>>> 1a795fab3e500c86808fb03de735d2d67697fae1
 
             <div className="filters-search-section"> {/* Container for filters and search */}
                 <div className="filter-group">
