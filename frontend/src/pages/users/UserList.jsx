@@ -33,6 +33,8 @@ const UserList = () => {
     }
   };
 
+  const isRestricted = (role) => role === 'maintenance' || role === 'movement';
+
   return (
     <div className="user-list-container">
       <div className="user-list-card">
@@ -56,9 +58,14 @@ const UserList = () => {
                 <td>{u.role}</td>
                 <td>
                   <Link to={`/users/edit/${u._id}`}>
-                    <button>Edit</button>
+                    <button disabled={isRestricted(u.role)}>Edit</button>
                   </Link>
-                  <button onClick={() => deleteUser(u._id)}>Delete</button>
+                  <button
+                    onClick={() => deleteUser(u._id)}
+                    disabled={isRestricted(u.role)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}

@@ -91,7 +91,7 @@ const MaintenanceList = () => {
                             onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
                             className="filter-select"
                         >
-                            <option value="">All Statuses</option>
+                            <option value="">All Status</option>
                             <option value="scheduled">Scheduled</option>
                             <option value="in_progress">In Progress</option>
                             <option value="completed">Completed</option>

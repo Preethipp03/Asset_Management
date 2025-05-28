@@ -92,9 +92,6 @@ const Profile = () => {
           <label>Email</label>
           <input type="email" name="email" value={formData.email} disabled />
 
-          <label>Role</label>
-          <input type="text" name="role" value={formData.role} disabled />
-
           <div className="form-buttons">
             {message === 'Profile updated successfully!' ? (
               <button

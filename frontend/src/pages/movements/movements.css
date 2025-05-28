@@ -237,6 +237,7 @@
     border-radius: 12px;
     box-shadow: var(--shadow-medium);
     background-color: var(--card-bg); /* Use pure white for the table background */
+    
 }
 
 /* Data Table Styling */
