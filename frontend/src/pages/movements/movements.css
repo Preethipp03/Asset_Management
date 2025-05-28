@@ -213,23 +213,12 @@ body {
 
 /* Table Styles (now the main scrollable area) */
 .table-responsive {
-<<<<<<< HEAD
     flex-grow: 1; /* Takes all remaining vertical space */
     overflow-y: auto; /* Enables vertical scrolling for table content */
     overflow-x: auto; /* Keeps horizontal scrolling for wide tables */
     margin-bottom: 20px; /* Space above pagination */
     width: 100%;
     box-sizing: border-box;
-=======
-    flex-grow: 1; /* Allows the table to take up available vertical space */
-    overflow-y: auto; /* Enable vertical scroll if table content overflows */
-    overflow-x: auto; /* Enable horizontal scroll for wide tables */
-    margin: 0 24px 24px 24px; /* Matches page padding */
-    border-radius: 12px;
-    box-shadow: var(--shadow-medium);
-    background-color: var(--card-bg); /* Use pure white for the table background */
-    
->>>>>>> 1a795fab3e500c86808fb03de735d2d67697fae1
 }
 
 .data-table {

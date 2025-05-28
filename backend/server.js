@@ -711,7 +711,26 @@ function validateMaintenance(maintenance) {
 }
 
 
-/// Create maintenance record
+function validateMaintenance(data) {
+  if (!data.assetName || typeof data.assetName !== 'string' || data.assetName.trim() === '') {
+    throw new Error('Asset Name is required and must be a string');
+  }
+  if (!data.serialNumber || typeof data.serialNumber !== 'string' || data.serialNumber.trim() === '') {
+    throw new Error('Serial Number is required and must be a string');
+  }
+  if (!data.maintenanceType || !['preventive', 'corrective'].includes(data.maintenanceType)) {
+    throw new Error('Maintenance Type must be preventive or corrective');
+  }
+  if (!data.scheduledDate || isNaN(Date.parse(data.scheduledDate))) {
+    throw new Error('Scheduled Date is required and must be a valid date');
+  }
+  if (!data.status || !['scheduled', 'in_progress', 'completed'].includes(data.status)) {
+    throw new Error('Status must be scheduled, in_progress or completed');
+  }
+  // performedBy and description are optional, but trim if present
+}
+
+// Create maintenance record
 app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
     const maintenance = req.body;
@@ -719,20 +738,17 @@ app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']
 
     const db = await connectDB();
 
-    // Confirm asset exists
-    const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
-    if (!asset) return res.status(404).json({ error: 'Asset not found' });
-
     const maintenanceDoc = {
-      assetId: new ObjectId(maintenance.assetId),
-      assetName: asset.name,
-      maintenanceType: maintenance.maintenanceType.trim(),
-      description: maintenance.description ? maintenance.description.trim() : '',
+      assetName: maintenance.assetName.trim(),
+      serialNumber: maintenance.serialNumber.trim(),
+      maintenanceType: maintenance.maintenanceType,
       scheduledDate: new Date(maintenance.scheduledDate),
-      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
-      status: maintenance.status.trim(),
+      status: maintenance.status,
       performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
       description: maintenance.description ? maintenance.description.trim() : '',
+      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await db.collection(maintenanceCollection).insertOne(maintenanceDoc);
@@ -742,11 +758,11 @@ app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']
   }
 });
 
-// Get all maintenance records (admin and super_admin only)
-app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+// Get all maintenance records (all authenticated users)
+app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
-    const maintenance = await db.collection(maintenanceCollection).find().toArray();
+    const maintenance = await db.collection(maintenanceCollection).find().sort({ scheduledDate: -1 }).toArray();
     res.status(200).json(maintenance);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch maintenance records', details: err.message });
@@ -754,7 +770,7 @@ app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin'])
 });
 
 // Get maintenance by ID
-app.get('/maintenance/:id', authMiddleware, async (req, res) => {
+app.get('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
 
@@ -768,7 +784,7 @@ app.get('/maintenance/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Update maintenance record (PUT)
+// Update maintenance record (PUT - full update)
 app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
@@ -779,20 +795,16 @@ app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 
     const db = await connectDB();
 
-    // Confirm asset exists
-    const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(maintenance.assetId) });
-    if (!asset) return res.status(404).json({ error: 'Asset not found' });
-
     const updatedDoc = {
-      assetId: new ObjectId(maintenance.assetId),
-      assetName: asset.name,
-      maintenanceType: maintenance.maintenanceType.trim(),
-      description: maintenance.description ? maintenance.description.trim() : '',
+      assetName: maintenance.assetName.trim(),
+      serialNumber: maintenance.serialNumber.trim(),
+      maintenanceType: maintenance.maintenanceType,
       scheduledDate: new Date(maintenance.scheduledDate),
-      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
-      status: maintenance.status.trim(),
+      status: maintenance.status,
       performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
       description: maintenance.description ? maintenance.description.trim() : '',
+      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
+      updatedAt: new Date(),
     };
 
     const result = await db.collection(maintenanceCollection).updateOne(
@@ -814,18 +826,19 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
 
   const updates = req.body;
 
-  // Optional: Validate fields if you want, here minimal check
-  if (updates.assetId && !ObjectId.isValid(updates.assetId)) {
-    return res.status(400).json({ error: 'Invalid assetId' });
+  // Basic validation for some fields if present
+  if (updates.assetName && typeof updates.assetName !== 'string') {
+    return res.status(400).json({ error: 'Invalid assetName' });
   }
-
+  if (updates.serialNumber && typeof updates.serialNumber !== 'string') {
+    return res.status(400).json({ error: 'Invalid serialNumber' });
+  }
   if (updates.status) {
     const validStatuses = ['scheduled', 'in_progress', 'completed'];
     if (!validStatuses.includes(updates.status)) {
       return res.status(400).json({ error: 'Invalid status value' });
     }
   }
-
   if (updates.maintenanceType) {
     const validTypes = ['preventive', 'corrective'];
     if (!validTypes.includes(updates.maintenanceType)) {
@@ -834,16 +847,6 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
   }
 
   try {
-    const db = await connectDB();
-
-    // If assetId is being updated, verify asset exists and get name
-    if (updates.assetId) {
-      const asset = await db.collection(assetsCollection).findOne({ _id: new ObjectId(updates.assetId) });
-      if (!asset) return res.status(404).json({ error: 'Asset not found' });
-      updates.assetName = asset.name;
-      updates.assetId = new ObjectId(updates.assetId);
-    }
-
     // Convert dates if present
     if (updates.scheduledDate) {
       if (isNaN(Date.parse(updates.scheduledDate))) {
@@ -859,12 +862,16 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
       updates.completedDate = new Date(updates.completedDate);
     }
 
-    // Trim string fields if present
-    ['maintenanceType', 'status', 'description', 'performedBy', 'description'].forEach(field => {
+    // Trim string fields
+    ['assetName', 'serialNumber', 'maintenanceType', 'status', 'description', 'performedBy'].forEach(field => {
       if (updates[field] && typeof updates[field] === 'string') {
         updates[field] = updates[field].trim();
       }
     });
+
+    updates.updatedAt = new Date();
+
+    const db = await connectDB();
 
     const result = await db.collection(maintenanceCollection).findOneAndUpdate(
       { _id: new ObjectId(id) },
@@ -879,7 +886,6 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
     res.status(500).json({ error: 'Failed to update maintenance record', details: err.message });
   }
 });
-
 
 // Delete maintenance record
 app.delete('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {

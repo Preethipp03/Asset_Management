@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './MaintenanceList.css'; // <-- Import the new CSS file here
 
@@ -10,6 +10,7 @@ const MaintenanceList = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const token = localStorage.getItem('token');
+    const location = useLocation(); // Track location changes to trigger refetch
 
     useEffect(() => {
         const fetchMaintenance = async () => {
@@ -24,7 +25,7 @@ const MaintenanceList = () => {
         };
 
         fetchMaintenance();
-    }, [token]);
+    }, [token, location.key]); // Refetch whenever token or route location changes
 
     useEffect(() => {
         let data = [...maintenance];
@@ -63,36 +64,16 @@ const MaintenanceList = () => {
     };
 
     return (
-<<<<<<< HEAD
-        <div className="maintenance-list-container"> {/* Main container */}
-            <h2 className="maintenance-list-title">Maintenance Records</h2> {/* Title */}
-=======
-        <div className="movement-list-page"> {/* Main page container */}
-            <div className="fixed-header-section">
-                <div className="table-controls-header">
-                    <div className="header-left">
-                        <Link to="/maintenance/add" className="add-movement-btn">
-                            <i className="fa-solid fa-plus"></i> Add Maintenance
-                        </Link>
-                        <select
-                            value={filter.status}
-                            onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
-                            className="filter-select"
-                        >
-                            <option value="">All Status</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
->>>>>>> 1a795fab3e500c86808fb03de735d2d67697fae1
+        <div className="maintenance-list-container">
+            <h2 className="maintenance-list-title">Maintenance Records</h2>
 
-            <div className="filters-search-section"> {/* Container for filters and search */}
+            <div className="filters-search-section">
                 <div className="filter-group">
                     <label>Status: </label>
                     <select
                         value={filter.status}
                         onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
-                        className="filter-select" // Added class
+                        className="filter-select"
                     >
                         <option value="">All</option>
                         <option value="scheduled">Scheduled</option>
@@ -106,7 +87,7 @@ const MaintenanceList = () => {
                     <select
                         value={filter.type}
                         onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))}
-                        className="filter-select" // Added class
+                        className="filter-select"
                     >
                         <option value="">All</option>
                         <option value="preventive">Preventive</option>
@@ -119,11 +100,11 @@ const MaintenanceList = () => {
                     placeholder="Search by asset or technician"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input" // Added class
+                    className="search-input"
                 />
             </div>
 
-            <table className="maintenance-table"> {/* Table element */}
+            <table className="maintenance-table">
                 <thead>
                     <tr>
                         <th>Asset</th>
@@ -143,9 +124,13 @@ const MaintenanceList = () => {
                                 <td>{item.maintenanceType}</td>
                                 <td>{item.performedBy || '-'}</td>
                                 <td>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : '-'}</td>
-                                <td><span className={`status-badge status-${item.status.toLowerCase().replace(/\s/g, '-')}`}>{item.status}</span></td> {/* Added class for status badge */}
+                                <td>
+                                    <span className={`status-badge status-${item.status.toLowerCase().replace(/\s/g, '-')}`}>
+                                        {item.status}
+                                    </span>
+                                </td>
                                 <td className="maintenance-description-cell">{item.description || '-'}</td>
-                                <td className="table-actions"> {/* Actions column */}
+                                <td className="table-actions">
                                     <Link to={`/maintenance/edit/${item._id}`}>
                                         <button type="button" className="action-button edit-button">Edit</button>
                                     </Link>

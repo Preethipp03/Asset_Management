@@ -1,43 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './AddMaintenance.css'; // Import the new CSS file
+import './AddMaintenance.css';
 
 const AddMaintenance = () => {
-    const [assets, setAssets] = useState([]);
     const [form, setForm] = useState({
-        assetId: '',
+        assetName: '',
+        serialNumber: '',
         maintenanceType: 'preventive',
         scheduledDate: '',
         status: 'scheduled',
         performedBy: '',
         description: '',
     });
-    const [loading, setLoading] = useState(false); // Add loading state for submission
-    const [fetchError, setFetchError] = useState(null); // Error for fetching assets
 
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
-
-    useEffect(() => {
-        const fetchAssets = async () => {
-            try {
-                const res = await axios.get('http://localhost:5000/assets', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setAssets(res.data);
-            } catch (err) {
-                console.error('Failed to fetch assets:', err);
-                setFetchError('Failed to load asset options. Please try again.');
-            }
-        };
-        if (token) {
-            fetchAssets();
-        } else {
-            setFetchError('Authentication token not found. Please log in.');
-            // Optionally navigate('/login');
-        }
-    }, [token]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -46,50 +25,51 @@ const AddMaintenance = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true); // Set loading true on submission
+        setLoading(true);
 
         try {
-            console.log('Submitting maintenance:', form); // Debug log
             await axios.post('http://localhost:5000/maintenance', form, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert('Maintenance record added successfully!');
-            navigate('/maintenance'); // Redirect to maintenance list
+            navigate('/maintenance');
         } catch (err) {
             console.error('Failed to add maintenance:', err.response?.data || err.message);
             alert('Error adding maintenance: ' + (err.response?.data?.error || err.message));
         } finally {
-            setLoading(false); // Set loading false after submission attempt
+            setLoading(false);
         }
     };
 
-    if (fetchError) {
-        return <div className="error-message">Error: {fetchError}</div>;
-    }
-
     return (
-        <div className="add-maintenance-container"> {/* Main container */}
-            <h2 className="add-maintenance-title">Schedule New Maintenance</h2> {/* Title */}
+        <div className="add-maintenance-container">
+            <h2 className="add-maintenance-title">Schedule New Maintenance</h2>
 
-            <form onSubmit={handleSubmit} className="add-maintenance-form"> {/* Form element */}
-
-                <div className="form-group"> {/* Wrapper for each field */}
-                    <label htmlFor="assetId">Select Asset:</label>
-                    <select
-                        id="assetId"
-                        name="assetId"
-                        value={form.assetId}
+            <form onSubmit={handleSubmit} className="add-maintenance-form">
+                <div className="form-group">
+                    <label>Asset Name:</label>
+                    <input
+                        type="text"
+                        name="assetName"
+                        value={form.assetName}
                         onChange={handleChange}
-                        required
                         className="form-control"
-                    >
-                        <option value="">-- Select Asset --</option>
-                        {assets.map((a) => (
-                            <option key={a._id} value={a._id}>
-                                {a.name}
-                            </option>
-                        ))}
-                    </select>
+                        placeholder="Enter Asset Name"
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Serial Number:</label>
+                    <input
+                        type="text"
+                        name="serialNumber"
+                        value={form.serialNumber}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Enter Serial Number"
+                        required
+                    />
                 </div>
 
                 <div className="form-group">
@@ -159,10 +139,10 @@ const AddMaintenance = () => {
                         onChange={handleChange}
                         placeholder="Description (optional)"
                         className="form-control description-textarea"
-                    ></textarea>
+                    />
                 </div>
 
-                <div className="form-actions"> {/* Container for buttons */}
+                <div className="form-actions">
                     <button type="submit" className="submit-button" disabled={loading}>
                         {loading ? 'Adding...' : 'Add Maintenance'}
                     </button>
