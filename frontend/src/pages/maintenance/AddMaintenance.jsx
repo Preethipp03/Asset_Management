@@ -9,8 +9,10 @@ const AddMaintenance = () => {
         serialNumber: '',
         maintenanceType: 'preventive',
         scheduledDate: '',
+        nextScheduledDate: '',
         status: 'scheduled',
-        performedBy: '',
+        technicianInHouse: '',
+        technicianVendor: '',
         description: '',
     });
 
@@ -25,6 +27,13 @@ const AddMaintenance = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validation: technicianInHouse required
+        if (!form.technicianInHouse.trim()) {
+            alert('In-house technician is required.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -101,6 +110,19 @@ const AddMaintenance = () => {
                 </div>
 
                 <div className="form-group">
+                    <label htmlFor="nextScheduledDate">Next Scheduled Date:</label>
+                    <input
+                        id="nextScheduledDate"
+                        type="date"
+                        name="nextScheduledDate"
+                        value={form.nextScheduledDate}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="Optional"
+                    />
+                </div>
+
+                <div className="form-group">
                     <label htmlFor="status">Status:</label>
                     <select
                         id="status"
@@ -116,19 +138,36 @@ const AddMaintenance = () => {
                     </select>
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="performedBy">Technician:</label>
-                    <input
-                        id="performedBy"
-                        type="text"
-                        name="performedBy"
-                        value={form.performedBy}
-                        onChange={handleChange}
-                        required
-                        placeholder="Technician Name"
-                        className="form-control"
-                    />
-                </div>
+                <fieldset className="form-group technician-group">
+                    <legend>Technician Details:</legend>
+
+                    <div className="technician-field">
+                        <label htmlFor="technicianInHouse">In-House Technician: <span style={{color:'red'}}>*</span></label>
+                        <input
+                            id="technicianInHouse"
+                            type="text"
+                            name="technicianInHouse"
+                            value={form.technicianInHouse}
+                            onChange={handleChange}
+                            placeholder="Required"
+                            className="form-control"
+                            required
+                        />
+                    </div>
+
+                    <div className="technician-field">
+                        <label htmlFor="technicianVendor">Vendor Technician (optional):</label>
+                        <input
+                            id="technicianVendor"
+                            type="text"
+                            name="technicianVendor"
+                            value={form.technicianVendor}
+                            onChange={handleChange}
+                            placeholder="If handed over to vendor"
+                            className="form-control"
+                        />
+                    </div>
+                </fieldset>
 
                 <div className="form-group">
                     <label htmlFor="description">Description:</label>

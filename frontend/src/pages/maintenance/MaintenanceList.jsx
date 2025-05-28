@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import './MaintenanceList.css'; // <-- Import the new CSS file here
+import './MaintenanceList.css';
 
 const MaintenanceList = () => {
     const [maintenance, setMaintenance] = useState([]);
@@ -10,7 +10,7 @@ const MaintenanceList = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const token = localStorage.getItem('token');
-    const location = useLocation(); // Track location changes to trigger refetch
+    const location = useLocation();
 
     useEffect(() => {
         const fetchMaintenance = async () => {
@@ -25,7 +25,7 @@ const MaintenanceList = () => {
         };
 
         fetchMaintenance();
-    }, [token, location.key]); // Refetch whenever token or route location changes
+    }, [token, location.key]);
 
     useEffect(() => {
         let data = [...maintenance];
@@ -42,7 +42,8 @@ const MaintenanceList = () => {
             const term = searchTerm.toLowerCase();
             data = data.filter(item =>
                 (item.assetName?.toLowerCase().includes(term)) ||
-                (item.performedBy?.toLowerCase().includes(term))
+                (item.technicianInHouse?.toLowerCase().includes(term)) ||
+                (item.technicianVendor?.toLowerCase().includes(term))
             );
         }
 
@@ -61,6 +62,13 @@ const MaintenanceList = () => {
             console.error('Error deleting maintenance record:', error);
             alert('Failed to delete maintenance record');
         }
+    };
+
+    // Helper to format dates safely
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return isNaN(d) ? '-' : d.toLocaleDateString();
     };
 
     return (
@@ -107,11 +115,14 @@ const MaintenanceList = () => {
             <table className="maintenance-table">
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th>Type</th>
-                        <th>Technician</th>
+                        <th>Asset Name</th>
+                        <th>Serial Number</th>
+                        <th>Maintenance Type</th>
                         <th>Scheduled Date</th>
+                        <th>Next Scheduled Date</th>
                         <th>Status</th>
+                        <th>In-House Technician</th>
+                        <th>Vendor Technician</th>
                         <th>Description</th>
                         <th>Actions</th>
                     </tr>
@@ -120,15 +131,18 @@ const MaintenanceList = () => {
                     {filtered.length > 0 ? (
                         filtered.map((item) => (
                             <tr key={item._id}>
-                                <td>{item.assetName || 'Unknown'}</td>
-                                <td>{item.maintenanceType}</td>
-                                <td>{item.performedBy || '-'}</td>
-                                <td>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : '-'}</td>
+                                <td>{item.assetName || '-'}</td>
+                                <td>{item.serialNumber || '-'}</td>
+                                <td>{item.maintenanceType || '-'}</td>
+                                <td>{formatDate(item.scheduledDate)}</td>
+                                <td>{formatDate(item.nextScheduledDate)}</td>
                                 <td>
-                                    <span className={`status-badge status-${item.status.toLowerCase().replace(/\s/g, '-')}`}>
-                                        {item.status}
+                                    <span className={`status-badge status-${item.status?.toLowerCase().replace(/\s/g, '-')}`}>
+                                        {item.status || '-'}
                                     </span>
                                 </td>
+                                <td>{item.technicianInHouse || '-'}</td>
+                                <td>{item.technicianVendor || '-'}</td>
                                 <td className="maintenance-description-cell">{item.description || '-'}</td>
                                 <td className="table-actions">
                                     <Link to={`/maintenance/edit/${item._id}`}>
@@ -146,7 +160,7 @@ const MaintenanceList = () => {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="7" className="no-records-message">
+                            <td colSpan="10" className="no-records-message">
                                 No maintenance records found.
                             </td>
                         </tr>

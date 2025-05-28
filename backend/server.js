@@ -676,87 +676,95 @@ app.delete('/movements/:id', authMiddleware, roleMiddleware(['admin', 'super_adm
 });
 
    ///MAINTENANCE  APIs
-function validateMaintenance(maintenance) {
+function validateMaintenance(data) {
   const validStatuses = ['scheduled', 'in_progress', 'completed'];
   const validTypes = ['preventive', 'corrective'];
 
-  if (
-    !maintenance.assetId ||
-    !ObjectId.isValid(maintenance.assetId) ||
-    !maintenance.maintenanceType ||
-    !validTypes.includes(maintenance.maintenanceType) ||
-    !maintenance.scheduledDate ||
-    isNaN(Date.parse(maintenance.scheduledDate)) ||
-    !maintenance.status ||
-    !validStatuses.includes(maintenance.status)
-  ) {
-    throw new Error('Missing or invalid required fields for maintenance');
-  }
-
-  if (maintenance.completedDate && isNaN(Date.parse(maintenance.completedDate))) {
-    throw new Error('Invalid completedDate');
-  }
-
-  if (maintenance.description && typeof maintenance.description !== 'string') {
-    throw new Error('Description should be a string');
-  }
-
-  if (maintenance.performedBy && typeof maintenance.performedBy !== 'string') {
-    throw new Error('performedBy should be a string');
-  }
-
-  if (maintenance.description && typeof maintenance.description !== 'string') {
-    throw new Error('description should be a string');
-  }
-}
-
-
-function validateMaintenance(data) {
   if (!data.assetName || typeof data.assetName !== 'string' || data.assetName.trim() === '') {
     throw new Error('Asset Name is required and must be a string');
   }
+
   if (!data.serialNumber || typeof data.serialNumber !== 'string' || data.serialNumber.trim() === '') {
     throw new Error('Serial Number is required and must be a string');
   }
-  if (!data.maintenanceType || !['preventive', 'corrective'].includes(data.maintenanceType)) {
+
+  if (!data.maintenanceType || !validTypes.includes(data.maintenanceType)) {
     throw new Error('Maintenance Type must be preventive or corrective');
   }
+
   if (!data.scheduledDate || isNaN(Date.parse(data.scheduledDate))) {
     throw new Error('Scheduled Date is required and must be a valid date');
   }
-  if (!data.status || !['scheduled', 'in_progress', 'completed'].includes(data.status)) {
-    throw new Error('Status must be scheduled, in_progress or completed');
+
+  if (!data.status || !validStatuses.includes(data.status)) {
+    throw new Error('Status must be scheduled, in_progress, or completed');
   }
-  // performedBy and description are optional, but trim if present
+
+  if (!data.technicianInHouse || typeof data.technicianInHouse !== 'string') {
+    throw new Error('In-house technician is required and must be a string');
+  }
+
+  if (data.nextScheduledDate && isNaN(Date.parse(data.nextScheduledDate))) {
+    throw new Error('Next Scheduled Date must be a valid date');
+  }
+
+  if (data.completedDate && isNaN(Date.parse(data.completedDate))) {
+    throw new Error('Completed Date must be a valid date');
+  }
+
+  if (data.description && typeof data.description !== 'string') {
+    throw new Error('Description must be a string');
+  }
+
+  if (data.technicianVendor && typeof data.technicianVendor !== 'string') {
+    throw new Error('Vendor technician must be a string');
+  }
 }
 
 // Create maintenance record
+// Create maintenance
 app.post('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
-    const maintenance = req.body;
-    validateMaintenance(maintenance);
+    validateMaintenance(req.body);
 
-    const db = await connectDB();
+    const {
+      assetName,
+      serialNumber,
+      maintenanceType,
+      scheduledDate,
+      nextScheduledDate,
+      completedDate,
+      status,
+      description,
+      technicianInHouse,
+      technicianVendor
+    } = req.body;
 
-    const maintenanceDoc = {
-      assetName: maintenance.assetName.trim(),
-      serialNumber: maintenance.serialNumber.trim(),
-      maintenanceType: maintenance.maintenanceType,
-      scheduledDate: new Date(maintenance.scheduledDate),
-      status: maintenance.status,
-      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
-      description: maintenance.description ? maintenance.description.trim() : '',
-      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const newMaintenance = {
+      assetName: assetName.trim(),
+      serialNumber: serialNumber.trim(),
+      maintenanceType,
+      scheduledDate: new Date(scheduledDate),
+      nextScheduledDate: nextScheduledDate ? new Date(nextScheduledDate) : null,
+      completedDate: completedDate ? new Date(completedDate) : null,
+      status,
+      description: description?.trim() || '',
+      technicianInHouse: technicianInHouse.trim(),
+      technicianVendor: technicianVendor?.trim() || null,
+      createdAt: new Date()
     };
 
-    const result = await db.collection(maintenanceCollection).insertOne(maintenanceDoc);
-    res.status(201).json({ message: 'Maintenance record created', maintenanceId: result.insertedId });
+    const db = await connectDB();
+    const result = await db.collection(maintenanceCollection).insertOne(newMaintenance);
+
+    const inserted = await db.collection(maintenanceCollection).findOne({ _id: result.insertedId });
+    res.status(201).json(inserted);
   } catch (err) {
-    res.status(400).json({ error: 'Failed to create maintenance record', details: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
+
+
 
 // Get all maintenance records (all authenticated users)
 app.get('/maintenance', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
@@ -787,37 +795,72 @@ app.get('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admi
 // Update maintenance record (PUT - full update)
 app.put('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
-  if (!ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid maintenance ID' });
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid maintenance ID' });
+  }
 
   try {
-    const maintenance = req.body;
-    validateMaintenance(maintenance);
+    // Validate all fields from the request body
+    validateMaintenance(req.body);
 
-    const db = await connectDB();
+    // Destructure fields from request body
+    const {
+      assetName,
+      serialNumber,
+      maintenanceType,
+      scheduledDate,
+      nextScheduledDate,
+      completedDate,
+      status,
+      description,
+      technicianInHouse,
+      technicianVendor,
+      frequency,
+      performedBy
+    } = req.body;
 
-    const updatedDoc = {
-      assetName: maintenance.assetName.trim(),
-      serialNumber: maintenance.serialNumber.trim(),
-      maintenanceType: maintenance.maintenanceType,
-      scheduledDate: new Date(maintenance.scheduledDate),
-      status: maintenance.status,
-      performedBy: maintenance.performedBy ? maintenance.performedBy.trim() : '',
-      description: maintenance.description ? maintenance.description.trim() : '',
-      completedDate: maintenance.completedDate ? new Date(maintenance.completedDate) : null,
-      updatedAt: new Date(),
+    // Prepare update document with $set and $unset
+    const updateDoc = {
+      $set: {
+        assetName: assetName ? assetName.trim() : '',
+        serialNumber: serialNumber ? serialNumber.trim() : '',
+        maintenanceType,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        nextScheduledDate: nextScheduledDate ? new Date(nextScheduledDate) : null,
+        completedDate: completedDate ? new Date(completedDate) : null,
+        status,
+        description: description ? description.trim() : '',
+        technicianInHouse: technicianInHouse ? technicianInHouse.trim() : '',
+        technicianVendor: technicianVendor ? technicianVendor.trim() : null,
+        frequency: frequency || null,
+        performedBy: performedBy || '',
+        updatedAt: new Date(),
+      },
+      $unset: {
+        assetId: ""  // THIS REMOVES THE assetId field from the document
+      }
     };
 
-    const result = await db.collection(maintenanceCollection).updateOne(
+    const db = await connectDB();
+    const result = await db.collection(maintenanceCollection).findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: updatedDoc }
+      updateDoc,
+      { returnDocument: 'after' }
     );
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: 'Maintenance record not found' });
-    res.status(200).json({ message: 'Maintenance record updated successfully' });
+    if (!result.value) {
+      return res.status(404).json({ error: 'Maintenance record not found' });
+    }
+
+    res.status(200).json(result.value);
+
   } catch (err) {
-    res.status(400).json({ error: 'Failed to update maintenance record', details: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
+
+
 
 // PATCH maintenance record (partial update)
 app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
@@ -826,44 +869,29 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
 
   const updates = req.body;
 
-  // Basic validation for some fields if present
-  if (updates.assetName && typeof updates.assetName !== 'string') {
-    return res.status(400).json({ error: 'Invalid assetName' });
-  }
-  if (updates.serialNumber && typeof updates.serialNumber !== 'string') {
-    return res.status(400).json({ error: 'Invalid serialNumber' });
-  }
-  if (updates.status) {
+  try {
     const validStatuses = ['scheduled', 'in_progress', 'completed'];
-    if (!validStatuses.includes(updates.status)) {
+    const validTypes = ['preventive', 'corrective'];
+
+    if (updates.status && !validStatuses.includes(updates.status)) {
       return res.status(400).json({ error: 'Invalid status value' });
     }
-  }
-  if (updates.maintenanceType) {
-    const validTypes = ['preventive', 'corrective'];
-    if (!validTypes.includes(updates.maintenanceType)) {
-      return res.status(400).json({ error: 'Invalid maintenanceType value' });
-    }
-  }
 
-  try {
-    // Convert dates if present
-    if (updates.scheduledDate) {
-      if (isNaN(Date.parse(updates.scheduledDate))) {
-        return res.status(400).json({ error: 'Invalid scheduledDate' });
+    if (updates.maintenanceType && !validTypes.includes(updates.maintenanceType)) {
+      return res.status(400).json({ error: 'Invalid maintenance type value' });
+    }
+
+    ['scheduledDate', 'nextScheduledDate', 'completedDate'].forEach(dateField => {
+      if (updates[dateField]) {
+        if (isNaN(Date.parse(updates[dateField]))) {
+          throw new Error(`Invalid ${dateField}`);
+        }
+        updates[dateField] = new Date(updates[dateField]);
       }
-      updates.scheduledDate = new Date(updates.scheduledDate);
-    }
+    });
 
-    if (updates.completedDate) {
-      if (isNaN(Date.parse(updates.completedDate))) {
-        return res.status(400).json({ error: 'Invalid completedDate' });
-      }
-      updates.completedDate = new Date(updates.completedDate);
-    }
-
-    // Trim string fields
-    ['assetName', 'serialNumber', 'maintenanceType', 'status', 'description', 'performedBy'].forEach(field => {
+    // Trim strings
+    ['assetName', 'serialNumber', 'description', 'technicianInHouse', 'technicianVendor'].forEach(field => {
       if (updates[field] && typeof updates[field] === 'string') {
         updates[field] = updates[field].trim();
       }
@@ -872,7 +900,6 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
     updates.updatedAt = new Date();
 
     const db = await connectDB();
-
     const result = await db.collection(maintenanceCollection).findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: updates },
@@ -881,9 +908,9 @@ app.patch('/maintenance/:id', authMiddleware, roleMiddleware(['admin', 'super_ad
 
     if (!result.value) return res.status(404).json({ error: 'Maintenance record not found' });
 
-    res.status(200).json({ message: 'Maintenance record updated successfully', maintenance: result.value });
+    res.status(200).json({ message: 'Maintenance updated', maintenance: result.value });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update maintenance record', details: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
