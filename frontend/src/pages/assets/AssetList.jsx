@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import './AddAssets.css'; // ✅ Make sure this is imported
+import './AssetList.css'; // Make sure this path is correct
 
 const AssetList = () => {
   const [assets, setAssets] = useState([]);
@@ -38,21 +38,20 @@ const AssetList = () => {
   };
 
   return (
-    <div className="asset-list-container">
-      <div className="asset-list-card">
-        <div className="asset-list-header">
-          <h2>Assets</h2>
-          <Link to="/assets/add">
-            <button>Add Asset</button>
-          </Link>
-        </div>
+    <div className="asset-list-wrapper"> {/* Renamed container for clarity, less prone to general page styling */}
+      <div className="asset-list-header">
+        <h2>Assets</h2>
+        <Link to="/assets/add">
+          <button className="add-asset-button">Add Asset</button>
+        </Link>
+      </div>
 
+      <div className="asset-table-container"> {/* New div to manage table overflow if needed */}
         <table className="asset-table">
           <thead>
             <tr>
               <th>Name</th>
               <th>Location</th>
-              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -61,16 +60,15 @@ const AssetList = () => {
               <tr key={a._id}>
                 <td>{a.name}</td>
                 <td>{a.location}</td>
-                <td>{a.status || 'N/A'}</td>
-                <td>
+                <td className="asset-actions"> {/* Add a class for actions column for flexible styling */}
                   <Link to={`/assets/edit/${a._id}`}>
-                    <button>Edit</button>
+                    <button className="edit-button">Edit</button>
                   </Link>
                   <Link to={`/assets/view/${a._id}`}>
-                    <button>View</button>
+                    <button className="view-button">View</button>
                   </Link>
                   <button
-                    className="delete"
+                    className="delete-button"
                     onClick={() => deleteAsset(a._id)}
                   >
                     Delete
@@ -80,7 +78,7 @@ const AssetList = () => {
             ))}
             {assets.length === 0 && (
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center' }}>
+                <td colSpan="3" style={{ textAlign: 'center' }}>
                   No assets found
                 </td>
               </tr>

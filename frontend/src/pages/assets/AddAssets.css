@@ -92,14 +92,6 @@
 
 
 
-/* Full-page gradient background */
-body, html {
-  height: 100%;
-  margin: 0;
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
-  font-family: sans-serif;
-}
-
 /* Container for the asset list page */
 .asset-list-container {
   min-height: 100vh;
@@ -213,7 +205,6 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
   padding: 20px;
 }
 

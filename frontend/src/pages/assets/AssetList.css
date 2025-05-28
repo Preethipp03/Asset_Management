@@ -1,0 +1,143 @@
+/* AssetList.css */
+
+/* General page styling to remove default padding/margin from body/html if present */
+/* You might want to put this in a more global CSS file if it affects your entire application layout */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5; /* A light background color for the overall page */
+}
+
+.asset-list-wrapper {
+  /* This container will hold the header and the table */
+  width: 100%; /* Ensure it takes full width of its parent */
+  padding: 20px; /* Add some overall padding to the content area */
+  box-sizing: border-box; /* Include padding in the width */
+  /* Remove any background-color, border, or box-shadow that would create a "card" effect here */
+}
+
+.asset-list-header {
+  display: flex;
+  justify-content: space-between; /* Pushes H2 to left, button to right */
+  align-items: center;
+  margin-bottom: 15px; /* Space between header and table */
+  padding: 0 10px; /* Optional: Add some horizontal padding inside the header */
+}
+
+.asset-list-header h2 {
+  margin: 0; /* Remove default margin from heading */
+  font-size: 1.8em;
+  color: #333; /* Darker text for heading */
+}
+
+.add-asset-button {
+  background-color: #007bff; /* Primary blue color for add button */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+}
+
+.add-asset-button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.asset-table-container {
+  /* This div ensures the table can scroll horizontally if needed */
+  overflow-x: auto;
+  border: 1px solid #e0e0e0; /* Light border around the *entire* table for a clean edge */
+  border-radius: 5px; /* Slight rounded corners for the table container */
+  background-color: white; /* White background for the table area itself */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow if desired, can be removed */
+}
+
+.asset-table {
+  width: 100%; /* Make table take full width of its container */
+  border-collapse: collapse; /* Collapse borders for a clean look */
+  min-width: 600px; /* Ensures table doesn't get too squished on small screens */
+}
+
+.asset-table th,
+.asset-table td {
+  padding: 12px 15px; /* Comfortable padding inside cells */
+  text-align: left;
+  border-bottom: 1px solid #eee; /* Only bottom border for separator lines */
+}
+
+.asset-table th {
+  background-color: #f8f8f8; /* Very light grey background for headers */
+  font-weight: 600; /* Slightly bolder headers */
+  color: #555;
+  border-bottom: 2px solid #ddd; /* A bit stronger line under headers */
+}
+
+.asset-table tbody tr:last-child td {
+  border-bottom: none; /* No border for the last row */
+}
+
+.asset-table tbody tr:nth-child(even) {
+  background-color: #fcfcfc; /* Very subtle zebra striping */
+}
+
+.asset-table tbody tr:hover {
+  background-color: #f5f5f5; /* Light highlight on hover */
+}
+
+/* Specific styling for the actions column */
+.asset-actions {
+  white-space: nowrap; /* Prevent buttons from wrapping to next line */
+  text-align: right; /* Align buttons to the right in their cell */
+}
+
+/* Button styling within table actions */
+.asset-actions button {
+  margin-left: 8px; /* Space between action buttons */
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+}
+
+.edit-button {
+  background-color: #ffc107; /* Warning yellow */
+  color: #333;
+}
+
+.edit-button:hover {
+  background-color: #e0a800;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.view-button {
+  background-color: #17a2b8; /* Info blue */
+  color: white;
+}
+
+.view-button:hover {
+  background-color: #138496;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.delete-button {
+  background-color: #dc3545; /* Danger red */
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Styling for "No assets found" message */
+.asset-table tbody tr td[colspan="3"] {
+  padding: 20px;
+  font-style: italic;
+  color: #666;
+  background-color: white; /* Ensure background is white for this row */
+}
