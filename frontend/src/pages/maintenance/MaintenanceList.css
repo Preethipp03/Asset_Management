@@ -1,0 +1,458 @@
+/* General Body and Page Container Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5; /* Slightly grey background for the whole body */
+    margin: 0;
+    padding: 0;
+}
+
+/* NEW: Application Header */
+.app-header {
+    width: 100%;
+    background-color: #ffffff; /* White background for the header */
+    padding: 15px 30px; /* Padding inside the header */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow at the bottom */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    position: sticky; /* Keeps it at the top when scrolling */
+    top: 0;
+    z-index: 100; /* Ensure it's above other content */
+}
+
+.app-logo {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #007bff; /* Primary blue for logo/app name */
+}
+
+.maintenance-list-container {
+    width: 100vw;
+    min-height: calc(100vh - 70px); /* Adjust based on app-header height */
+    max-width: none;
+    margin: 0 auto;
+    border-radius: 0;
+    box-shadow: none;
+    min-width: 320px;
+    background-color: #ffffff;
+    padding: 20px 30px 30px; /* Padding for the content inside this container */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column; /* To stack title, filters, table, and pagination vertically */
+    overflow-y: auto; /* Makes the main content area scrollable */
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.maintenance-list-title {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+/* Controls Section (Filters, Search, Add, Reset) */
+.filters-search-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95em;
+    color: #555;
+}
+
+/* Filter Selects */
+.filter-select {
+    padding: 10px 15px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #333;
+    background-color: #fcfcfc;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.filter-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Search Input */
+.search-input {
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+    padding: 10px 15px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #333;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+    background-color: #fcfcfc;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Add New Maintenance Button */
+.add-maintenance-link {
+    text-decoration: none;
+}
+.add-maintenance-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: #007bff;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1em;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    box-sizing: border-box;
+}
+
+.add-maintenance-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+}
+
+.add-maintenance-button:active {
+    background-color: #004085;
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.add-maintenance-button:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Reset Button - Outline Style for Usability */
+.reset-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+.reset-btn:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+}
+
+.reset-btn:active {
+    background-color: #0056b3;
+    border-color: #004085;
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.reset-btn:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.reset-btn i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+
+/* Table Styles */
+.maintenance-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1200px; /* Ensures horizontal scroll for wide tables */
+    flex-grow: 1; /* Allows table to take remaining vertical space in flex container */
+    overflow-y: auto; /* Enables vertical scrolling for table content IF it overflows */
+    overflow-x: auto; /* Keeps horizontal scrolling for wide tables */
+}
+
+.maintenance-table th,
+.maintenance-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.maintenance-table thead th {
+    background-color: #f5f8fa;
+    color: #34495e;
+    font-weight: 700;
+    font-size: 0.95em;
+    position: sticky;
+    top: 0; /* Stays at the top of its scrollable container (the maintenance-list-container) */
+    z-index: 50;
+    border-bottom: 2px solid #ccd2d8;
+}
+
+.maintenance-table tbody tr:nth-child(even) {
+    background-color: #f9fbfd;
+}
+
+.maintenance-table tbody tr:hover {
+    background-color: #eaf3ff;
+    cursor: pointer;
+}
+
+.maintenance-table th:first-child,
+.maintenance-table td:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+.maintenance-table th.actions-cell,
+.maintenance-table td.actions-cell {
+    width: 120px;
+    text-align: center;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 0.85em;
+    color: white;
+}
+
+.status-badge.status-scheduled { background-color: #007bff; }
+.status-badge.status-in-progress { background-color: #ffc107; }
+.status-badge.status-completed { background-color: #28a745; }
+
+.maintenance-description-cell {
+    white-space: normal;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Action Buttons within table */
+.table-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-button {
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    color: white;
+}
+
+.edit-button {
+    background-color: #ffc107;
+}
+
+.edit-button:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(255, 193, 7, 0.2);
+}
+
+.delete-button {
+    background-color: #dc3545;
+}
+
+.delete-button:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+}
+
+/* Empty State / Messages */
+.no-records-message {
+    text-align: center;
+    font-size: 1.2em;
+    padding: 20px;
+    color: #777;
+    background-color: #f8f8f8;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    font-style: italic;
+}
+
+
+/* NEW: Pagination Styles */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px; /* Space above pagination */
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0; /* Separator line */
+}
+
+.pagination-button {
+    padding: 10px 15px;
+    border: 1px solid #007bff;
+    background-color: #ffffff;
+    color: #007bff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    color: #999;
+    border-color: #dcdfe6;
+}
+
+.pagination-button.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    pointer-events: none; /* Make active button not clickable */
+}
+
+.page-numbers {
+    display: flex;
+    gap: 5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .app-header {
+        padding: 10px 20px;
+    }
+    .app-logo {
+        font-size: 1.3em;
+    }
+    .maintenance-list-container {
+        padding: 20px;
+        min-height: calc(100vh - 60px);
+    }
+    .filters-search-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .filter-controls {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 10px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-input {
+        width: 100%;
+        max-width: none;
+    }
+    .add-maintenance-link, .reset-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .add-maintenance-button, .reset-btn {
+        width: 100%;
+        text-align: center;
+        padding: 10px 20px;
+    }
+    .pagination-controls {
+        flex-wrap: wrap; /* Allow pagination to wrap on smaller screens */
+    }
+    .page-numbers {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .maintenance-list-container {
+        padding: 15px;
+    }
+    .filter-select {
+        width: 100%;
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+    .maintenance-table th, .maintenance-table td {
+        padding: 10px 12px;
+        font-size: 0.85em;
+    }
+    .action-button {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 480px) {
+    .maintenance-list-container {
+        padding: 10px;
+    }
+    .maintenance-list-title {
+        font-size: 1.4em;
+    }
+    .maintenance-table {
+        min-width: 500px;
+    }
+    .maintenance-table th, .maintenance-table td {
+        padding: 6px 8px;
+        font-size: 0.75em;
+    }
+}

@@ -3,7 +3,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
   padding: 20px;
 }
 
@@ -48,7 +47,6 @@
 }
 
 .edit-user-button {
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
   color: white;
   padding: 12px;
   border: none;

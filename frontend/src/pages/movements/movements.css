@@ -1,107 +1,157 @@
-/* Google Fonts - Optional: Import a modern font for a nicer look */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* Variables for easier theme management */
-:root {
-    --primary-blue: #3b82f6; /* A vibrant, modern blue */
-    --primary-blue-dark: #2563eb; /* Darker blue for hover */
-
-    /* NEW Background Colors */
-    --page-bg: #eef6f9; /* A very soft, light blue-gray for the overall page background */
-    --card-bg: #ffffff; /* Pure white for main card-like elements (header, table, pagination) */
-    --secondary-bg: #e8f1f8; /* A slightly deeper light blue-gray for accents like table headers, disabled states, default select backgrounds */
-
-    --text-color-dark: #334155; /* Darker text for readability */
-    --text-color-medium: #64748b; /* Medium gray for secondary text */
-    --border-color: #e2e8f0; /* Light gray for borders */
-    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-    --delete-red: #ef4444;
-    --delete-red-dark: #dc2626;
-    --reset-btn-bg: #f1f5f9; /* Light gray for reset button */
-    --reset-btn-hover-bg: #e2e8f0;
+/* General Body and Page Container Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Set body background to white to match the card, ensuring no blue peeks through if card fills */
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent body scroll, movement-list-page will handle it */
 }
 
-/* Overall Page Layout */
 .movement-list-page {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--page-bg); /* Apply the new page background */
-    padding: 24px; /* Keeps a nice spacing from the browser edges */
+    /* Critical changes for full-bleed effect */
+    width: 100vw; /* Take 100% of the viewport width */
+    height: 100vh; /* Take 100% of the viewport height */
+    max-width: none; /* Remove any maximum width constraint */
+    margin: 0; /* Remove all external margins */
+    border-radius: 0; /* Remove border-radius to make it perfectly rectangular */
+    box-shadow: none; /* Remove shadow as it's no longer "floating" */
+
+    min-width: 320px; /* Added min-width to prevent squishing on tiny screens */
+    background-color: #ffffff;
+    padding: 30px;
+    box-sizing: border-box; /* Include padding in element's total width/height */
+
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Make the page fill the viewport height */
-    box-sizing: border-box; /* Include padding in element's total width/height */
-    overflow-x: hidden; /* Prevent horizontal scroll due to minor layout shifts */
-    color: var(--text-color-dark);
+    overflow: hidden; /* Hide overflow of this container, let internal elements scroll */
+
+    animation: fadeIn 0.5s ease-out;
 }
 
-/* Fixed Header Section (for sticky behavior) */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Fixed Header Section (now structurally fixed by flexbox) */
 .fixed-header-section {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background-color: var(--page-bg); /* Match page background so content slides smoothly */
-    padding-bottom: 16px; /* Spacing below the header control box */
-    margin-bottom: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
+    background-color: #ffffff; /* Explicitly set background */
+    padding-bottom: 20px; /* Space below the header controls */
+    border-bottom: 1px solid #e0e0e0; /* Separator line */
+    margin-bottom: 20px;
+    padding-top: 5px; /* Small padding at the top */
+    box-sizing: border-box;
+    width: 100%; /* Ensure it takes full width of its parent */
 }
 
-/* Table Controls Header (Top bar with Add Button, Search, Rows per page) */
+/* Table Controls Header */
 .table-controls-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--card-bg); /* Use pure white for the card background */
-    padding: 16px 24px; /* Internal padding for the header box */
-    border-radius: 12px;
-    margin-bottom: 16px; /* Space between header box and table */
-    box-shadow: var(--shadow-light);
-    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
-    gap: 20px; /* Space between flex items */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px; /* Space between control groups */
+    width: 100%; /* Ensure it takes full width */
+    box-sizing: border-box;
 }
 
-.table-controls-header .header-left {
+.header-left, .header-right {
     display: flex;
     align-items: center;
-    gap: 15px; /* Adjust gap between elements in header-left */
-    flex-wrap: wrap; /* Allow items to wrap within header-left */
-}
-
-.table-controls-header .header-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
+    gap: 15px;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    flex: 1; /* Allow these sections to grow and shrink */
+    min-width: 0; /* Important for flex items to prevent overflow */
+}
+
+.header-right {
+    justify-content: flex-end; /* Align content to the right */
 }
 
 /* Add Movement Button */
 .add-movement-btn {
-    background-color: var(--primary-blue);
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    text-decoration: none;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-light);
-    white-space: nowrap; /* Prevent text wrapping */
+    background-color: #007bff; /* Primary blue */
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    box-sizing: border-box; /* Crucial for buttons within flex containers */
 }
 
 .add-movement-btn:hover {
-    background-color: var(--primary-blue-dark);
+    background-color: #0056b3;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
 }
 
 .add-movement-btn i {
+    margin-right: 8px;
     font-size: 1.1em;
+}
+
+/* Filter Selects */
+.filter-select {
+    padding: 10px 15px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #333;
+    background-color: #fcfcfc;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.filter-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Reset Button - ENHANCED STYLING */
+.reset-btn {
+    /* Changed background to a lighter, less dominant grey for a softer look */
+    background-color: #eef2f6; /* A subtle light grey, similar to page background */
+    color: #34495e; /* Darker text color for contrast */
+    border: 1px solid #dcdfe6; /* Added a subtle border to give it definition */
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Lighter shadow to match softer background */
+    box-sizing: border-box;
+}
+
+.reset-btn:hover {
+    background-color: #e2e8f0; /* Slightly darker background on hover */
+    border-color: #c7d0d9; /* Slightly darker border on hover */
+    transform: translateY(-1px); /* Lifts the button slightly */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Clearer shadow on hover */
+}
+
+.reset-btn:active {
+    background-color: #d2dce4; /* Even darker on active (pressed) state */
+    border-color: #b0b8c2; /* Darker border on active */
+    transform: translateY(0); /* Pushes the button down to simulate a press */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtler shadow on active */
+}
+
+.reset-btn:focus-visible {
+    outline: 2px solid #007bff; /* Clear blue outline for keyboard navigation */
+    outline-offset: 2px; /* Adds space between outline and button border */
+}
+
+.reset-btn i {
+    margin-right: 8px;
 }
 
 /* Search Box */
@@ -109,364 +159,326 @@
     position: relative;
     display: flex;
     align-items: center;
+    flex: 1; /* Allow search box to take available space */
+    min-width: 180px; /* Minimum width for the search box */
+    max-width: 280px; /* Max width for the search box */
 }
 
 .search-box input {
-    padding: 10px 12px 10px 40px; /* Left padding for icon */
-    border: 1px solid var(--border-color);
+    padding: 10px 15px 10px 40px; /* Left padding for icon */
+    border: 1px solid #dcdfe6;
     border-radius: 8px;
-    font-size: 15px;
-    width: 250px; /* Fixed width for larger screens */
-    transition: all 0.3s ease;
-    background-color: var(--secondary-bg); /* Slightly tinted background for input */
-    color: var(--text-color-dark);
-}
-
-.search-box input::placeholder {
-    color: var(--text-color-medium);
+    font-size: 1em;
+    color: #333;
+    width: 100%; /* Make it fill its parent */
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+    background-color: #fcfcfc;
 }
 
 .search-box input:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    background-color: var(--card-bg); /* Pure white on focus */
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.search-box .search-icon {
+.search-icon {
     position: absolute;
     left: 15px;
-    color: var(--text-color-medium);
-    font-size: 16px;
+    color: #aeb4c0;
+    font-size: 1em;
 }
 
-/* Rows per page selector */
+/* Rows Per Page Selector */
 .rows-per-page-selector {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    color: var(--text-color-medium);
-    font-weight: 500;
-    white-space: nowrap;
+    gap: 8px;
+    font-size: 0.95em;
+    color: #555;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .rows-per-page-selector select {
-    padding: 9px 12px;
-    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border: 1px solid #dcdfe6;
     border-radius: 8px;
-    background-color: var(--secondary-bg); /* Slightly tinted background for select */
+    font-size: 1em;
+    color: #333;
+    background-color: #fcfcfc;
     cursor: pointer;
-    font-size: 15px;
-    color: var(--text-color-dark);
-    -webkit-appearance: none; /* Remove default arrow on WebKit browsers */
-    -moz-appearance: none; /* Remove default arrow on Firefox */
-    appearance: none; /* Remove default arrow */
-    /* Custom arrow using SVG data URI */
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2C114.7L154.5%2C247.3c-2.3%2C2.3-5.3%2C3.5-8.2%2C3.5s-5.9-1.2-8.2-3.5L5.4%2C114.7c-4.4-4.4-4.4-11.4%2C0-15.8c4.4-4.4%2C11.4-4.4%2C15.8%2C0l133.3%2C133.3L271.2%2C98.9c4.4-4.4%2C11.4-4.4%2C15.8%2C0C291.5%2C103.3%2C291.5%2C110.3%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    padding-right: 36px; /* Make space for the custom arrow */
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.rows-per-page-selector select:focus {
     outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    background-color: var(--card-bg); /* Pure white on focus */
+    box-sizing: border-box;
 }
 
-
-/* Filter Selects (now directly in header-left or filter-controls) */
-.filter-select {
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 15px;
-    background-color: var(--secondary-bg); /* Slightly tinted background for filter select */
-    cursor: pointer;
-    color: var(--text-color-dark);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2C114.7L154.5%2C247.3c-2.3%2C2.3-5.3%2C3.5-8.2%2C3.5s-5.9-1.2-8.2-3.5L5.4%2C114.7c-4.4-4.4-4.4-11.4%2C0-15.8c4.4-4.4%2C11.4-4.4%2C15.8%2C0l133.3%2C133.3L271.2%2C98.9c4.4-4.4%2C11.4-4.4%2C15.8%2C0C291.5%2C103.3%2C291.5%2C110.3%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    padding-right: 36px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    white-space: nowrap;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    background-color: var(--card-bg); /* Pure white on focus */
-}
-
-/* Messages (Loading, Error, No Data) */
-.loading-message,
-.error-message,
-.no-data-message {
-    text-align: center;
-    padding: 30px 20px;
-    font-size: 1.2em;
-    color: var(--text-color-medium);
-    background-color: var(--card-bg); /* Use pure white */
-    border-radius: 12px;
-    box-shadow: var(--shadow-light);
-    margin: 24px; /* Matches page padding */
-    font-weight: 500;
-}
-
-.error-message {
-    color: var(--delete-red);
-    background-color: #fef2f2;
-    border: 1px solid var(--delete-red);
-}
-
-/* Table Container (for scrollability) */
+/* Table Styles (now the main scrollable area) */
 .table-responsive {
-    flex-grow: 1; /* Allows the table to take up available vertical space */
-    overflow-y: auto; /* Enable vertical scroll if table content overflows */
-    overflow-x: auto; /* Enable horizontal scroll for wide tables */
-    margin: 0 24px 24px 24px; /* Matches page padding */
-    border-radius: 12px;
-    box-shadow: var(--shadow-medium);
-    background-color: var(--card-bg); /* Use pure white for the table background */
+    flex-grow: 1; /* Takes all remaining vertical space */
+    overflow-y: auto; /* Enables vertical scrolling for table content */
+    overflow-x: auto; /* Keeps horizontal scrolling for wide tables */
+    margin-bottom: 20px; /* Space above pagination */
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* Data Table Styling */
 .data-table {
-    width: 100%; /* Ensures the table fills its container */
-    border-collapse: separate; /* Required for border-spacing and border-radius on table */
+    width: 100%;
+    border-collapse: separate; /* Allows border-spacing */
     border-spacing: 0;
-    min-width: 1200px; /* Increased min-width for more columns in movements table */
+    min-width: 1200px; /* Minimum width for the table content (for horizontal scroll) */
 }
 
 .data-table th,
 .data-table td {
-    padding: 14px 18px;
+    padding: 15px 20px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e0e0e0; /* Light border for rows */
+    white-space: nowrap; /* Prevent text wrapping in cells */
+    box-sizing: border-box;
 }
 
-.data-table th {
-    background-color: var(--secondary-bg); /* Slightly tinted background for table header */
-    color: var(--text-color-dark);
-    font-weight: 600;
-    font-size: 14.5px;
-    white-space: nowrap;
-    position: sticky; /* Sticky header for table scrolling */
-    top: 0;
-    z-index: 10;
-    border-bottom: 2px solid var(--border-color);
+.data-table thead th {
+    background-color: #f5f8fa; /* Light header background */
+    color: #34495e;
+    font-weight: 700;
+    font-size: 0.95em;
+    position: sticky; /* Make headers sticky within the scrollable table-responsive div */
+    top: 0; /* Stick to the top of the scrollable container */
+    z-index: 50; /* Ensure headers are above scrolling content */
+    border-bottom: 2px solid #ccd2d8; /* Stronger border for header */
 }
 
-/* Rounded corners for table header */
-.data-table thead tr:first-child th:first-child {
-    border-top-left-radius: 12px;
-}
-.data-table thead tr:first-child th:last-child {
-    border-top-right-radius: 12px;
-}
-/* Ensure bottom borders are rounded as well if table is scrollable */
-.data-table tbody tr:last-child td:first-child {
-    border-bottom-left-radius: 12px;
-}
-.data-table tbody tr:last-child td:last-child {
-    border-bottom-right-radius: 12px;
-}
-
-
-/* Row Styling (Alternating background) */
 .data-table tbody tr:nth-child(even) {
-    background-color: #f9fcff; /* Very subtle light blue tint for even rows */
-}
-/* Odd rows remain white (default table background) */
-.data-table tbody tr:hover {
-    background-color: #e0f2fe; /* A more noticeable, friendly blue on hover */
-    cursor: default;
+    background-color: #f9fbfd; /* Subtle stripe effect */
 }
 
-/* Action Buttons in Table */
-.actions-cell {
-    white-space: nowrap;
+.data-table tbody tr:hover {
+    background-color: #eaf3ff; /* Highlight row on hover */
+    cursor: pointer;
+}
+
+/* Specific column widths or alignments if needed */
+.data-table th:first-child,
+.data-table td:first-child {
+    width: 50px; /* Small width for # column */
     text-align: center;
 }
 
-.action-btn {
-    background: none;
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    border-radius: 6px;
+.data-table th.actions-cell,
+.data-table td.actions-cell {
+    width: 120px; /* Width for actions column */
+    text-align: center;
+}
+
+/* Sort Icon */
+.data-table th span {
+    margin-left: 5px;
+    font-size: 0.8em;
+    color: #777;
     cursor: pointer;
-    font-size: 14px;
-    margin: 0 4px;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease;
+}
+
+.data-table th span:hover {
+    color: #007bff;
+}
+
+
+/* Action Buttons within table */
+.action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-color-medium);
-    text-decoration: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.action-btn:hover {
-    box-shadow: var(--shadow-light);
-    transform: translateY(-1px);
-}
-
-.action-btn i {
-    font-size: 1em;
+    width: 38px; /* Fixed width for icon buttons */
+    height: 38px; /* Fixed height for icon buttons */
+    border-radius: 50%; /* Make them circular */
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    margin: 0 5px; /* Space between buttons */
 }
 
 .edit-btn {
-    color: var(--primary-blue);
-    border-color: var(--primary-blue);
-}
-.edit-btn:hover {
-    background-color: var(--primary-blue);
+    background-color: #ffc107; /* Yellow for edit */
     color: white;
+}
+
+.edit-btn:hover {
+    background-color: #e0a800;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.3);
 }
 
 .delete-btn {
-    color: var(--delete-red);
-    border-color: var(--delete-red);
-}
-.delete-btn:hover {
-    background-color: var(--delete-red);
+    background-color: #dc3545; /* Red for delete */
     color: white;
 }
 
-.reset-btn {
-    background-color: var(--reset-btn-bg);
-    color: var(--text-color-dark);
-    border-color: var(--border-color);
-}
-.reset-btn:hover {
-    background-color: var(--reset-btn-hover-bg);
-    color: var(--primary-blue);
+.delete-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
 }
 
-/* Placeholder for Sort Icon */
-.data-table th .SortIcon {
-    margin-left: 6px;
-    color: var(--text-color-medium);
-    font-size: 0.9em;
+/* Empty State / Messages */
+.loading-message,
+.error-message,
+.no-data-message {
+    text-align: center;
+    font-size: 1.2em;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px auto;
+    max-width: 600px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.loading-message {
+    background-color: #f0f4f8;
+    color: #34495e;
+}
+
+.error-message {
+    background-color: #ffeef0;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.no-data-message {
+    color: #777;
+    background-color: #f8f8f8;
+    border: 1px dashed #ccc;
+    font-style: italic;
 }
 
 
-/* Pagination Controls */
+/* Pagination Controls (now structurally fixed at bottom by flexbox) */
 .pagination-controls {
     display: flex;
-    justify-content: flex-end; /* Align to the right */
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    padding: 10px 18px; /* Internal padding for the pagination box */
-    background-color: var(--card-bg); /* Use pure white */
-    border-radius: 10px;
-    margin: 0 24px 24px 24px; /* Matches page padding, consistent bottom spacing */
-    box-shadow: var(--shadow-light);
-    position: sticky; /* Make pagination sticky at the bottom */
-    bottom: 0;
-    z-index: 20;
-    background-color: var(--page-bg); /* Match page background for the sticky part */
-    padding-top: 10px; /* Ensure content above doesn't get hidden */
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    flex-wrap: wrap; /* Allow pagination buttons to wrap */
 }
 
-/* Responsive adjustments */
+.pagination-btn {
+    background-color: #f0f4f8;
+    color: #34495e;
+    border: 1px solid #dcdfe6;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 1em;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: 700;
+}
+
+.pagination-btn.active:hover {
+    background-color: #0056b3;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .movement-list-page {
+        width: 100vw;
+        height: 100vh;
+        padding: 25px;
+    }
+    .table-controls-header {
+        flex-direction: column; /* Stack controls vertically */
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .header-left, .header-right {
+        width: 100%; /* Force stacking */
+        justify-content: flex-start;
+        gap: 10px;
+        flex-direction: column; /* Ensure items within left/right headers also stack */
+        align-items: stretch; /* Make items fill the width */
+    }
+    .search-box {
+        width: 100%; /* Allow search box to take full width */
+        max-width: none; /* Remove max-width constraint here */
+    }
+}
+
 @media (max-width: 768px) {
     .movement-list-page {
-        padding: 16px; /* Reduce overall page padding on smaller screens */
+        margin: 0;
+        padding: 20px;
+        width: 100vw;
+        height: 100vh;
     }
-
-    .table-controls-header { /* No longer includes filter-controls */
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 16px; /* Adjust internal padding for header box */
-        gap: 10px; /* Reduce gap */
+    .add-movement-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 20px;
     }
-
-    .table-controls-header .header-left,
-    .table-controls-header .header-right {
-        width: 100%; /* Make header sections full width */
-        justify-content: flex-start;
-        margin-top: 0;
-        gap: 10px; /* Reduce gap within header sections */
+    .filter-select, .reset-btn {
+        width: 100%; /* Make them take full width and stack */
+        font-size: 0.9em;
+        padding: 8px 12px;
     }
-
-    .search-box input {
-        width: 100%; /* Make search input full width */
-    }
-
     .rows-per-page-selector {
         width: 100%;
-        justify-content: space-between;
-    }
-
-    .add-movement-btn,
-    .filter-select,
-    .action-btn.reset-btn { /* Apply full width to all controls in header-left on small screens */
-        width: 100%; /* Make buttons and selects full width */
         justify-content: center;
+        font-size: 0.85em;
     }
-
-    /* Adjust margins for table and pagination to match new page padding */
-    .loading-message,
-    .error-message,
-    .no-data-message,
-    .table-responsive,
-    .pagination-controls {
-        margin-left: 16px;
-        margin-right: 16px;
+    .data-table th, .data-table td {
+        padding: 10px 12px;
+        font-size: 0.85em;
     }
-
-    .pagination-controls {
-        justify-content: center;
-        padding: 10px;
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9em;
+        margin: 0 3px;
     }
 }
 
 @media (max-width: 480px) {
     .movement-list-page {
-        padding: 12px; /* Further reduce overall page padding */
+        padding: 15px;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
     }
-
-    .table-controls-header,
+    .data-table {
+        min-width: 800px;
+    }
+    .data-table th, .data-table td {
+        padding: 8px 10px;
+        font-size: 0.8em;
+    }
     .pagination-controls {
-        padding: 12px; /* Further reduce internal padding */
-        border-radius: 8px;
+        flex-direction: column;
+        gap: 8px;
     }
-
-    .add-movement-btn,
-    .filter-select,
-    .action-btn.reset-btn {
-        font-size: 14px;
-        padding: 10px 15px;
-    }
-
-    .search-box input {
-        padding: 8px 10px 8px 35px;
-        font-size: 14px;
-    }
-
-    .rows-per-page-selector,
     .pagination-btn {
-        font-size: 13px;
-        padding: 7px 10px;
-    }
-
-    /* Adjust margins for table and pagination to match new page padding */
-    .loading-message,
-    .error-message,
-    .no-data-message,
-    .table-responsive,
-    .pagination-controls {
-        margin-left: 12px;
-        margin-right: 12px;
+        width: 100%;
+        padding: 8px 15px;
     }
 }

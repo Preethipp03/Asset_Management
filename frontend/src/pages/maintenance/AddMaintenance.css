@@ -1,296 +1,210 @@
+/* General Body Styles - Consistent Page Background */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #eef2f6; /* A slightly cooler, soft gray background */
+    margin: 0;
+    padding: 20px 0; /* Adjusted padding: top/bottom 20px, left/right 0. Centering handled by container margin auto. */
+    box-sizing: border-box;
+    overflow-y: auto; /* Allow vertical scrolling on the body itself */
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+}
+
+/* Main Container for the Add Maintenance Form */
 .add-maintenance-container {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
-  padding: 20px;
+    width: 100%;
+    max-width: 700px; /* Consistent width for forms */
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    box-sizing: border-box;
+    animation: fadeIn 0.5s ease-out;
+    /* Added margin for horizontal centering and vertical spacing */
+    margin: 20px auto; /* 20px top/bottom margin, auto for left/right centering */
 }
 
-.add-maintenance-card {
-  background-color: #f3f4f6;
-  border-radius: 24px;
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
+/* Title Styling */
 .add-maintenance-title {
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
+    font-size: 2.4em;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 35px;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
 }
 
+.add-maintenance-title::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 80px;
+    height: 4px;
+    background-color: #007bff; /* Accent color for the underline */
+    border-radius: 2px;
+}
+
+/* Form Layout */
 .add-maintenance-form {
-  display: flex;
-  flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
 }
 
-.add-maintenance-input,
-.add-maintenance-select,
-.add-maintenance-textarea {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 9999px;
-  padding: 0 20px;
-  color: #111827;
-  margin-bottom: 16px;
-  font-size: 16px;
-  height: 48px;
-  line-height: 48px;
-}
-
-.add-maintenance-textarea {
-  height: 80px;
-  resize: vertical;
-  border-radius: 16px;
-  padding: 12px 20px;
-}
-
-.add-maintenance-button {
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
-  color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  font-size: 16px;
-  height: 48px;
-}
-
-.add-maintenance-button:hover {
-  background-color: #acb9f4;
-}
-
-.next-date-display {
-  color: #111827;
-  font-weight: 500;
-  margin-bottom: 16px;
-}
-
-
-/*MaintenanceList.css*/
-
-/* MaintenanceList.css */
-
-/* Full-page gradient background consistent with UserList */
-body, html {
-  height: 100%;
-  margin: 0;
-  background: linear-gradient(135deg, #1a2b4c, #0f4881);
-  font-family: sans-serif;
-}
-
-/* Container similar to UserList */
-.maintenance-list-container {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 40px;
-}
-
-/* Card container */
-.maintenance-list-card {
-  background-color: #f5f5f5; /* Light grey */
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 900px;
-}
-
-/* Header style */
-.maintenance-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.maintenance-list-header h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #1a2b4c;
-}
-
-/* Filters container */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: center;
-}
-
-.filters label {
-  color: #1a2b4c;
-  font-weight: 600;
-}
-
-/* Select and input styling */
-.filters select,
-.filters input[type="text"] {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  min-width: 150px;
-}
-
-/* Reset button styling */
-.filters button {
-  cursor: pointer;
-  padding: 8px 16px;
-  background-color: #3498db;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-.filters button:hover {
-  background-color: #2980b9;
-}
-
-/* Table styling consistent with UserList */
-.maintenance-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 16px;
-}
-
-.maintenance-table th,
-.maintenance-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.maintenance-table th {
-  background-color: #eaeaea;
-  color: #333;
-}
-
-/* Action buttons */
-.maintenance-table td button {
-  background-color: #f39c12;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.maintenance-table td button:hover {
-  background-color: #e67e22;
-}
-
-.maintenance-table td button.delete {
-  background-color: #e74c3c;
-  margin-left: 10px;
-}
-
-.maintenance-table td button.delete:hover {
-  background-color: #c0392b;
-}
-
-/* Responsive tweaks */
-@media (max-width: 600px) {
-  .filters {
+/* Individual Form Group (label + input/select/textarea) */
+.form-group {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filters select,
-  .filters input[type="text"] {
-    min-width: 100%;
-  }
-
-  .maintenance-table th,
-  .maintenance-table td {
-    font-size: 14px;
-    padding: 8px;
-  }
+    gap: 8px;
 }
 
-
-/* EditMaintenance.css */
-.form-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  background-color: #f5f7fa;
-  min-height: 100vh;
+.form-group label {
+    font-weight: 600;
+    color: #34495e;
+    font-size: 1.05em;
 }
 
-.form-card {
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  max-width: 600px;
+/* Styling for all form controls (input, select, textarea) */
+.form-control {
+    padding: 14px 18px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 1.05em;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    background-color: #fcfcfc;
 }
 
-.maintenance-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    background-color: #ffffff;
 }
 
-.maintenance-form label {
-  font-weight: 600;
-  color: #333;
-  display: flex;
-  flex-direction: column;
+.form-control::placeholder {
+    color: #aeb4c0;
 }
 
-.maintenance-form input,
-.maintenance-form select,
-.maintenance-form textarea {
-  padding: 10px 12px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  transition: border-color 0.3s;
+/* Specific styling for textarea */
+.description-textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
-.maintenance-form input:focus,
-.maintenance-form select:focus,
-.maintenance-form textarea:focus {
-  border-color: #3f51b5;
-  outline: none;
+/* Form Actions (Buttons) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
-.maintenance-form textarea {
-  resize: vertical;
-  min-height: 100px;
+.submit-button,
+.cancel-button {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.next-date {
-  font-weight: 500;
-  color: #444;
+.submit-button {
+    background-color: #007bff; /* Primary blue for Add action */
+    color: white;
 }
 
-.maintenance-form button {
-  padding: 12px 16px;
-  background-color: #3f51b5;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.submit-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
 }
 
-.maintenance-form button:hover {
-  background-color: #303f9f;
+.submit-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) inset;
+}
+
+.cancel-button {
+    background-color: #6c757d; /* Muted gray for cancel */
+    color: white;
+}
+
+.cancel-button:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.2);
+}
+
+.cancel-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) inset;
+}
+
+/* Error Message */
+.error-message {
+    font-size: 1.2em;
+    color: #dc3545; /* Red for error */
+    text-align: center;
+    padding: 20px;
+    background-color: #ffeef0;
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+    .add-maintenance-form {
+        grid-template-columns: repeat(2, 1fr); /* Two columns on larger screens */
+    }
+    .form-group:nth-child(5), /* Technician (Performed By) */
+    .form-group:nth-child(6) { /* Description */
+        grid-column: span 2; /* Make these fields span full width */
+    }
+    .form-actions {
+        grid-column: span 2; /* Make buttons span full width */
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 15px; /* Slightly less padding on smaller screens */
+    }
+    .add-maintenance-container {
+        padding: 30px 20px;
+        margin: 15px auto; /* Reduced vertical margin */
+    }
+    .add-maintenance-title {
+        font-size: 2em;
+        margin-bottom: 25px;
+    }
+    .add-maintenance-title::after {
+        width: 60px;
+        height: 3px;
+    }
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .submit-button,
+    .cancel-button {
+        width: 100%;
+        padding: 14px 20px;
+    }
 }

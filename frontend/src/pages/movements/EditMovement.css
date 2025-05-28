@@ -12,10 +12,10 @@ body {
     box-sizing: border-box;
 }
 
-/* Main Container for the Add Movement Form */
-.add-movement-container { /* Specific container class */
+/* Main Container for the Edit Movement Form - Reusing AddMovement container styling */
+.edit-movement-container { /* Specific container class for Edit */
     width: 100%;
-    max-width: 800px; /* Wider to accommodate more fields if needed */
+    max-width: 800px; /* Consistent width for forms */
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -29,8 +29,8 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Title Styling */
-.add-movement-title { /* Specific title class */
+/* Title Styling - Reusing AddMovement title styling */
+.edit-movement-title { /* Specific title class for Edit */
     font-size: 2.4em;
     color: #2c3e50;
     text-align: center;
@@ -40,7 +40,7 @@ body {
     padding-bottom: 15px;
 }
 
-.add-movement-title::after { /* Underline for the title */
+.edit-movement-title::after { /* Underline for the title */
     content: '';
     position: absolute;
     left: 50%;
@@ -52,14 +52,14 @@ body {
     border-radius: 2px;
 }
 
-/* Form Layout */
-.add-movement-form { /* Specific form class */
+/* Form Layout - Reusing AddMovement form layout */
+.edit-movement-form { /* Specific form class for Edit */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adaptive grid for more fields */
     gap: 25px; /* Space between form groups */
 }
 
-/* Individual Form Group (label + input/select/textarea) */
+/* Individual Form Group (label + input/select/textarea) - Reusing common styles */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -72,7 +72,7 @@ body {
     font-size: 1.05em;
 }
 
-/* Styling for all common form controls (input, select, textarea) */
+/* Styling for all common form controls (input, select, textarea) - Reusing common styles */
 .form-control {
     padding: 14px 18px;
     border: 1px solid #dcdfe6;
@@ -96,13 +96,13 @@ body {
     color: #aeb4c0;
 }
 
-/* Specific styling for textarea */
+/* Specific styling for textarea - Reusing common styles */
 .description-textarea {
     min-height: 120px; /* Taller textarea for more content */
     resize: vertical;
 }
 
-/* Checkbox specific styles */
+/* Checkbox specific styles - Reusing common styles */
 .form-group-checkbox {
     flex-direction: row; /* Align checkbox and label horizontally */
     align-items: center;
@@ -128,7 +128,7 @@ body {
 }
 
 
-/* Form Actions (Buttons) */
+/* Form Actions (Buttons) - Reusing common styles */
 .form-actions {
     display: flex;
     justify-content: flex-end; /* Align buttons to the right */
@@ -152,14 +152,14 @@ body {
 }
 
 .submit-button {
-    background-color: #007bff; /* Primary blue for Add action */
+    background-color: #28a745; /* Green for Update action */
     color: white;
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background-color: #218838;
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
 }
 
 .submit-button:active {
@@ -183,35 +183,63 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) inset;
 }
 
-/* Responsive Adjustments */
+/* Error message styling */
+.error-message {
+    font-size: 1.2em;
+    color: #dc3545; /* Red for error */
+    text-align: center;
+    padding: 20px;
+    background-color: #ffeef0;
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    margin: 20px auto 30px auto; /* Increased bottom margin */
+    max-width: 600px;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 1.5em;
+    color: #34495e;
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f0f4f8;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+
+/* Responsive Adjustments (copied from AddMovement.css) */
 @media (max-width: 850px) {
-    .add-movement-form {
+    .edit-movement-form {
         grid-template-columns: 1fr; /* Single column on smaller screens */
     }
     .form-actions {
         grid-column: span 1; /* Adjust button container for single column */
     }
+    /* Specific fields might need resetting if they were forced to span 2 columns before */
     .form-group:nth-child(5), /* Movement Type */
     .form-group:nth-child(6), /* Dispatched By */
     .form-group:nth-child(7), /* Received By */
     .form-group:nth-child(8), /* Date & Time */
     .form-group:nth-child(9), /* Returnable checkbox */
     .form-group:nth-child(10), /* Expected Return Date */
-    .form-group:nth-child(11) { /* Asset Condition */
+    .form-group:nth-child(11), /* Returned Date & Time */
+    .form-group:nth-child(12), /* Asset Condition */
+    .form-group:nth-child(13) { /* Description */
         grid-column: span 1; /* Reset to single column on smaller screens */
     }
 }
 
 @media (max-width: 768px) {
-    .add-movement-container {
+    .edit-movement-container {
         padding: 30px 20px;
         margin: 0 15px;
     }
-    .add-movement-title {
+    .edit-movement-title {
         font-size: 2em;
         margin-bottom: 25px;
     }
-    .add-movement-title::after {
+    .edit-movement-title::after {
         width: 60px;
         height: 3px;
     }
@@ -224,17 +252,4 @@ body {
         width: 100%;
         padding: 14px 20px;
     }
-}
-
-/* Error message styling (reusing from previous components) */
-.error-message {
-    font-size: 1.2em;
-    color: #dc3545; /* Red for error */
-    text-align: center;
-    padding: 20px;
-    background-color: #ffeef0;
-    border: 1px solid #dc3545;
-    border-radius: 8px;
-    margin: 20px auto;
-    max-width: 600px;
 }
