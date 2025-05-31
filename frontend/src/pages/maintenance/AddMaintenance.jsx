@@ -1,10 +1,64 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './AddMaintenance.css';
 
 const AddMaintenance = () => {
-    const [form, setForm] = useState({
+  const [maintenanceData, setMaintenanceData] = useState({
+    assetName: '',
+    serialNumber: '',
+    maintenanceType: 'preventive',
+    scheduledDate: '',
+    nextScheduledDate: '',
+    status: 'scheduled',
+    technicianInHouse: '',
+    technicianVendor: '',
+    description: '',
+  });
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleChange = (e) => {
+    setMaintenanceData({
+      ...maintenanceData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Basic validation example
+    if (!maintenanceData.assetName.trim()) {
+      setError('Asset Name is required');
+      return;
+    }
+    if (!maintenanceData.serialNumber.trim()) {
+      setError('Serial Number is required');
+      return;
+    }
+    if (!maintenanceData.scheduledDate) {
+      setError('Scheduled Date is required');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('You must be logged in.');
+        return;
+      }
+
+      // Make API call to backend
+      await axios.post('http://localhost:5000/maintenance', maintenanceData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setSuccess('Maintenance record added successfully!');
+      setMaintenanceData({
         assetName: '',
         serialNumber: '',
         maintenanceType: 'preventive',
@@ -14,189 +68,115 @@ const AddMaintenance = () => {
         technicianInHouse: '',
         technicianVendor: '',
         description: '',
-    });
+      });
+    } catch (err) {
+      setError(
+        err.response?.data?.error || 'Failed to add maintenance record'
+      );
+    }
+  };
 
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
-    const token = localStorage.getItem('token');
+  return (
+    <div className="add-maintenance-container">
+      <h2>Add Maintenance Record</h2>
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+      <form onSubmit={handleSubmit}>
+        <label>
+          Asset Name:
+          <input
+            type="text"
+            name="assetName"
+            value={maintenanceData.assetName}
+            onChange={handleChange}
+          />
+        </label>
 
-        // Validation: technicianInHouse required
-        if (!form.technicianInHouse.trim()) {
-            alert('In-house technician is required.');
-            return;
-        }
+        <label>
+          Serial Number:
+          <input
+            type="text"
+            name="serialNumber"
+            value={maintenanceData.serialNumber}
+            onChange={handleChange}
+          />
+        </label>
 
-        setLoading(true);
+        <label>
+          Maintenance Type:
+          <input
+            type="text"
+            name="maintenanceType"
+            value={maintenanceData.maintenanceType}
+            onChange={handleChange}
+          />
+        </label>
 
-        try {
-            await axios.post('http://localhost:5000/maintenance', form, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            alert('Maintenance record added successfully!');
-            navigate('/maintenance');
-        } catch (err) {
-            console.error('Failed to add maintenance:', err.response?.data || err.message);
-            alert('Error adding maintenance: ' + (err.response?.data?.error || err.message));
-        } finally {
-            setLoading(false);
-        }
-    };
+        <label>
+          Scheduled Date:
+          <input
+            type="date"
+            name="scheduledDate"
+            value={maintenanceData.scheduledDate}
+            onChange={handleChange}
+          />
+        </label>
 
-    return (
-        <div className="add-maintenance-container">
-            <h2 className="add-maintenance-title">Schedule New Maintenance</h2>
+        <label>
+          Next Scheduled Date:
+          <input
+            type="date"
+            name="nextScheduledDate"
+            value={maintenanceData.nextScheduledDate}
+            onChange={handleChange}
+          />
+        </label>
 
-            <form onSubmit={handleSubmit} className="add-maintenance-form">
-                <div className="form-group">
-                    <label>Asset Name:</label>
-                    <input
-                        type="text"
-                        name="assetName"
-                        value={form.assetName}
-                        onChange={handleChange}
-                        className="form-control"
-                        placeholder="Enter Asset Name"
-                        required
-                    />
-                </div>
+        <label>
+          Status:
+          <input
+            type="text"
+            name="status"
+            value={maintenanceData.status}
+            onChange={handleChange}
+          />
+        </label>
 
-                <div className="form-group">
-                    <label>Serial Number:</label>
-                    <input
-                        type="text"
-                        name="serialNumber"
-                        value={form.serialNumber}
-                        onChange={handleChange}
-                        className="form-control"
-                        placeholder="Enter Serial Number"
-                        required
-                    />
-                </div>
+        <label>
+          Technician In-House:
+          <input
+            type="text"
+            name="technicianInHouse"
+            value={maintenanceData.technicianInHouse}
+            onChange={handleChange}
+          />
+        </label>
 
-                <div className="form-group">
-                    <label htmlFor="maintenanceType">Maintenance Type:</label>
-                    <select
-                        id="maintenanceType"
-                        name="maintenanceType"
-                        value={form.maintenanceType}
-                        onChange={handleChange}
-                        required
-                        className="form-control"
-                    >
-                        <option value="preventive">Preventive</option>
-                        <option value="corrective">Corrective</option>
-                    </select>
-                </div>
+        <label>
+          Technician Vendor:
+          <input
+            type="text"
+            name="technicianVendor"
+            value={maintenanceData.technicianVendor}
+            onChange={handleChange}
+          />
+        </label>
 
-                <div className="form-group">
-                    <label htmlFor="scheduledDate">Scheduled Date:</label>
-                    <input
-                        id="scheduledDate"
-                        type="date"
-                        name="scheduledDate"
-                        value={form.scheduledDate}
-                        onChange={handleChange}
-                        required
-                        className="form-control"
-                    />
-                </div>
+        <label>
+          Description:
+          <textarea
+            name="description"
+            value={maintenanceData.description}
+            onChange={handleChange}
+          />
+        </label>
 
-                <div className="form-group">
-                    <label htmlFor="nextScheduledDate">Next Scheduled Date:</label>
-                    <input
-                        id="nextScheduledDate"
-                        type="date"
-                        name="nextScheduledDate"
-                        value={form.nextScheduledDate}
-                        onChange={handleChange}
-                        className="form-control"
-                        placeholder="Optional"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="status">Status:</label>
-                    <select
-                        id="status"
-                        name="status"
-                        value={form.status}
-                        onChange={handleChange}
-                        required
-                        className="form-control"
-                    >
-                        <option value="scheduled">Scheduled</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-
-                <fieldset className="form-group technician-group">
-                    <legend>Technician Details:</legend>
-
-                    <div className="technician-field">
-                        <label htmlFor="technicianInHouse">In-House Technician: <span style={{color:'red'}}>*</span></label>
-                        <input
-                            id="technicianInHouse"
-                            type="text"
-                            name="technicianInHouse"
-                            value={form.technicianInHouse}
-                            onChange={handleChange}
-                            placeholder="Required"
-                            className="form-control"
-                            required
-                        />
-                    </div>
-
-                    <div className="technician-field">
-                        <label htmlFor="technicianVendor">Vendor Technician (optional):</label>
-                        <input
-                            id="technicianVendor"
-                            type="text"
-                            name="technicianVendor"
-                            value={form.technicianVendor}
-                            onChange={handleChange}
-                            placeholder="If handed over to vendor"
-                            className="form-control"
-                        />
-                    </div>
-                </fieldset>
-
-                <div className="form-group">
-                    <label htmlFor="description">Description:</label>
-                    <textarea
-                        id="description"
-                        name="description"
-                        value={form.description}
-                        onChange={handleChange}
-                        placeholder="Description (optional)"
-                        className="form-control description-textarea"
-                    />
-                </div>
-
-                <div className="form-actions">
-                    <button type="submit" className="submit-button" disabled={loading}>
-                        {loading ? 'Adding...' : 'Add Maintenance'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/maintenance')}
-                        className="cancel-button"
-                        disabled={loading}
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
+        <button type="submit">Add Maintenance</button>
+      </form>
+    </div>
+  );
 };
 
 export default AddMaintenance;

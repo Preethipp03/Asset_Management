@@ -201,13 +201,13 @@ const App = () => {
           }
         />
         <Route
-          path="/maintenance/edit/:id"
-          element={
-            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
-              <EditMaintenance />
-            </ProtectedRoute>
-          }
-        />
+  path="/edit-maintenance/:id"
+  element={
+    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+      <EditMaintenance />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </BrowserRouter>
   );
