@@ -8,28 +8,48 @@ const MaintenanceList = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchMaintenances = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/maintenance', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setMaintenances(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load maintenance records');
-        setLoading(false);
-      }
-    };
+  const fetchMaintenances = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/maintenance', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMaintenances(response.data);
+    } catch (err) {
+      setError('Failed to load maintenance records');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMaintenances();
   }, []);
 
   const handleEdit = (id) => {
     navigate(`/edit-maintenance/${id}`);
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete this maintenance record?'
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/maintenance/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Refresh list after delete
+      fetchMaintenances();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete maintenance record');
+    }
   };
 
   if (loading) return <p>Loading maintenance records...</p>;
@@ -51,6 +71,7 @@ const MaintenanceList = () => {
               <th>Status</th>
               <th>Technician (In-House)</th>
               <th>Technician (Vendor)</th>
+              <th>Description</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -64,8 +85,10 @@ const MaintenanceList = () => {
                 <td>{maintenance.status}</td>
                 <td>{maintenance.technicianInHouse}</td>
                 <td>{maintenance.technicianVendor}</td>
+                <td>{maintenance.description}</td>
                 <td>
-                  <button onClick={() => handleEdit(maintenance._id)}>Edit</button>
+                  <button onClick={() => handleEdit(maintenance._id)}>Edit</button>{' '}
+                  <button onClick={() => handleDelete(maintenance._id)}>Delete</button>
                 </td>
               </tr>
             ))}
