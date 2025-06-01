@@ -13,6 +13,9 @@ body, html {
     min-height: 100vh;
     background: linear-gradient(to right, #e0f2f7 0%, #ffffff 50%, #e0f2f7 100%);
     color: #333;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 /* Header */

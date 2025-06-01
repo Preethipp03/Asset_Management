@@ -9,6 +9,9 @@ body {
 }
 
 .movement-list-page {
+    position: fixed;
+    top: 0;
+    left: 0;
     /* Critical changes for full-bleed effect */
     width: 100vw; /* Take 100% of the viewport width */
     height: 100vh; /* Take 100% of the viewport height */
