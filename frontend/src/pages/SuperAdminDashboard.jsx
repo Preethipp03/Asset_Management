@@ -87,10 +87,10 @@ const SuperAdminDashboard = () => {
                 </Link>
             </li>
             <li className="nav-item">
-                <Link to="/profile" className="nav-link">
-                    <FaCog className="nav-icon" /> Profile
-                </Link>
-            </li>
+                          <Link to="/profile" className="nav-link">
+                            <FaCog className="nav-icon" /> Profile
+                          </Link>
+                        </li>
           </ul>
         </nav>
         {/* Logout Button */}

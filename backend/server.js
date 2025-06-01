@@ -487,12 +487,47 @@ app.post('/movements', authMiddleware, async (req, res) => {
 app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
   try {
     const db = await connectDB();
-    const movements = await db.collection(movementsCollection).find({}).sort({ date: -1 }).toArray();
-    res.json(movements);
+
+    // Start with empty query - fetch all movements by default
+    const query = {};
+
+    // Extract possible filters from query params
+    const { fromDate, toDate, movementFrom, movementTo, assetId, returnable } = req.query;
+
+    // Date range filter
+    if (fromDate || toDate) {
+      query.date = {};
+      if (fromDate && !isNaN(Date.parse(fromDate))) {
+        query.date.$gte = new Date(fromDate);
+      }
+      if (toDate && !isNaN(Date.parse(toDate))) {
+        query.date.$lte = new Date(toDate);
+      }
+    }
+
+    // String exact match filters (trimmed)
+    if (movementFrom) query.movementFrom = movementFrom.trim();
+    if (movementTo) query.movementTo = movementTo.trim();
+
+    // assetId filter - validate ObjectId
+    if (assetId && ObjectId.isValid(assetId)) {
+      query.assetId = new ObjectId(assetId);
+    }
+
+    // Boolean filter for returnable - expect string 'true' or 'false'
+    if (returnable === 'true') query.returnable = true;
+    else if (returnable === 'false') query.returnable = false;
+
+    // Run the query with filters (or no filters if none provided)
+    const movements = await db.collection(movementsCollection).find(query).toArray();
+
+    res.status(200).json(movements);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch movements', details: err.message });
+    console.error('Error fetching movements:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
+
 
 // Get movement by ID
 app.get('/movements/:id', authMiddleware, async (req, res) => {

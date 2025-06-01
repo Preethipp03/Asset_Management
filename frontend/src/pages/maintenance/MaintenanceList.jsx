@@ -64,7 +64,7 @@ const MaintenanceList = () => {
     };
 
     const handleAddMaintenance = () => {
-        navigate('/add-maintenance'); // Assuming you have an add-maintenance route configured
+        navigate('/maintenance/add'); // Assuming you have an add-maintenance route configured
     };
 
     const handleResetFilters = () => {
@@ -83,6 +83,11 @@ const MaintenanceList = () => {
             <div className="fixed-header-section"> {/* Header section with controls */}
                 <div className="table-controls-header">
                     <div className="header-left">
+                        {/* Moved Back Button here */}
+                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                            <i className="fas fa-arrow-left"></i> Back
+                        </button>
+
                         {/* Add Maintenance Button */}
                         <button className="add-movement-btn" onClick={handleAddMaintenance}>
                             <i className="fas fa-plus"></i> Add Maintenance

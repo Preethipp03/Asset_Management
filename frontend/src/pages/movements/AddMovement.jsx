@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './AddMovement.css'; // Import the new CSS file
+// The CSS import should ideally be a global one, e.g., in App.js or index.js
+// but if you want it component-specific, rename this to match your global CSS file, e.g.,
+// import '../styles/FormStyles.css'; // Assuming your global styles are here
 
 const AddMovement = () => {
     const navigate = useNavigate();
@@ -21,6 +23,9 @@ const AddMovement = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(''); // Added error state for better feedback
+    const [success, setSuccess] = useState(''); // Added success state
+
     const token = localStorage.getItem('token');
 
     const handleChange = (e) => {
@@ -33,6 +38,8 @@ const AddMovement = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(''); // Clear previous errors
+        setSuccess(''); // Clear previous success messages
 
         const {
             serialNumber,
@@ -47,23 +54,42 @@ const AddMovement = () => {
             expectedReturnDate,
         } = formData;
 
-        // Basic validation (can be enhanced with more robust validation libraries)
-        if (
-            !serialNumber.trim() ||
-            !assetName.trim() ||
-            !movementFrom.trim() ||
-            !movementTo.trim() ||
-            !movementType ||
-            !dispatchedBy.trim() ||
-            !receivedBy.trim() ||
-            !date
-        ) {
-            alert('Please fill in all required fields.');
+        // More user-friendly validation messages
+        if (!serialNumber.trim()) {
+            setError('Serial Number is required.');
+            return;
+        }
+        if (!assetName.trim()) {
+            setError('Asset Name is required.');
+            return;
+        }
+        if (!movementFrom.trim()) {
+            setError('Movement From location is required.');
+            return;
+        }
+        if (!movementTo.trim()) {
+            setError('Movement To location is required.');
+            return;
+        }
+        if (!movementType) {
+            setError('Movement Type is required.');
+            return;
+        }
+        if (!dispatchedBy.trim()) {
+            setError('Dispatched By field is required.');
+            return;
+        }
+        if (!receivedBy.trim()) {
+            setError('Received By field is required.');
+            return;
+        }
+        if (!date) {
+            setError('Date & Time is required.');
             return;
         }
 
         if (returnable && !expectedReturnDate) {
-            alert('Expected return date is required when returnable is checked.');
+            setError('Expected return date is required when the asset is returnable.');
             return;
         }
 
@@ -83,7 +109,8 @@ const AddMovement = () => {
                     receivedBy: receivedBy.trim(),
                     date: new Date(date).toISOString(), // Ensure date is ISO format
                     returnable,
-                    expectedReturnDate: returnable ? (expectedReturnDate ? new Date(expectedReturnDate).toISOString() : null) : null,
+                    // Send null if not returnable or if returnable but date is empty
+                    expectedReturnDate: returnable && expectedReturnDate ? new Date(expectedReturnDate).toISOString() : null,
                     assetCondition: formData.assetCondition.trim(),
                     description: formData.description.trim(),
                 },
@@ -92,8 +119,8 @@ const AddMovement = () => {
                 }
             );
 
-            alert('Movement recorded successfully!');
-            // Reset form or navigate to a list page
+            setSuccess('Movement recorded successfully!');
+            // Reset form for next entry or navigate
             setFormData({
                 serialNumber: '',
                 assetName: '',
@@ -108,25 +135,42 @@ const AddMovement = () => {
                 assetCondition: '',
                 description: '',
             });
-            navigate('/movements'); // Assuming you have a /movements list page
+            // Navigate to movements list after a short delay
+            setTimeout(() => {
+                navigate('/movements');
+            }, 1500);
         } catch (err) {
             console.error('Failed to record movement:', err.response?.data || err.message);
-            alert('Failed to record movement: ' + (err.response?.data?.error || err.message));
+            setError('Failed to record movement: ' + (err.response?.data?.error || 'An unexpected error occurred.'));
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="add-movement-container"> {/* Main container */}
-            <h2 className="add-movement-title">Record New Asset Movement</h2> {/* Title */}
-            <form className="add-movement-form" onSubmit={handleSubmit}>
+        // Use the main container class for consistent padding and card-like appearance
+        <div className="edit-movement-container">
+            <div className="header-with-back-button">
+                <button onClick={() => navigate('/movements')} className="back-button">
+                    &larr; Back to Movements
+                </button>
+                {/* Use the common title class */}
+                <h2 className="edit-movement-title">Record New Asset Movement</h2>
+            </div>
 
+            {/* Display messages using common classes */}
+            {error && <p className="error-message">{error}</p>}
+            {success && <p className="success-message">{success}</p>}
+
+            {/* Use the common form class */}
+            <form className="edit-movement-form" onSubmit={handleSubmit}>
+
+                {/* All form groups should use "form-group" */}
                 <div className="form-group">
                     <label htmlFor="serialNumber">Serial Number:</label>
                     <input
                         id="serialNumber"
-                        className="form-control"
+                        className="form-control" // Use "form-control"
                         type="text"
                         name="serialNumber"
                         placeholder="e.g., SN12345"
@@ -236,6 +280,7 @@ const AddMovement = () => {
                     />
                 </div>
 
+                {/* For the checkbox, you might need a slight adjustment in CSS if labels are not side-by-side */}
                 <div className="form-group form-group-checkbox">
                     <input
                         id="returnable"
@@ -243,11 +288,10 @@ const AddMovement = () => {
                         name="returnable"
                         checked={formData.returnable}
                         onChange={handleChange}
-                        className="form-checkbox" /* New class for checkbox input */
+                        className="form-checkbox" // Retained your new class, but ensure it's styled in CSS
                     />
-                    <label htmlFor="returnable" className="form-checkbox-label">Returnable</label> {/* Label next to checkbox */}
+                    <label htmlFor="returnable" className="form-checkbox-label">Returnable</label>
                 </div>
-
 
                 {formData.returnable && (
                     <div className="form-group">
@@ -277,11 +321,12 @@ const AddMovement = () => {
                     />
                 </div>
 
-                <div className="form-group">
+                {/* Description textarea should span all columns */}
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label htmlFor="description">Description (Optional):</label>
                     <textarea
                         id="description"
-                        className="form-control description-textarea" // Reusing description-textarea class
+                        className="form-control description-textarea" // Use "form-control" and "description-textarea"
                         name="description"
                         placeholder="Any additional details or notes"
                         value={formData.description}
@@ -290,17 +335,13 @@ const AddMovement = () => {
                     />
                 </div>
 
-                <div className="form-actions"> {/* Container for buttons */}
-                    <button type="submit" className="submit-button" disabled={loading}>
-                        {loading ? 'Submitting...' : 'Add Movement'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/movements')} // Navigate back to movements list
-                        className="cancel-button"
-                        disabled={loading}
-                    >
+                {/* Form actions (buttons) container */}
+                <div className="form-actions">
+                    <button type="button" onClick={() => navigate('/movements')} className="cancel-button" disabled={loading}>
                         Cancel
+                    </button>
+                    <button type="submit" className="submit-button" disabled={loading}>
+                        {loading ? 'Adding...' : 'Add Movement'}
                     </button>
                 </div>
             </form>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../../api/axios'; // This 'api' instance is stable and imported
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import api from '../../api/axios';
 import './movements.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -18,6 +18,8 @@ const MovementList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const navigate = useNavigate(); // Initialize useNavigate
+
     useEffect(() => {
         const fetchMovements = async () => {
             setLoading(true);
@@ -34,7 +36,7 @@ const MovementList = () => {
             }
         };
         fetchMovements();
-    }, [setLoading, setError, setMovements]); // 'api' removed from dependencies
+    }, [setLoading, setError, setMovements]);
 
     const filteredMovements = useMemo(() => {
         let result = [...movements];
@@ -96,6 +98,11 @@ const MovementList = () => {
                 {/* Top control bar: Add Movement button, Search, Rows per page */}
                 <div className="table-controls-header">
                     <div className="header-left">
+                        {/* Back Button - added here */}
+                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                            <i className="fa-solid fa-arrow-left"></i> Back
+                        </button>
+
                         <Link to="/movements/add" className="add-movement-btn">
                             <i className="fa-solid fa-plus"></i> Add Movement
                         </Link>

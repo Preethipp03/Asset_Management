@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import './EditMovement.css'; // Changed to EditMovement.css
+import './EditMovement.css'; 
 
 const EditMovement = () => {
     const { id: movementId } = useParams();
@@ -9,9 +9,11 @@ const EditMovement = () => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(''); // Added success state
+
     const [formData, setFormData] = useState({
         assetName: '',
-        assetId: '', // Keep assetId if it's part of your schema, though not directly editable
+        assetId: '',
         serialNumber: '',
         movementFrom: '',
         movementTo: '',
@@ -30,12 +32,14 @@ const EditMovement = () => {
 
     useEffect(() => {
         if (!movementId) {
-            setError('Invalid movement ID');
+            setError('Invalid movement ID. Redirecting...');
+            setTimeout(() => navigate('/movements'), 2000);
             return;
         }
 
         if (!token) {
-            setError('Not authorized. Please login.');
+            setError('Not authorized. Please log in. Redirecting...');
+            setTimeout(() => navigate('/login'), 2000);
             return;
         }
 
@@ -48,18 +52,21 @@ const EditMovement = () => {
                 const data = res.data;
                 setFormData({
                     assetName: data.assetName || '',
-                    assetId: data.assetId || '', // Ensure assetId is set if available
+                    assetId: data.assetId || '',
                     serialNumber: data.serialNumber || '',
                     movementFrom: data.movementFrom || '',
                     movementTo: data.movementTo || '',
                     movementType: data.movementType || '',
                     dispatchedBy: data.dispatchedBy || '',
                     receivedBy: data.receivedBy || '',
+                    // Format date-time for input type="datetime-local"
                     date: data.date ? new Date(data.date).toISOString().slice(0, 16) : '',
                     returnable: data.returnable || false,
+                    // Format date for input type="date"
                     expectedReturnDate: data.expectedReturnDate
                         ? new Date(data.expectedReturnDate).toISOString().slice(0, 10)
                         : '',
+                    // Format date-time for input type="datetime-local"
                     returnedDateTime: data.returnedDateTime
                         ? new Date(data.returnedDateTime).toISOString().slice(0, 16)
                         : '',
@@ -70,23 +77,11 @@ const EditMovement = () => {
             })
             .catch((err) => {
                 console.error('Failed to fetch movement data', err);
-                setError('Failed to load movement data');
+                setError('Failed to load movement data. Redirecting...');
+                setTimeout(() => navigate('/movements'), 2000); // Redirect on fetch error
             })
             .finally(() => setFetching(false));
-    }, [movementId, token]);
-
-    useEffect(() => {
-        if (error) {
-            const timer = setTimeout(() => {
-                if (error === 'Invalid movement ID' || error === 'Failed to load movement data') {
-                    navigate('/movements');
-                } else if (error === 'Not authorized. Please login.') {
-                    navigate('/login');
-                }
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [error, navigate]);
+    }, [movementId, token, navigate]); // Added navigate to dependency array
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -98,8 +93,10 @@ const EditMovement = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        setError(''); // Clear previous errors
+        setSuccess(''); // Clear previous success messages
 
+        // Basic client-side validation
         if (
             !formData.assetName.trim() ||
             !formData.serialNumber.trim() ||
@@ -125,27 +122,32 @@ const EditMovement = () => {
                 `http://localhost:5000/movements/${movementId}`,
                 {
                     assetName: formData.assetName.trim(),
-                    assetId: formData.assetId, // Include assetId in payload
+                    assetId: formData.assetId,
                     serialNumber: formData.serialNumber.trim(),
                     movementFrom: formData.movementFrom.trim(),
                     movementTo: formData.movementTo.trim(),
                     movementType: formData.movementType.trim(),
                     dispatchedBy: formData.dispatchedBy.trim(),
                     receivedBy: formData.receivedBy.trim(),
-                    date: new Date(formData.date),
+                    date: new Date(formData.date).toISOString(), // Ensure date is ISO format
                     returnable: formData.returnable,
-                    expectedReturnDate: formData.returnable ? (formData.expectedReturnDate ? new Date(formData.expectedReturnDate) : null) : null,
-                    returnedDateTime: formData.returnedDateTime ? new Date(formData.returnedDateTime) : null,
+                    // Conditionally include expectedReturnDate and returnedDateTime
+                    expectedReturnDate: formData.returnable && formData.expectedReturnDate
+                        ? new Date(formData.expectedReturnDate).toISOString()
+                        : null,
+                    returnedDateTime: formData.returnedDateTime
+                        ? new Date(formData.returnedDateTime).toISOString()
+                        : null,
                     assetCondition: formData.assetCondition.trim(),
                     description: formData.description.trim(),
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            alert('Movement updated successfully');
-            navigate('/movements');
+            setSuccess('Movement updated successfully!');
+            setTimeout(() => navigate('/movements'), 1500); // Navigate after a short delay
         } catch (err) {
-            console.error('Failed to update movement', err);
-            setError('Failed to update movement: ' + (err.response?.data?.error || err.message));
+            console.error('Failed to update movement', err.response?.data || err.message);
+            setError('Failed to update movement: ' + (err.response?.data?.error || 'An unexpected error occurred.'));
         } finally {
             setLoading(false);
         }
@@ -155,17 +157,22 @@ const EditMovement = () => {
         return <p className="loading-message">Loading movement data...</p>;
     }
 
-    if (error && (error === 'Invalid movement ID' || error === 'Not authorized. Please login.' || error === 'Failed to load movement data')) {
+    // Display critical errors that lead to redirection
+    if (error && (error.includes('Invalid movement ID') || error.includes('Not authorized') || error.includes('Failed to load movement data'))) {
         return <div className="error-message">Error: {error}</div>;
     }
 
     return (
-        <div className="edit-movement-container"> {/* Renamed to be consistent */}
-            <h2 className="edit-movement-title">Edit Movement Record</h2> {/* Consistent title class */}
+        <div className="edit-movement-container">
+            <div className="header-with-back-button">
+                <button onClick={() => navigate('/movements')} className="back-button">
+                    &larr; Back to Movements
+                </button>
+                <h2 className="edit-movement-title">Edit Movement Record</h2>
+            </div>
 
-            {error && error !== 'Invalid movement ID' && error !== 'Not authorized. Please login.' && error !== 'Failed to load movement data' && (
-                 <p className="error-message">{error}</p>
-            )}
+            {error && <p className="error-message">{error}</p>}
+            {success && <p className="success-message">{success}</p>}
 
             <form className="edit-movement-form" onSubmit={handleSubmit}>
                 <div className="form-group">
@@ -328,7 +335,7 @@ const EditMovement = () => {
                     </>
                 )}
 
-                <div className="form-group">
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}> {/* Ensure description spans all columns */}
                     <label htmlFor="description">Description (Optional):</label>
                     <textarea
                         id="description"
@@ -342,20 +349,19 @@ const EditMovement = () => {
 
                 <div className="form-actions">
                     <button
-                        type="submit"
-                        disabled={loading}
-                        className="submit-button"
-                    >
-                        {loading ? 'Updating...' : 'Update Movement'}
-                    </button>
-
-                    <button
                         type="button"
                         onClick={() => navigate('/movements')}
                         className="cancel-button"
                         disabled={loading}
                     >
                         Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="submit-button"
+                    >
+                        {loading ? 'Updating...' : 'Update Movement'}
                     </button>
                 </div>
             </form>

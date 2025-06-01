@@ -94,30 +94,6 @@ body {
     font-size: 1.1em;
 }
 
-/* Specific style for view button if it's different from edit/delete */
-.view-btn {
-    background-color: #17a2b8; /* Info blue */
-    color: white;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    margin: 0 5px;
-}
-
-.view-btn:hover {
-    background-color: #138496;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 8px rgba(23, 162, 184, 0.3);
-}
-
-
 .filter-select {
     padding: 10px 15px;
     border: 1px solid #dcdfe6;

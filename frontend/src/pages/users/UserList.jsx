@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './UserList.css'; // Ensure this path is correct
@@ -13,7 +13,7 @@ const UserList = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10); // For basic pagination control
     const [currentUserRole, setCurrentUserRole] = useState(null); // Renamed to avoid confusion with filterRole
     const token = localStorage.getItem('token');
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // Initialize useNavigate
 
     // Memoize fetchUsers using useCallback for performance and to satisfy useEffect dependencies
     const fetchUsers = useCallback(async () => {
@@ -88,7 +88,6 @@ const UserList = () => {
         return false; // Not restricted
     };
 
-
     // Handle Add User button click based on current user's role
     const handleAddUser = () => {
         if (currentUserRole === 'super_admin') {
@@ -108,7 +107,6 @@ const UserList = () => {
         // setPage(1);
     };
 
-
     // Simple pagination: slicing the array. For real apps, implement backend pagination.
     const paginatedUsers = users.slice(0, rowsPerPage);
 
@@ -117,6 +115,11 @@ const UserList = () => {
             <div className="fixed-header-section">
                 <div className="table-controls-header">
                     <div className="header-left">
+                        {/* Back Button - added here */}
+                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                            <i className="fas fa-arrow-left"></i> Back
+                        </button>
+
                         {/* Add User Button - conditional rendering/disabling based on role */}
                         <button
                             className="add-movement-btn"
