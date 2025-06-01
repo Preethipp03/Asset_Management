@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './UserList.css'; // Import the CSS file
+import { jwtDecode } from 'jwt-decode'; // <-- Import this
+import './UserList.css';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
+  const [role, setRole] = useState(null); // <-- Add this state
   const token = localStorage.getItem('token');
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Decode token to get role
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setRole(decoded.role);
+      } catch (err) {
+        console.error('Invalid token');
+      }
+    }
+
     const fetchUsers = async () => {
       try {
         const res = await axios.get('http://localhost:5000/users', {
@@ -35,15 +48,23 @@ const UserList = () => {
 
   const isRestricted = (role) => role === 'maintenance' || role === 'movement';
 
+  // Replaces the static Add User button
+  const handleAddUser = () => {
+    if (role === 'super_admin') {
+      navigate('/users/add');
+    } else if (role === 'admin') {
+      navigate('/users/add-user');
+    }
+  };
+
   return (
     <div className="user-list-container">
       <div className="user-list-card">
         <div className="user-list-header">
           <h2>Users</h2>
-          <Link to="/users/add">
-            <button>Add User</button>
-          </Link>
+          <button onClick={handleAddUser}>Add User</button> {/* Replaced Link */}
         </div>
+
         <table className="user-table">
           <thead>
             <tr>
