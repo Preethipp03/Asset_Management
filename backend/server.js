@@ -939,7 +939,7 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
     const {
       fromDate,
       toDate,
-      // assetName,  <-- remove this line, no longer needed
+      assetName,
       maintenanceType,
       status,
       technician,
@@ -948,7 +948,7 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
 
     const query = {};
 
-    // Date filtering for scheduledDate
+    // Date filtering
     if (fromDate || toDate) {
       query.scheduledDate = {};
       if (fromDate && !isNaN(Date.parse(fromDate))) {
@@ -959,7 +959,9 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
       }
     }
 
-    // Remove assetName filtering entirely
+    if (assetName) {
+      query.assetName = { $regex: assetName.trim(), $options: 'i' };
+    }
 
     if (maintenanceType) {
       query.maintenanceType = { $regex: maintenanceType.trim(), $options: 'i' };
@@ -970,7 +972,6 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
     }
 
     if (technician) {
-      // Match technicianInHouse or technicianVendor
       query.$or = [
         { technicianInHouse: { $regex: technician.trim(), $options: 'i' } },
         { technicianVendor: { $regex: technician.trim(), $options: 'i' } }
@@ -978,6 +979,7 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
     }
 
     const maintenances = await db.collection('maintenance').find(query).toArray();
+    const totalCount = maintenances.length;
 
     if (format === 'csv') {
       const fields = [
@@ -992,11 +994,14 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
         'description'
       ];
       const parser = new Parser({ fields });
-      const csv = parser.parse(maintenances);
+      const csvData = parser.parse(maintenances);
+
+      // Prepend count to CSV
+      const csvWithCount = `Total Records: ${totalCount}\n\n${csvData}`;
 
       res.header('Content-Type', 'text/csv');
       res.attachment('maintenance_report.csv');
-      return res.send(csv);
+      return res.send(csvWithCount);
 
     } else if (format === 'pdf') {
       const doc = new PDFDocument();
@@ -1008,6 +1013,9 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
       doc.pipe(res);
 
       doc.fontSize(16).text('Maintenance Report', { align: 'center' });
+      doc.moveDown();
+
+      doc.fontSize(12).text(`Total Records: ${totalCount}`);
       doc.moveDown();
 
       maintenances.forEach((m, idx) => {
@@ -1037,7 +1045,6 @@ app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_a
     res.status(500).json({ error: 'Failed to generate maintenance report', details: err.message });
   }
 });
-
 // --- Maintenance GET all ---
 app.get(
   '/maintenance',
