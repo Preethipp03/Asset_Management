@@ -1,21 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import './UserList.css'; // Ensure this path is correct
+import {jwtDecode} from 'jwt-decode';
+import './UserList.css';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterRole, setFilterRole] = useState('all'); // Filter by user role
-    const [rowsPerPage, setRowsPerPage] = useState(10); // For basic pagination control
-    const [currentUserRole, setCurrentUserRole] = useState(null); // Renamed to avoid confusion with filterRole
+    const [filterRole, setFilterRole] = useState('all');
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [currentUserRole, setCurrentUserRole] = useState(null);
     const token = localStorage.getItem('token');
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate();
 
-    // Memoize fetchUsers using useCallback for performance and to satisfy useEffect dependencies
     const fetchUsers = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -24,7 +23,7 @@ const UserList = () => {
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
                     search: searchQuery,
-                    role: filterRole === 'all' ? '' : filterRole, // Send filter param
+                    role: filterRole === 'all' ? '' : filterRole,
                 },
             });
             setUsers(res.data);
@@ -34,21 +33,19 @@ const UserList = () => {
         } finally {
             setLoading(false);
         }
-    }, [token, searchQuery, filterRole]); // Dependencies for useCallback
+    }, [token, searchQuery, filterRole]);
 
-    // Fetch users and decode token on component mount or when dependencies change
     useEffect(() => {
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                setCurrentUserRole(decoded.role); // Set current user's role
+                setCurrentUserRole(decoded.role);
             } catch (err) {
                 console.error('Invalid token:', err);
-                // Optionally handle invalid token, e.g., redirect to login
             }
         }
         fetchUsers();
-    }, [token, fetchUsers]); // fetchUsers is a dependency here, which is memoized
+    }, [token, fetchUsers]);
 
     const deleteUser = async (id) => {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
@@ -56,7 +53,6 @@ const UserList = () => {
             await axios.delete(`http://localhost:5000/users/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            // Re-fetch users to update the list after deletion
             fetchUsers();
         } catch (err) {
             console.error('Error deleting user:', err);
@@ -64,72 +60,77 @@ const UserList = () => {
         }
     };
 
-    // Determine if a user's role is restricted for editing/deleting by the current user
     const isRestricted = (userRole) => {
-        // Prevent deletion/editing of super_admin by anyone but a super_admin
         if (userRole === 'super_admin' && currentUserRole !== 'super_admin') {
             return true;
         }
-        // Prevent deletion/editing of admin by maintenance or movement roles
-        // FIX: Added parentheses to clarify the order of operations
         if (userRole === 'admin' && (currentUserRole === 'maintenance' || currentUserRole === 'movement')) {
             return true;
         }
-        // Prevent deletion/editing of maintenance/movement roles by maintenance/movement roles themselves
-        // unless the current user is an admin or super_admin
-        // FIX: Added parentheses to clarify the order of operations
         if ((userRole === 'maintenance' || userRole === 'movement') && (currentUserRole !== 'super_admin' && currentUserRole !== 'admin')) {
             return true;
         }
-        // Additional condition: A user cannot delete/edit themselves (optional, but good practice)
-        // You'd need to get the current user's ID from the token for this.
-        // if (user._id === currentUserId) { return true; }
-
-        return false; // Not restricted
+        return false;
     };
 
-    // Handle Add User button click based on current user's role
     const handleAddUser = () => {
         if (currentUserRole === 'super_admin') {
-            navigate('/users/add'); // Route for super_admin to add any user
+            navigate('/users/add');
         } else if (currentUserRole === 'admin') {
-            navigate('/users/add-user'); // Route for admin to add non-super_admin users
+            navigate('/users/add-user');
         } else {
             alert('You do not have permission to add users.');
         }
     };
 
-    // Define handleResetFilters function
     const handleResetFilters = () => {
         setSearchQuery('');
         setFilterRole('all');
-        // Reset pagination if implemented
-        // setPage(1);
     };
 
-    // Simple pagination: slicing the array. For real apps, implement backend pagination.
+    // New back button handler to navigate based on user role
+    const handleBackToDashboard = () => {
+        if (!token) {
+            navigate('/'); // no token, go to login
+            return;
+        }
+        try {
+            const decoded = jwtDecode(token);
+            const role = decoded.role;
+            if (role === 'super_admin') {
+                navigate('/super-admin');
+            } else if (role === 'admin') {
+                navigate('/admin');
+            } else if (role === 'user') {
+                navigate('/user');
+            } else {
+                navigate('/');
+            }
+        } catch (error) {
+            console.error('Invalid token:', error);
+            navigate('/');
+        }
+    };
+
     const paginatedUsers = users.slice(0, rowsPerPage);
 
     return (
-        <div className="movement-list-page"> {/* Re-using the main page container class */}
+        <div className="movement-list-page">
             <div className="fixed-header-section">
                 <div className="table-controls-header">
                     <div className="header-left">
-                        {/* Back Button - added here */}
-                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                        <button className="reset-btn" onClick={handleBackToDashboard} style={{ marginRight: '10px' }}>
                             <i className="fas fa-arrow-left"></i> Back
                         </button>
 
-                        {/* Add User Button - conditional rendering/disabling based on role */}
                         <button
                             className="add-movement-btn"
                             onClick={handleAddUser}
-                            disabled={!['super_admin', 'admin'].includes(currentUserRole)} // Only super_admin/admin can add
+                            disabled={!['super_admin', 'admin'].includes(currentUserRole)}
                         >
                             <i className="fas fa-plus"></i> Add User
                         </button>
 
-                        {/* Filter by Role */}
                         <select
                             className="filter-select"
                             value={filterRole}
@@ -140,12 +141,10 @@ const UserList = () => {
                             <option value="admin">Admin</option>
                             <option value="maintenance">Maintenance</option>
                             <option value="movement">Movement</option>
-                            {/* Add other roles as necessary */}
                         </select>
                     </div>
 
                     <div className="header-right">
-                        {/* Search Box */}
                         <div className="search-box">
                             <i className="fas fa-search search-icon"></i>
                             <input
@@ -156,7 +155,6 @@ const UserList = () => {
                             />
                         </div>
 
-                        {/* Reset Filters Button */}
                         <button className="reset-btn" onClick={handleResetFilters}>
                             <i className="fas fa-redo"></i> Reset
                         </button>
@@ -164,7 +162,6 @@ const UserList = () => {
                 </div>
             </div>
 
-            {/* Main content area: table and messages */}
             <div className="table-responsive">
                 {loading ? (
                     <div className="loading-message">
@@ -179,7 +176,7 @@ const UserList = () => {
                         <i className="fas fa-info-circle"></i> No users found.
                     </div>
                 ) : (
-                    <table className="data-table"> {/* Applying the data-table class */}
+                    <table className="data-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -197,7 +194,6 @@ const UserList = () => {
                                     <td>{u.email}</td>
                                     <td>{u.role}</td>
                                     <td className="actions-cell">
-                                        {/* Edit Button */}
                                         <Link to={`/users/edit/${u._id}`}>
                                             <button
                                                 className="action-btn edit-btn"
@@ -207,7 +203,6 @@ const UserList = () => {
                                                 <i className="fas fa-edit"></i>
                                             </button>
                                         </Link>
-                                        {/* Delete Button */}
                                         <button
                                             className="action-btn delete-btn"
                                             onClick={() => deleteUser(u._id)}
@@ -224,7 +219,6 @@ const UserList = () => {
                 )}
             </div>
 
-            {/* Pagination Controls */}
             <div className="pagination-controls">
                 <div className="rows-per-page-selector">
                     Rows per page:
@@ -235,7 +229,6 @@ const UserList = () => {
                         <option value="50">50</option>
                     </select>
                 </div>
-                {/* Pagination buttons (logic for these is not implemented here, placeholders only) */}
                 <button className="pagination-btn" disabled>Previous</button>
                 <button className="pagination-btn active">1</button>
                 <button className="pagination-btn" disabled>Next</button>

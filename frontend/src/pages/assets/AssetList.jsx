@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode'; // Make sure to install this: npm install jwt-decode
 import './AssetList.css';
 
 const AssetList = () => {
@@ -64,6 +65,29 @@ const AssetList = () => {
         setCurrentPage(1);
     };
 
+    const handleBackToDashboard = () => {
+        if (!token) {
+            navigate('/'); // no token, go to login
+            return;
+        }
+        try {
+            const decoded = jwtDecode(token);
+            const role = decoded.role; // adjust if your JWT uses a different key
+            if (role === 'super_admin') {
+                navigate('/super-admin');
+            } else if (role === 'admin') {
+                navigate('/admin');
+            } else if (role === 'user') {
+                navigate('/user');
+            } else {
+                navigate('/'); // fallback
+            }
+        } catch (error) {
+            console.error('Invalid token:', error);
+            navigate('/'); // fallback
+        }
+    };
+
     const indexOfLastAsset = currentPage * rowsPerPage;
     const indexOfFirstAsset = indexOfLastAsset - rowsPerPage;
     const currentAssets = assets.slice(indexOfFirstAsset, indexOfLastAsset);
@@ -100,9 +124,12 @@ const AssetList = () => {
             <div className="fixed-header-section">
                 <div className="table-controls-header">
                     <div className="header-left">
-                        {/* Moved Back Button here */}
-                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
-                            <i className="fas fa-arrow-left"></i> Back
+                        <button
+                            className="reset-btn"
+                            onClick={handleBackToDashboard}
+                            style={{ marginRight: '10px' }}
+                        >
+                            <i className="fas fa-arrow-left"></i> Back to Dashboard
                         </button>
                         <Link to="/assets/add" className="add-movement-btn">
                             <i className="fas fa-plus"></i> Add Asset
@@ -110,7 +137,10 @@ const AssetList = () => {
                         <select
                             className="filter-select"
                             value={filterType}
-                            onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                            onChange={(e) => {
+                                setFilterType(e.target.value);
+                                setCurrentPage(1);
+                            }}
                         >
                             <option value="all">All Types</option>
                             <option value="Electronics">Electronics</option>
@@ -125,7 +155,10 @@ const AssetList = () => {
                                 type="text"
                                 placeholder="Search assets..."
                                 value={searchQuery}
-                                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                             />
                         </div>
                         <button className="reset-btn" onClick={handleResetFilters}>
@@ -205,10 +238,13 @@ const AssetList = () => {
                 <div className="pagination-controls">
                     <div className="rows-per-page-selector">
                         Rows per page:
-                        <select value={rowsPerPage} onChange={(e) => {
-                            setRowsPerPage(Number(e.target.value));
-                            setCurrentPage(1);
-                        }}>
+                        <select
+                            value={rowsPerPage}
+                            onChange={(e) => {
+                                setRowsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                        >
                             <option value="5">5</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
@@ -220,7 +256,7 @@ const AssetList = () => {
                         onClick={() => paginate(currentPage - 1)}
                         disabled={currentPage === 1}
                     >
-                        Previous
+                        Prev
                     </button>
                     {renderPaginationButtons()}
                     <button

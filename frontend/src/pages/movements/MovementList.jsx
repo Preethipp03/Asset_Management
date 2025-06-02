@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
 import api from '../../api/axios';
 import './movements.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -18,12 +19,31 @@ const MovementList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate();
+
+    const handleBackToDashboard = () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/');
+            return;
+        }
+        try {
+            const decoded = jwtDecode(token);
+            const role = decoded.role;
+            if (role === 'super_admin') navigate('/super-admin');
+            else if (role === 'admin') navigate('/admin');
+            else if (role === 'user') navigate('/user');
+            else navigate('/');
+        } catch (error) {
+            console.error('Invalid token:', error);
+            navigate('/');
+        }
+    };
 
     useEffect(() => {
         const fetchMovements = async () => {
             setLoading(true);
-            setError(''); // Clear previous errors
+            setError('');
             try {
                 const token = localStorage.getItem('token');
                 const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -36,7 +56,7 @@ const MovementList = () => {
             }
         };
         fetchMovements();
-    }, [setLoading, setError, setMovements]);
+    }, []);
 
     const filteredMovements = useMemo(() => {
         let result = [...movements];
@@ -95,11 +115,10 @@ const MovementList = () => {
         <div className="movement-list-page">
             {/* Fixed Header Section */}
             <div className="fixed-header-section">
-                {/* Top control bar: Add Movement button, Search, Rows per page */}
                 <div className="table-controls-header">
                     <div className="header-left">
-                        {/* Back Button - added here */}
-                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                        {/* Role-based Back Button */}
+                        <button className="reset-btn" onClick={handleBackToDashboard} style={{ marginRight: '10px' }}>
                             <i className="fa-solid fa-arrow-left"></i> Back
                         </button>
 
@@ -107,7 +126,6 @@ const MovementList = () => {
                             <i className="fa-solid fa-plus"></i> Add Movement
                         </Link>
 
-                        {/* Moved filter selects and reset button here */}
                         <select
                             value={typeFilter}
                             onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
@@ -167,11 +185,10 @@ const MovementList = () => {
             {loading ? (
                 <p className="loading-message">Loading movements...</p>
             ) : (
-                <div className="table-responsive"> {/* This div contains the scrollable table */}
+                <div className="table-responsive">
                     <table className="data-table">
                         <thead>
                             <tr>
-                                {/* Table Headers - these will be sticky */}
                                 <th># <SortIcon /></th>
                                 <th>Asset <SortIcon /></th>
                                 <th>Serial No. <SortIcon /></th>
@@ -236,7 +253,6 @@ const MovementList = () => {
                 >
                     Previous
                 </button>
-                {/* Generate pagination buttons dynamically */}
                 {Array.from({ length: totalPages }, (_, i) => (
                     <button
                         key={i + 1}
