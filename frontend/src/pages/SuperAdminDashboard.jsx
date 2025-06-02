@@ -12,6 +12,17 @@ import './SuperAdminDashboard.css'; // Adjust path if necessary
 const SuperAdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // New states for counts
+  const [counts, setCounts] = useState({
+    usersCount: 0,
+    assetsCount: 0,
+    movementsCount: 0,
+    maintenanceCount: 0,
+  });
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [countsError, setCountsError] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +43,29 @@ const SuperAdminDashboard = () => {
     };
 
     fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        setCountsLoading(true);
+        setCountsError(null);
+
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/dashboard/counts', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setCounts(res.data);
+      } catch (error) {
+        console.error('Error fetching dashboard counts:', error);
+        setCountsError('Failed to load counts');
+      } finally {
+        setCountsLoading(false);
+      }
+    };
+
+    fetchCounts();
   }, []);
 
   if (loading) {
@@ -64,8 +98,6 @@ const SuperAdminDashboard = () => {
 
         <nav className="navigation">
           <ul className="nav-list">
-            {/* Added more navigation items to mimic the image */}
-            {/* Original management links - integrate them if they are part of the Super Admin context */}
             <li className="nav-item">
                 <Link to="/users" className="nav-link">
                     <FaUserCircle className="nav-icon" /> User Management
@@ -73,12 +105,12 @@ const SuperAdminDashboard = () => {
             </li>
             <li className="nav-item">
                 <Link to="/assets" className="nav-link">
-                    <FaFileAlt className="nav-icon" /> Asset Management {/* FaFileAlt is now used */}
+                    <FaFileAlt className="nav-icon" /> Asset Management
                 </Link>
             </li>
             <li className="nav-item">
                 <Link to="/movements" className="nav-link">
-                    <FaChartBar className="nav-icon" /> Movement Management {/* FaChartBar is now used */}
+                    <FaChartBar className="nav-icon" /> Movement Management
                 </Link>
             </li>
             <li className="nav-item">
@@ -87,10 +119,10 @@ const SuperAdminDashboard = () => {
                 </Link>
             </li>
             <li className="nav-item">
-                          <Link to="/profile" className="nav-link">
-                            <FaCog className="nav-icon" /> Profile
-                          </Link>
-                        </li>
+              <Link to="/profile" className="nav-link">
+                <FaCog className="nav-icon" /> Profile
+              </Link>
+            </li>
           </ul>
         </nav>
         {/* Logout Button */}
@@ -103,13 +135,32 @@ const SuperAdminDashboard = () => {
 
       {/* MAIN CONTENT */}
       <div className="main-content">
-
-        {/* Original Management Sections - You can decide where to place these
-            They don't quite fit the image's layout directly, but if they are
-            core to your Super Admin functionality, consider making them smaller cards
-            or placing them below the "Defi Overview" section.
-            For now, I'll keep them as they were, but styled.
-        */}
+        <div className="dashboard-cards">
+          {countsLoading ? (
+            <div>Loading counts...</div>
+          ) : countsError ? (
+            <div className="error-message">{countsError}</div>
+          ) : (
+            <>
+              <div className="card users-card">
+                <h3>Total Users</h3>
+                <p>{counts.usersCount}</p>
+              </div>
+              <div className="card assets-card">
+                <h3>Total Assets</h3>
+                <p>{counts.assetsCount}</p>
+              </div>
+              <div className="card movements-card">
+                <h3>Total Movements</h3>
+                <p>{counts.movementsCount}</p>
+              </div>
+              <div className="card maintenance-card">
+                <h3>Total Maintenance</h3>
+                <p>{counts.maintenanceCount}</p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import './SuperAdminDashboard.css';
 
@@ -13,8 +13,18 @@ import {
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
+  const [counts, setCounts] = useState({
+    usersCount: 0,
+    assetsCount: 0,
+    movementsCount: 0,
+    maintenanceCount: 0,
+  });
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [countsError, setCountsError] = useState(null);
+
   const navigate = useNavigate();
 
+  // Fetch user info
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
@@ -33,7 +43,6 @@ const AdminDashboard = () => {
           return;
         }
 
-        // Fetch user profile data
         const res = await axios.get('http://localhost:5000/api/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -48,9 +57,29 @@ const AdminDashboard = () => {
     fetchUserData();
   }, [navigate]);
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
+  // Fetch dashboard counts
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        setCountsLoading(true);
+        setCountsError(null);
+
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/dashboard/counts', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setCounts(res.data);
+      } catch (error) {
+        console.error('Error fetching dashboard counts:', error);
+        setCountsError('Failed to load counts');
+      } finally {
+        setCountsLoading(false);
+      }
+    };
+
+    fetchCounts();
+  }, []);
 
   const handleLogout = () => {
     const confirmed = window.confirm('Are you sure you want to log out?');
@@ -59,6 +88,10 @@ const AdminDashboard = () => {
       navigate('/');
     }
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="dashboard-container">
@@ -110,7 +143,32 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <div className="main-content">
-        {/* Empty main content */}
+        <div className="dashboard-cards">
+          {countsLoading ? (
+            <div>Loading counts...</div>
+          ) : countsError ? (
+            <div className="error-message">{countsError}</div>
+          ) : (
+            <>
+              <div className="card users-card">
+                <h3>Total Users</h3>
+                <p>{counts.usersCount}</p>
+              </div>
+              <div className="card assets-card">
+                <h3>Total Assets</h3>
+                <p>{counts.assetsCount}</p>
+              </div>
+              <div className="card movements-card">
+                <h3>Total Movements</h3>
+                <p>{counts.movementsCount}</p>
+              </div>
+              <div className="card maintenance-card">
+                <h3>Total Maintenance</h3>
+                <p>{counts.maintenanceCount}</p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
