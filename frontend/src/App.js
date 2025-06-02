@@ -31,6 +31,7 @@ import MaintenanceList from './pages/maintenance/MaintenanceList';
 import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
 
+import MovementReport from './pages/Reports/MovementReport';
 
 //Profile pages
 import Profile from './pages/profile';
@@ -208,6 +209,16 @@ const App = () => {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/reports/movements"
+  element={
+    <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+      <MovementReport />
+    </ProtectedRoute>
+  }
+/>
+
+
       </Routes>
     </BrowserRouter>
   );
