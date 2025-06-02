@@ -2,18 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-   FaFileAlt,
-  FaChartBar, FaCog, FaUserCircle
-} from 'react-icons/fa'; // All these icons are now used
+  FaFileAlt,
+  FaChartBar,
+  FaCog,
+  FaUserCircle
+} from 'react-icons/fa';
 
-// Import your CSS file
-import './SuperAdminDashboard.css'; // Adjust path if necessary
+// Import Recharts components
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
+
+import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // New states for counts
+  // Counts for cards
   const [counts, setCounts] = useState({
     usersCount: 0,
     assetsCount: 0,
@@ -22,6 +34,9 @@ const SuperAdminDashboard = () => {
   });
   const [countsLoading, setCountsLoading] = useState(true);
   const [countsError, setCountsError] = useState(null);
+
+  // New state for chart data
+  const [destinationData, setDestinationData] = useState([]);
 
   const navigate = useNavigate();
 
@@ -35,8 +50,6 @@ const SuperAdminDashboard = () => {
         setUser(res.data);
       } catch (error) {
         console.error('Error fetching profile:', error);
-        // Optionally redirect to login if token is invalid/expired
-        // navigate('/login');
       } finally {
         setLoading(false);
       }
@@ -44,7 +57,9 @@ const SuperAdminDashboard = () => {
 
     fetchUserProfile();
   }, []);
-
+useEffect(() => {
+  fetchMovementDestinations();
+}, []);
   useEffect(() => {
     const fetchCounts = async () => {
       try {
@@ -68,8 +83,40 @@ const SuperAdminDashboard = () => {
     fetchCounts();
   }, []);
 
+  // Fetch movements and aggregate destinations for chart
+ const fetchMovementDestinations = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.get('http://localhost:5000/movements', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const movements = res.data;
+
+    const countsMap = {};
+
+    movements.forEach(m => {
+      const from = m.movementFrom?.trim() || 'Unknown';
+      const to = m.movementTo?.trim() || 'Unknown';
+
+      // Count movementFrom
+      if (!countsMap[from]) countsMap[from] = { location: from, from: 0, to: 0 };
+      countsMap[from].from++;
+
+      // Count movementTo
+      if (!countsMap[to]) countsMap[to] = { location: to, from: 0, to: 0 };
+      countsMap[to].to++;
+    });
+
+    const formatted = Object.values(countsMap).sort((a, b) => (b.from + b.to) - (a.from + a.to));
+    setDestinationData(formatted);
+  } catch (error) {
+    console.error('Error fetching movement data:', error);
+  }
+};
+
   if (loading) {
-    return <div className="loading-state">Loading dashboard...</div>; // Added a class for loading
+    return <div className="loading-state">Loading dashboard...</div>;
   }
 
   const handleLogout = () => {
@@ -86,7 +133,7 @@ const SuperAdminDashboard = () => {
       <div className="sidebar">
         <div className="user-profile">
           <div className="user-avatar">
-            {user?.avatar_url ? ( // Assuming you might have an avatar URL
+            {user?.avatar_url ? (
               <img src={user.avatar_url} alt="User Avatar" />
             ) : (
               <FaUserCircle className="avatar-icon" />
@@ -99,49 +146,42 @@ const SuperAdminDashboard = () => {
         <nav className="navigation">
           <ul className="nav-list">
             <li className="nav-item">
-                <Link to="/users" className="nav-link">
-                    <FaUserCircle className="nav-icon" /> User Management
-                </Link>
+              <Link to="/users" className="nav-link">
+                <FaUserCircle className="nav-icon" /> User Management
+              </Link>
             </li>
             <li className="nav-item">
-                <Link to="/assets" className="nav-link">
-                    <FaFileAlt className="nav-icon" /> Asset Management
-                </Link>
+              <Link to="/assets" className="nav-link">
+                <FaFileAlt className="nav-icon" /> Asset Management
+              </Link>
             </li>
             <li className="nav-item">
-                <Link to="/movements" className="nav-link">
-                    <FaChartBar className="nav-icon" /> Movement Management
-                </Link>
+              <Link to="/movements" className="nav-link">
+                <FaChartBar className="nav-icon" /> Movement Management
+              </Link>
             </li>
             <li className="nav-item">
-                <Link to="/maintenance" className="nav-link">
-                    <FaCog className="nav-icon" /> Maintenance Management
-                </Link>
+              <Link to="/maintenance" className="nav-link">
+                <FaCog className="nav-icon" /> Maintenance Management
+              </Link>
             </li>
             <li className="nav-item">
-<<<<<<< HEAD
               <Link to="/profile" className="nav-link">
                 <FaCog className="nav-icon" /> Profile
               </Link>
             </li>
-=======
-                          <Link to="/profile" className="nav-link">
-                            <FaCog className="nav-icon" /> Profile
-                          </Link>
-                        </li>
-                        <li className="nav-item">
-      <Link to="/reports/movements" className="nav-link">
-        <FaFileAlt className="nav-icon" /> Movement Report
-      </Link>
-    </li>
->>>>>>> 48149577af75b5220f3d204db7ccf5da94a8ebdd
+            <li className="nav-item">
+              <Link to="/reports/movements" className="nav-link">
+                <FaFileAlt className="nav-icon" /> Movement Report
+              </Link>
+            </li>
           </ul>
         </nav>
-        {/* Logout Button */}
+
         <div className="nav-item logout">
-            <button onClick={handleLogout} className="nav-link logout-button">
-                <FaUserCircle className="nav-icon" /> Log out
-            </button>
+          <button onClick={handleLogout} className="nav-link logout-button">
+            <FaUserCircle className="nav-icon" /> Log out
+          </button>
         </div>
       </div>
 
@@ -173,6 +213,25 @@ const SuperAdminDashboard = () => {
             </>
           )}
         </div>
+
+        {/* Chart Section */}
+  <h3>Top Movement Locations</h3>
+{destinationData.length === 0 ? (
+  <p>No movement data available.</p>
+) : (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={destinationData} layout="vertical" margin={{ right: 700,left:30 }}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis type="number" />
+      <YAxis dataKey="location" type="category" />
+      <Tooltip />
+      <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
+      <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
+    </BarChart>
+  </ResponsiveContainer>
+)}
+
+       
       </div>
     </div>
   );
