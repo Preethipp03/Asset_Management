@@ -161,7 +161,7 @@ const App = () => {
         <Route
           path="/movements/add"
           element={
-            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <AddMovement />
             </ProtectedRoute>
           }
@@ -177,7 +177,7 @@ const App = () => {
         <Route
           path="/movements/edit/:id"
           element={
-            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <EditMovement />
             </ProtectedRoute>
           }
@@ -195,7 +195,7 @@ const App = () => {
         <Route
           path="/maintenance/add"
           element={
-            <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
               <AddMaintenance />
             </ProtectedRoute>
           }
@@ -203,7 +203,7 @@ const App = () => {
         <Route
   path="/edit-maintenance/:id"
   element={
-    <ProtectedRoute allowedRoles={['super_admin', 'admin', 'user']}>
+    <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
       <EditMaintenance />
     </ProtectedRoute>
   }
