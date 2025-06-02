@@ -827,7 +827,7 @@ app.post(
 app.get(
   '/maintenance',
   authMiddleware,
-  roleMiddleware(['admin', 'super_admin']),
+  roleMiddleware(['admin', 'super_admin','user']),
   async (req, res) => {
     try {
       const db = await connectDB();
