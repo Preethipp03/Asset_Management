@@ -166,15 +166,15 @@ useEffect(() => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link to="/profile" className="nav-link">
-                <FaCog className="nav-icon" /> Profile
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/reports/movements" className="nav-link">
-                <FaFileAlt className="nav-icon" /> Movement Report
-              </Link>
-            </li>
+                          <Link to="/profile" className="nav-link">
+                            <FaCog className="nav-icon" /> Profile
+                          </Link>
+                        </li>
+                        <li className="nav-item">
+      <Link to="/reports/movements" className="nav-link">
+        <FaFileAlt className="nav-icon" /> Movement Report
+      </Link>
+    </li>
           </ul>
         </nav>
 

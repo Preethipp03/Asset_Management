@@ -932,6 +932,119 @@ app.post(
   }
 );
 
+app.get('/maintenance/report', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const db = await connectDB();
+
+    const {
+      fromDate,
+      toDate,
+      assetName,
+      maintenanceType,
+      status,
+      technician,
+      format = 'csv'
+    } = req.query;
+
+    const query = {};
+
+    // Date filtering
+    if (fromDate || toDate) {
+      query.scheduledDate = {};
+      if (fromDate && !isNaN(Date.parse(fromDate))) {
+        query.scheduledDate.$gte = new Date(fromDate);
+      }
+      if (toDate && !isNaN(Date.parse(toDate))) {
+        query.scheduledDate.$lte = new Date(toDate);
+      }
+    }
+
+    if (assetName) {
+      query.assetName = { $regex: assetName.trim(), $options: 'i' };
+    }
+
+    if (maintenanceType) {
+      query.maintenanceType = { $regex: maintenanceType.trim(), $options: 'i' };
+    }
+
+    if (status) {
+      query.status = { $regex: status.trim(), $options: 'i' };
+    }
+
+    if (technician) {
+      query.$or = [
+        { technicianInHouse: { $regex: technician.trim(), $options: 'i' } },
+        { technicianVendor: { $regex: technician.trim(), $options: 'i' } }
+      ];
+    }
+
+    const maintenances = await db.collection('maintenance').find(query).toArray();
+    const totalCount = maintenances.length;
+
+    if (format === 'csv') {
+      const fields = [
+        'assetName',
+        'serialNumber',
+        'maintenanceType',
+        'scheduledDate',
+        'nextScheduledDate',
+        'status',
+        'technicianInHouse',
+        'technicianVendor',
+        'description'
+      ];
+      const parser = new Parser({ fields });
+      const csvData = parser.parse(maintenances);
+
+      // Prepend count to CSV
+      const csvWithCount = `Total Records: ${totalCount}\n\n${csvData}`;
+
+      res.header('Content-Type', 'text/csv');
+      res.attachment('maintenance_report.csv');
+      return res.send(csvWithCount);
+
+    } else if (format === 'pdf') {
+      const doc = new PDFDocument();
+      const filename = `maintenance_report_${Date.now()}.pdf`;
+
+      res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-type', 'application/pdf');
+
+      doc.pipe(res);
+
+      doc.fontSize(16).text('Maintenance Report', { align: 'center' });
+      doc.moveDown();
+
+      doc.fontSize(12).text(`Total Records: ${totalCount}`);
+      doc.moveDown();
+
+      maintenances.forEach((m, idx) => {
+        doc
+          .fontSize(10)
+          .text(`Maintenance #${idx + 1}`)
+          .text(`Asset Name: ${m.assetName}`)
+          .text(`Serial Number: ${m.serialNumber}`)
+          .text(`Type: ${m.maintenanceType}`)
+          .text(`Scheduled Date: ${m.scheduledDate ? new Date(m.scheduledDate).toLocaleString() : 'N/A'}`)
+          .text(`Next Scheduled Date: ${m.nextScheduledDate ? new Date(m.nextScheduledDate).toLocaleString() : 'N/A'}`)
+          .text(`Status: ${m.status}`)
+          .text(`Technician (In-House): ${m.technicianInHouse || 'N/A'}`)
+          .text(`Technician (Vendor): ${m.technicianVendor || 'N/A'}`)
+          .text(`Description: ${m.description || ''}`)
+          .moveDown();
+      });
+
+      doc.end();
+
+    } else {
+      return res.status(400).json({ message: 'Invalid format. Use ?format=csv or ?format=pdf' });
+    }
+
+  } catch (err) {
+    console.error('Error generating maintenance report:', err);
+    res.status(500).json({ error: 'Failed to generate maintenance report', details: err.message });
+  }
+});
 // --- Maintenance GET all ---
 app.get(
   '/maintenance',
