@@ -24,6 +24,32 @@ const maintenanceCollection = 'maintenance';
 // =========================
 // AUTH ROUTES
 // =========================
+app.get('/dashboard/counts', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+  try {
+    const db = await connectDB();
+
+    // Assuming you have these collections declared somewhere:
+    // const usersCollection = 'users';
+    // const assetsCollection = 'assets';
+    // const movementsCollection = 'movements';
+    // const maintenanceCollection = 'maintenance';
+
+    const usersCount = await db.collection(usersCollection).countDocuments();
+    const assetsCount = await db.collection(assetsCollection).countDocuments();
+    const movementsCount = await db.collection(movementsCollection).countDocuments();
+    const maintenanceCount = await db.collection(maintenanceCollection).countDocuments();
+
+    res.status(200).json({
+      usersCount,
+      assetsCount,
+      movementsCount,
+      maintenanceCount,
+    });
+  } catch (err) {
+    console.error('Error fetching dashboard counts:', err);
+    res.status(500).json({ error: 'Failed to fetch dashboard counts', details: err.message });
+  }
+});
 
 // Get current logged-in user
 app.get('/me', authMiddleware, (req, res) => {
