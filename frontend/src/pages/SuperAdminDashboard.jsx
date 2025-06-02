@@ -119,12 +119,6 @@ const SuperAdminDashboard = () => {
                 </Link>
             </li>
             <li className="nav-item">
-<<<<<<< HEAD
-              <Link to="/profile" className="nav-link">
-                <FaCog className="nav-icon" /> Profile
-              </Link>
-            </li>
-=======
                           <Link to="/profile" className="nav-link">
                             <FaCog className="nav-icon" /> Profile
                           </Link>
@@ -134,7 +128,6 @@ const SuperAdminDashboard = () => {
         <FaFileAlt className="nav-icon" /> Movement Report
       </Link>
     </li>
->>>>>>> 48149577af75b5220f3d204db7ccf5da94a8ebdd
           </ul>
         </nav>
         {/* Logout Button */}
