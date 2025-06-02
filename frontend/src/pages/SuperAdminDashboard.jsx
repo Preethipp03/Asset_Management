@@ -96,6 +96,11 @@ const SuperAdminDashboard = () => {
         <FaFileAlt className="nav-icon" /> Movement Report
       </Link>
     </li>
+    <li className="nav-item">
+      <Link to="/reports/maintenance" className="nav-link">
+        <FaFileAlt className="nav-icon" /> Maintenance Report
+      </Link>
+    </li>
           </ul>
         </nav>
         {/* Logout Button */}
