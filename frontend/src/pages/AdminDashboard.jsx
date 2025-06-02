@@ -11,6 +11,16 @@ import {
   FaUserCircle
 } from 'react-icons/fa';
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
+
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [counts, setCounts] = useState({
@@ -21,6 +31,8 @@ const AdminDashboard = () => {
   });
   const [countsLoading, setCountsLoading] = useState(true);
   const [countsError, setCountsError] = useState(null);
+
+  const [destinationData, setDestinationData] = useState([]);
 
   const navigate = useNavigate();
 
@@ -79,6 +91,42 @@ const AdminDashboard = () => {
     };
 
     fetchCounts();
+  }, []);
+
+  // Fetch movement destination data for BarChart
+  useEffect(() => {
+    const fetchMovementDestinations = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/movements', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const movements = res.data;
+
+        const countsMap = {};
+
+        movements.forEach(m => {
+          const from = m.movementFrom?.trim() || 'Unknown';
+          const to = m.movementTo?.trim() || 'Unknown';
+
+          if (!countsMap[from]) countsMap[from] = { location: from, from: 0, to: 0 };
+          countsMap[from].from++;
+
+          if (!countsMap[to]) countsMap[to] = { location: to, from: 0, to: 0 };
+          countsMap[to].to++;
+        });
+
+        // Sort by total movements descending
+        const formatted = Object.values(countsMap).sort((a, b) => (b.from + b.to) - (a.from + a.to));
+
+        setDestinationData(formatted);
+      } catch (error) {
+        console.error('Error fetching movement data:', error);
+      }
+    };
+
+    fetchMovementDestinations();
   }, []);
 
   const handleLogout = () => {
@@ -169,6 +217,23 @@ const AdminDashboard = () => {
             </>
           )}
         </div>
+
+        {/* Movement Bar Chart */}
+       <h3>Top Movement Locations</h3>
+       {destinationData.length === 0 ? (
+         <p>No movement data available.</p>
+       ) : (
+         <ResponsiveContainer width="100%" height={300}>
+           <BarChart data={destinationData} layout="vertical" margin={{ right: 700,left:30 }}>
+             <CartesianGrid strokeDasharray="3 3" />
+             <XAxis type="number" />
+             <YAxis dataKey="location" type="category" />
+             <Tooltip />
+             <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
+             <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
+           </BarChart>
+         </ResponsiveContainer>
+       )}
       </div>
     </div>
   );

@@ -11,6 +11,16 @@ import {
   FaFileAlt,
 } from 'react-icons/fa';
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
+
 const UserDashboard = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +34,9 @@ const UserDashboard = () => {
   });
   const [countsLoading, setCountsLoading] = useState(true);
   const [countsError, setCountsError] = useState(null);
+
+  // Movement destination data for chart
+  const [destinationData, setDestinationData] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,6 +99,41 @@ const UserDashboard = () => {
     fetchCounts();
   }, []);
 
+  // Fetch movement destinations data for BarChart
+  useEffect(() => {
+    const fetchMovementDestinations = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/movements', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const movements = res.data;
+
+        const countsMap = {};
+
+        movements.forEach(m => {
+          const from = m.movementFrom?.trim() || 'Unknown';
+          const to = m.movementTo?.trim() || 'Unknown';
+
+          if (!countsMap[from]) countsMap[from] = { location: from, from: 0, to: 0 };
+          countsMap[from].from++;
+
+          if (!countsMap[to]) countsMap[to] = { location: to, from: 0, to: 0 };
+          countsMap[to].to++;
+        });
+
+        const formatted = Object.values(countsMap).sort((a, b) => (b.from + b.to) - (a.from + a.to));
+
+        setDestinationData(formatted);
+      } catch (error) {
+        console.error('Error fetching movement data:', error);
+      }
+    };
+
+    fetchMovementDestinations();
+  }, []);
+
   const handleLogout = () => {
     const confirmed = window.confirm('Are you sure you want to log out?');
     if (confirmed) {
@@ -130,10 +178,10 @@ const UserDashboard = () => {
               </Link>
             </li>
             <li className="nav-item">
-                            <Link to="/assets" className="nav-link">
-                                <FaFileAlt className="nav-icon" /> Asset Management
-                            </Link>
-                        </li>
+              <Link to="/assets" className="nav-link">
+                <FaFileAlt className="nav-icon" /> Asset Management
+              </Link>
+            </li>
             <li className="nav-item">
               <Link
                 to="/movements"
@@ -168,7 +216,6 @@ const UserDashboard = () => {
             <div className="error-message">{countsError}</div>
           ) : (
             <>
-             
               <div className="card assets-card">
                 <h3>Total Assets</h3>
                 <p>{counts.assetsCount}</p>
@@ -184,6 +231,23 @@ const UserDashboard = () => {
             </>
           )}
         </div>
+
+        {/* Movement Bar Chart */}
+        <h3>Top Movement Locations</h3>
+       {destinationData.length === 0 ? (
+         <p>No movement data available.</p>
+       ) : (
+         <ResponsiveContainer width="100%" height={300}>
+           <BarChart data={destinationData} layout="vertical" margin={{ right: 700,left:30 }}>
+             <CartesianGrid strokeDasharray="3 3" />
+             <XAxis type="number" />
+             <YAxis dataKey="location" type="category" />
+             <Tooltip />
+             <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
+             <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
+           </BarChart>
+         </ResponsiveContainer>
+       )}
       </div>
     </div>
   );
