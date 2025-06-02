@@ -32,6 +32,7 @@ import AddMaintenance from './pages/maintenance/AddMaintenance';
 import EditMaintenance from './pages/maintenance/EditMaintenance';
 
 import MovementReport from './pages/Reports/MovementReport';
+import MaintenanceReport from './pages/Reports/MaintenanceReport';
 
 //Profile pages
 import Profile from './pages/profile';
@@ -214,6 +215,14 @@ const App = () => {
   element={
     <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
       <MovementReport />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/reports/maintenance"
+  element={
+    <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+      <MaintenanceReport />
     </ProtectedRoute>
   }
 />
