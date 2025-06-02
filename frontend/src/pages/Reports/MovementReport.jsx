@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import "./MovementReport.css";
 
 const MovementReport = () => {
   const [fromDate, setFromDate] = useState("");
@@ -10,6 +10,10 @@ const MovementReport = () => {
   const [format, setFormat] = useState("json");
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+
+  const goBack = () => {
+    window.history.back();
+  };
 
   const fetchMovements = async () => {
     setError(null);
@@ -30,23 +34,21 @@ const MovementReport = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        responseType: format === "json" ? "json" : "blob", // handle file download as blob
+        responseType: format === "json" ? "json" : "blob",
       };
 
-      const response = await axios.get(
+      const response = await fetch(
         `http://localhost:5000/movements/report?${params.toString()}`,
         config
       );
 
       if (format === "json") {
-        setData(response.data);
+        const jsonData = await response.json();
+        setData(jsonData);
       } else {
-        // For CSV or PDF: create a download link and trigger it
-        const blob = new Blob([response.data], {
-          type:
-            format === "csv"
-              ? "text/csv"
-              : "application/pdf",
+        const blobData = await response.blob();
+        const blob = new Blob([blobData], {
+          type: format === "csv" ? "text/csv" : "application/pdf",
         });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -61,15 +63,26 @@ const MovementReport = () => {
         window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error fetching movement report");
+      setError(err.message || "Error fetching movement report");
     }
   };
 
   return (
-    <div>
-      <h2>Movement Report</h2>
+    <div className="movement-report-wrapper">
+      <div className="header-with-back-button">
+        <button className="back-button" onClick={goBack}>
+          ← Back
+        </button>
+        <h2 className="edit-movement-title">Movement Report</h2>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}>
+      <form
+        className="edit-movement-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          fetchMovements();
+        }}
+      >
         <label>
           From Date:
           <input
@@ -127,27 +140,16 @@ const MovementReport = () => {
           </select>
         </label>
 
-        <button onClick={fetchMovements}>Get Report</button>
-      </div>
+        <button className="submit-button" type="submit">
+          Get Report
+        </button>
+      </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
-      <div style={{ marginTop: "20px" }}>
-        {format === "json" && data.length > 0 && (
-          <pre
-            style={{
-              whiteSpace: "pre-wrap",
-              maxHeight: "400px",
-              overflowY: "auto",
-              backgroundColor: "#f4f4f4",
-              padding: "10px",
-              borderRadius: "4px",
-            }}
-          >
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        )}
-      </div>
+      {format === "json" && data.length > 0 && (
+        <pre className="json-output">{JSON.stringify(data, null, 2)}</pre>
+      )}
     </div>
   );
 };
