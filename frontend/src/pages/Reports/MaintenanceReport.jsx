@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const backendURL = 'http://localhost:5000';  // Your backend URL & port
+const backendURL = 'http://localhost:5000';
 
 const MaintenanceReport = () => {
   const [filters, setFilters] = useState({
@@ -16,6 +16,9 @@ const MaintenanceReport = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // New state to store fetched records for viewing
+  const [records, setRecords] = useState([]);
+
   const handleChange = (e) => {
     setFilters({
       ...filters,
@@ -26,39 +29,69 @@ const MaintenanceReport = () => {
   const handleExport = async () => {
     setLoading(true);
     setError(null);
+    setRecords([]);
 
     try {
-      const token = localStorage.getItem('token');  // Get JWT token
-
-      // Build query params
+      const token = localStorage.getItem('token');
       const params = { ...filters };
-
-      // Remove empty params to keep URL clean
       Object.keys(params).forEach((key) => {
         if (!params[key]) delete params[key];
       });
 
       const response = await axios.get(`${backendURL}/maintenance/report`, {
         params,
-        responseType: 'blob', // important for file download
+        responseType: 'blob',
         headers: {
-          Authorization: `Bearer ${token}`,  // Pass token in header
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      // Create downloadable file blob
       const blob = new Blob([response.data], {
         type: filters.format === 'pdf' ? 'application/pdf' : 'text/csv',
       });
 
-      // Create link and click to download
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
+      link.href = url;
       link.download = `maintenance_report.${filters.format}`;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
 
     } catch (err) {
-      setError('Error exporting report: ' + (err.response?.data?.message || err.message));
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler for "View Records" button
+  const handleViewRecords = async () => {
+    setLoading(true);
+    setError(null);
+    setRecords([]);
+
+    try {
+      const token = localStorage.getItem('token');
+      const params = { ...filters };
+      delete params.format; // no need to send format when fetching JSON
+      Object.keys(params).forEach((key) => {
+        if (!params[key]) delete params[key];
+      });
+
+      // Use your existing backend endpoint that returns JSON records
+      const response = await axios.get(`${backendURL}/maintenance/records`, {
+        params,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setRecords(response.data); // set the fetched records
+
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -99,7 +132,13 @@ const MaintenanceReport = () => {
 
       <label>
         Technician:
-        <input type="text" name="technician" value={filters.technician} onChange={handleChange} placeholder="Technician name" />
+        <input
+          type="text"
+          name="technician"
+          value={filters.technician}
+          onChange={handleChange}
+          placeholder="Technician name"
+        />
       </label>
 
       <label>
@@ -110,11 +149,45 @@ const MaintenanceReport = () => {
         </select>
       </label>
 
-      <button onClick={handleExport} disabled={loading} style={{ marginTop: 20 }}>
-        {loading ? 'Exporting...' : 'Export Report'}
-      </button>
+      <div style={{ marginTop: 20 }}>
+        <button onClick={handleExport} disabled={loading}>
+          {loading ? 'Exporting...' : 'Export Report'}
+        </button>
+
+        <button onClick={handleViewRecords} disabled={loading} style={{ marginLeft: 10 }}>
+          {loading ? 'Loading...' : 'View Records'}
+        </button>
+      </div>
 
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {records.length > 0 && (
+        <div style={{ marginTop: 30 }}>
+          <h3>Records</h3>
+          <table border="1" cellPadding="5" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th>Asset Name</th>
+                <th>Maintenance Type</th>
+                <th>Status</th>
+                <th>Scheduled Date</th>
+                <th>Technician</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record._id || record.id}>
+                  <td>{record.assetName}</td>
+                  <td>{record.maintenanceType}</td>
+                  <td>{record.status}</td>
+                  <td>{new Date(record.scheduledDate).toLocaleDateString()}</td>
+                  <td>{record.technicianInHouse || record.technicianVendor || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
