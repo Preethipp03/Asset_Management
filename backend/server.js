@@ -509,50 +509,133 @@ app.post('/movements', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/movements', authMiddleware, async (req, res) => {
+  try {
+    const db = await connectDB();
+    const movements = await db.collection(movementsCollection).find({}).toArray();
+    res.json(movements);
+  } catch (err) {
+    console.error('Error fetching movements:', err);
+    res.status(500).json({ error: 'Failed to fetch movements' });
+  }
+});
+
+
 // Get all movements
-app.get('/movements', authMiddleware, roleMiddleware(['admin', 'super_admin', 'user']), async (req, res) => {
+const { Parser } = require('json2csv');
+const PDFDocument = require('pdfkit');
+
+
+app.get('/movements/report', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
     const db = await connectDB();
 
-    // Start with empty query - fetch all movements by default
+    const {
+      fromDate,
+      toDate,
+      movementFrom,
+      movementTo,
+      // assetId,  <-- REMOVED
+      returnable,
+      format = 'csv'
+    } = req.query;
+
     const query = {};
 
-    // Extract possible filters from query params
-    const { fromDate, toDate, movementFrom, movementTo, assetId, returnable } = req.query;
-
-    // Date range filter
     if (fromDate || toDate) {
-      query.date = {};
-      if (fromDate && !isNaN(Date.parse(fromDate))) {
-        query.date.$gte = new Date(fromDate);
-      }
-      if (toDate && !isNaN(Date.parse(toDate))) {
-        query.date.$lte = new Date(toDate);
-      }
-    }
+  query.date = {};
+  if (fromDate && !isNaN(Date.parse(fromDate))) {
+    query.date.$gte = new Date(fromDate);
+  }
+  if (toDate && !isNaN(Date.parse(toDate))) {
+    query.date.$lte = new Date(toDate);
+  }
+}
 
-    // String exact match filters (trimmed)
-    if (movementFrom) query.movementFrom = movementFrom.trim();
-    if (movementTo) query.movementTo = movementTo.trim();
 
-    // assetId filter - validate ObjectId
-    if (assetId && ObjectId.isValid(assetId)) {
-      query.assetId = new ObjectId(assetId);
-    }
+    if (movementFrom) query.movementFrom = { $regex: movementFrom.trim(), $options: 'i' };
+    if (movementTo) query.movementTo = { $regex: movementTo.trim(), $options: 'i' };
 
-    // Boolean filter for returnable - expect string 'true' or 'false'
+    // assetId filtering removed
+
     if (returnable === 'true') query.returnable = true;
     else if (returnable === 'false') query.returnable = false;
 
-    // Run the query with filters (or no filters if none provided)
     const movements = await db.collection(movementsCollection).find(query).toArray();
 
-    res.status(200).json(movements);
+    console.log('Query used:', query);
+console.log('Number of records found:', movements.length);
+if (movements.length > 0) {
+  console.log('Sample movement:', movements[0]);
+}
+
+    if (format === 'csv') {
+      const fields = [
+            'assetName',
+            'serialNumber',
+            'movementFrom',
+            'movementTo',
+            'movementType',
+            'dispatchedBy',
+            'receivedBy',
+            'date', 
+            'returnable',
+            'expectedReturnDate',
+            'returnedDateTime',
+            'assetCondition',
+            'description'
+          ];
+
+      const parser = new Parser({ fields });
+      const csv = parser.parse(movements);
+
+      res.header('Content-Type', 'text/csv');
+      res.attachment('movement_report.csv');
+      return res.send(csv);
+
+    } else if (format === 'pdf') {
+      const doc = new PDFDocument();
+      const filename = `movement_report_${Date.now()}.pdf`;
+
+      res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-type', 'application/pdf');
+
+      doc.pipe(res);
+
+      doc.fontSize(16).text('Movement Report', { align: 'center' });
+      doc.moveDown();
+
+      movements.forEach((mv, idx) => {
+        doc
+          .fontSize(10)
+          .text(`Movement #${idx + 1}`)
+          .text(`Asset Name: ${mv.assetName}`)
+          .text(`Serial Number: ${mv.serialNumber}`)
+          .text(`From: ${mv.movementFrom}`)
+          .text(`To: ${mv.movementTo}`)
+          .text(`Type: ${mv.movementType}`)
+          .text(`Dispatched By: ${mv.dispatchedBy}`)
+          .text(`Received By: ${mv.receivedBy}`)
+          .text(`Date: ${mv.date ? new Date(mv.date).toLocaleString() : 'N/A'}`)
+          .text(`Returnable: ${mv.returnable}`)
+          .text(`Expected Return: ${mv.expectedReturnDate ? new Date(mv.expectedReturnDate).toLocaleString() : 'N/A'}`)
+          .text(`Returned On: ${mv.returnedDateTime ? new Date(mv.returnedDateTime).toLocaleString() : 'N/A'}`)
+          .text(`Condition: ${mv.assetCondition}`)
+          .text(`Description: ${mv.description}`)
+          .moveDown();
+      });
+
+      doc.end();
+
+    } else {
+      return res.status(400).json({ message: 'Invalid format. Use ?format=csv or ?format=pdf' });
+    }
   } catch (err) {
-    console.error('Error fetching movements:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error('Error generating report:', err);
+    res.status(500).json({ error: 'Failed to generate report', details: err.message });
   }
 });
+
 
 
 // Get movement by ID
