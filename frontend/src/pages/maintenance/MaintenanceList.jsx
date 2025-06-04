@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {jwtDecode} from 'jwt-decode';
 import './MaintenanceList.css'; // Ensure this CSS file is in the same directory
 
 const MaintenanceList = () => {
@@ -66,6 +67,26 @@ const MaintenanceList = () => {
     const handleAddMaintenance = () => {
         navigate('/maintenance/add'); // Assuming you have an add-maintenance route configured
     };
+    
+    const handleBackToDashboard = () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/');
+                return;
+            }
+            try {
+                const decoded = jwtDecode(token);
+                const role = decoded.role;
+                if (role === 'super_admin') navigate('/super-admin');
+                else if (role === 'admin') navigate('/admin');
+                else if (role === 'user') navigate('/user');
+                else navigate('/');
+            } catch (error) {
+                console.error('Invalid token:', error);
+                navigate('/');
+            }
+        };
+    
 
     const handleResetFilters = () => {
         setSearchQuery('');
@@ -84,7 +105,7 @@ const MaintenanceList = () => {
                 <div className="table-controls-header">
                     <div className="header-left">
                         {/* Moved Back Button here */}
-                        <button className="reset-btn" onClick={() => navigate(-1)} style={{ marginRight: '10px' }}>
+                        <button className="reset-btn" onClick={handleBackToDashboard} style={{ marginRight: '10px' }}>
                             <i className="fas fa-arrow-left"></i> Back
                         </button>
 

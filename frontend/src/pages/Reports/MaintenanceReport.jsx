@@ -24,7 +24,6 @@ const MaintenanceReport = () => {
     });
   };
 
-  // Check if any filter is set to enable buttons
   const isFilterSet =
     filters.fromDate ||
     filters.toDate ||
@@ -44,7 +43,7 @@ const MaintenanceReport = () => {
         if (!params[key]) delete params[key];
       });
 
-      const response = await axios.get(`${backendURL}/maintenance/report`, {
+      const response = await axios.get(`${backendURL}/maintenance/records`, {
         params,
         responseType: 'blob',
         headers: {
@@ -78,8 +77,7 @@ const MaintenanceReport = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const params = { ...filters };
-      params.format = 'json';  // <-- Fix: explicitly request JSON format for viewing records
+      const params = { ...filters, format: 'json' };
       Object.keys(params).forEach((key) => {
         if (!params[key]) delete params[key];
       });
@@ -97,6 +95,19 @@ const MaintenanceReport = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      fromDate: '',
+      toDate: '',
+      maintenanceType: '',
+      status: '',
+      technician: '',
+      format: 'csv',
+    });
+    setRecords([]);
+    setError(null);
   };
 
   return (
@@ -181,6 +192,14 @@ const MaintenanceReport = () => {
         >
           {loading ? 'Loading...' : 'View Records'}
         </button>
+
+        <button
+          onClick={resetFilters}
+          disabled={loading || !isFilterSet}
+          style={{ marginLeft: 10 }}
+        >
+          Reset Filters
+        </button>
       </div>
 
       {error && (
@@ -194,42 +213,42 @@ const MaintenanceReport = () => {
       )}
 
       {records.length > 0 && (
-  <div style={{ marginTop: 30 }}>
-    <p>
-      <strong>Total Records:</strong> {records.length}
-    </p>
-    <table
-      border="1"
-      cellPadding="5"
-      style={{ width: '100%', borderCollapse: 'collapse' }}
-    >
-      <thead>
-        <tr>
-          <th>Asset Name</th>
-          <th>Maintenance Type</th>
-          <th>Status</th>
-          <th>Scheduled Date</th>
-          <th>Technician</th>
-        </tr>
-      </thead>
-      <tbody>
-        {records.map((record) => (
-          <tr key={record._id || record.id}>
-            <td>{record.assetName}</td>
-            <td>{record.maintenanceType}</td>
-            <td>{record.status}</td>
-            <td>
-              {record.scheduledDate
-                ? new Date(record.scheduledDate).toLocaleDateString()
-                : '-'}
-            </td>
-            <td>{record.technicianInHouse || record.technicianVendor || '-'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+        <div style={{ marginTop: 30 }}>
+          <p>
+            <strong>Total Records:</strong> {records.length}
+          </p>
+          <table
+            border="1"
+            cellPadding="5"
+            style={{ width: '100%', borderCollapse: 'collapse' }}
+          >
+            <thead>
+              <tr>
+                <th>Asset Name</th>
+                <th>Maintenance Type</th>
+                <th>Status</th>
+                <th>Scheduled Date</th>
+                <th>Technician</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record._id || record.id}>
+                  <td>{record.assetName}</td>
+                  <td>{record.maintenanceType}</td>
+                  <td>{record.status}</td>
+                  <td>
+                    {record.scheduledDate
+                      ? new Date(record.scheduledDate).toLocaleDateString()
+                      : '-'}
+                  </td>
+                  <td>{record.technicianInHouse || record.technicianVendor || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
