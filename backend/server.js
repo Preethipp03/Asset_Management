@@ -495,10 +495,8 @@ app.get('/movements', authMiddleware, async (req, res) => {
 });
 
 
-// Get all movements
 const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
-
 
 app.get('/movements/report', authMiddleware, roleMiddleware(['admin', 'super_admin']), async (req, res) => {
   try {
@@ -509,28 +507,25 @@ app.get('/movements/report', authMiddleware, roleMiddleware(['admin', 'super_adm
       toDate,
       movementFrom,
       movementTo,
-      // assetId,  <-- REMOVED
       returnable,
-      format = 'csv'
+      format = 'csv',
+      download = 'false'
     } = req.query;
 
     const query = {};
 
     if (fromDate || toDate) {
-  query.date = {};
-  if (fromDate && !isNaN(Date.parse(fromDate))) {
-    query.date.$gte = new Date(fromDate);
-  }
-  if (toDate && !isNaN(Date.parse(toDate))) {
-    query.date.$lte = new Date(toDate);
-  }
-}
-
+      query.date = {};
+      if (fromDate && !isNaN(Date.parse(fromDate))) {
+        query.date.$gte = new Date(fromDate);
+      }
+      if (toDate && !isNaN(Date.parse(toDate))) {
+        query.date.$lte = new Date(toDate);
+      }
+    }
 
     if (movementFrom) query.movementFrom = { $regex: movementFrom.trim(), $options: 'i' };
     if (movementTo) query.movementTo = { $regex: movementTo.trim(), $options: 'i' };
-
-    // assetId filtering removed
 
     if (returnable === 'true') query.returnable = true;
     else if (returnable === 'false') query.returnable = false;
@@ -538,27 +533,30 @@ app.get('/movements/report', authMiddleware, roleMiddleware(['admin', 'super_adm
     const movements = await db.collection(movementsCollection).find(query).toArray();
 
     console.log('Query used:', query);
-console.log('Number of records found:', movements.length);
-if (movements.length > 0) {
-  console.log('Sample movement:', movements[0]);
-}
+    console.log('Number of records found:', movements.length);
 
+    // 👇 Return preview data for browser display if not exporting
+    if (download === 'false') {
+      return res.json({ count: movements.length, data: movements });
+    }
+
+    // 👇 Proceed to export as CSV or PDF
     if (format === 'csv') {
       const fields = [
-            'assetName',
-            'serialNumber',
-            'movementFrom',
-            'movementTo',
-            'movementType',
-            'dispatchedBy',
-            'receivedBy',
-            'date', 
-            'returnable',
-            'expectedReturnDate',
-            'returnedDateTime',
-            'assetCondition',
-            'description'
-          ];
+        'assetName',
+        'serialNumber',
+        'movementFrom',
+        'movementTo',
+        'movementType',
+        'dispatchedBy',
+        'receivedBy',
+        'date',
+        'returnable',
+        'expectedReturnDate',
+        'returnedDateTime',
+        'assetCondition',
+        'description'
+      ];
 
       const parser = new Parser({ fields });
       const csv = parser.parse(movements);
@@ -566,7 +564,6 @@ if (movements.length > 0) {
       res.header('Content-Type', 'text/csv');
       res.attachment('movement_report.csv');
       return res.send(csv);
-
     } else if (format === 'pdf') {
       const doc = new PDFDocument();
       const filename = `movement_report_${Date.now()}.pdf`;
@@ -600,10 +597,10 @@ if (movements.length > 0) {
       });
 
       doc.end();
-
     } else {
-      return res.status(400).json({ message: 'Invalid format. Use ?format=csv or ?format=pdf' });
+      return res.status(400).json({ message: 'Invalid format. Use format=csv or format=pdf' });
     }
+
   } catch (err) {
     console.error('Error generating report:', err);
     res.status(500).json({ error: 'Failed to generate report', details: err.message });
@@ -921,6 +918,8 @@ app.get(
     }
   }
 );
+
+
 app.get(
   '/maintenance/records',
   authMiddleware,
@@ -936,6 +935,7 @@ app.get(
         maintenanceType,
         status,
         technician,
+        format,
       } = req.query;
 
       const query = {};
@@ -971,14 +971,57 @@ app.get(
 
       const maintenances = await db.collection('maintenance').find(query).toArray();
 
-      res.status(200).json(maintenances);
+      // 🟡 Return JSON if requested (for preview)
+      if (format === 'json') {
+        return res.status(200).json(maintenances);
+      }
+
+      // 🟢 CSV Export
+      if (format === 'csv') {
+        const fields = ['assetName', 'maintenanceType', 'status', 'scheduledDate', 'technicianInHouse', 'technicianVendor'];
+        const opts = { fields };
+        const parser = new Parser(opts);
+        const csv = parser.parse(maintenances);
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment('maintenance_report.csv');
+        return res.send(csv);
+      }
+
+      // 🔵 PDF Export
+      if (format === 'pdf') {
+        const doc = new PDFDocument();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=maintenance_report.pdf');
+        doc.pipe(res);
+
+        doc.fontSize(16).text('Maintenance Report', { align: 'center' }).moveDown();
+
+        maintenances.forEach((item, index) => {
+          doc
+            .fontSize(10)
+            .text(`Asset Name: ${item.assetName || '-'}`)
+            .text(`Maintenance Type: ${item.maintenanceType || '-'}`)
+            .text(`Status: ${item.status || '-'}`)
+            .text(`Scheduled Date: ${item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : '-'}`)
+            .text(`Technician: ${item.technicianInHouse || item.technicianVendor || '-'}`)
+            .moveDown();
+        });
+
+        doc.end();
+        return;
+      }
+
+      // ❌ Invalid format fallback
+      return res.status(400).json({ error: 'Invalid format. Choose csv, pdf, or json.' });
 
     } catch (err) {
-      console.error('Failed to fetch filtered maintenance records:', err);
-      res.status(500).json({ error: 'Failed to fetch maintenance records', details: err.message });
+      console.error('Failed to generate maintenance report:', err);
+      res.status(500).json({ error: 'Failed to generate maintenance report', details: err.message });
     }
   }
 );
+
 
 // --- Maintenance GET by ID ---
 app.get('/maintenance/:id', authMiddleware, async (req, res) => {
@@ -1113,6 +1156,33 @@ app.delete(
     }
   }
 );
+
+app.get('/dashboard/counts', authMiddleware, roleMiddleware(['admin', 'super_admin','user']), async (req, res) => {
+  try {
+    const db = await connectDB();
+ 
+    // Assuming you have these collections declared somewhere:
+    // const usersCollection = 'users';
+    // const assetsCollection = 'assets';
+    // const movementsCollection = 'movements';
+    // const maintenanceCollection = 'maintenance';
+ 
+    const usersCount = await db.collection(usersCollection).countDocuments();
+    const assetsCount = await db.collection(assetsCollection).countDocuments();
+    const movementsCount = await db.collection(movementsCollection).countDocuments();
+    const maintenanceCount = await db.collection(maintenanceCollection).countDocuments();
+ 
+    res.status(200).json({
+      usersCount,
+      assetsCount,
+      movementsCount,
+      maintenanceCount,
+    });
+  } catch (err) {
+    console.error('Error fetching dashboard counts:', err);
+    res.status(500).json({ error: 'Failed to fetch dashboard counts', details: err.message });
+  }
+});
 
 // =========================
 // SERVER SETUP
