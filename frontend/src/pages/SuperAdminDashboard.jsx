@@ -14,7 +14,11 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  ResponsiveContainer
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
 } from 'recharts';
 
 import './SuperAdminDashboard.css';
@@ -33,6 +37,7 @@ const SuperAdminDashboard = () => {
   const [countsError, setCountsError] = useState(null);
 
   const [destinationData, setDestinationData] = useState([]);
+  const [maintenanceStatusData, setMaintenanceStatusData] = useState([]);
 
   const navigate = useNavigate();
 
@@ -110,6 +115,35 @@ const SuperAdminDashboard = () => {
     fetchMovementDestinations();
   }, []);
 
+  useEffect(() => {
+    const fetchMaintenanceStatuses = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/maintenance', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const statusCountMap = {};
+
+        res.data.forEach(item => {
+          const status = item.status || 'unknown';
+          statusCountMap[status] = (statusCountMap[status] || 0) + 1;
+        });
+
+        const formatted = Object.entries(statusCountMap).map(([status, count]) => ({
+          name: status.charAt(0).toUpperCase() + status.slice(1),
+          value: count
+        }));
+
+        setMaintenanceStatusData(formatted);
+      } catch (error) {
+        console.error('Error fetching maintenance data:', error);
+      }
+    };
+
+    fetchMaintenanceStatuses();
+  }, []);
+
   const handleLogout = () => {
     const confirmed = window.confirm('Are you sure you want to log out?');
     if (confirmed) {
@@ -117,6 +151,8 @@ const SuperAdminDashboard = () => {
       navigate('/');
     }
   };
+
+  const pieColors = ['#FF6384', '#36A2EB', '#FFCE56', '#9CCC65'];
 
   if (loading) {
     return <div className="loading-state">Loading dashboard...</div>;
@@ -214,22 +250,53 @@ const SuperAdminDashboard = () => {
           )}
         </div>
 
-        {/* Movement Bar Chart */}
-        <h3 style={{ marginTop: '30px' }}>Top Movement Locations</h3>
-        {destinationData.length === 0 ? (
-          <p>No movement data available.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={destinationData} layout="vertical" margin={{ right: 700, left: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="location" type="category" />
-              <Tooltip />
-              <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
-              <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+        {/* CHARTS */}
+        <div className="charts-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', marginTop: '30px' }}>
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            <h3>Top Movement Locations</h3>
+            {destinationData.length === 0 ? (
+              <p>No movement data available.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={destinationData} layout="vertical" margin={{ right: 50, left: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="location" type="category" />
+                  <Tooltip />
+                  <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
+                  <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            <h3>Maintenance Status Distribution</h3>
+            {maintenanceStatusData.length === 0 ? (
+              <p>No maintenance data available.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={maintenanceStatusData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {maintenanceStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
