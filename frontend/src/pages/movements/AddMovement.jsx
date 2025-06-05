@@ -98,7 +98,7 @@ const AddMovement = () => {
         try {
             console.log('Submitting movement:', formData); // Debug log
             await axios.post(
-                'http://localhost:5000/movements',
+                'http://172.16.0.36:5000/movements',
                 {
                     serialNumber: serialNumber.trim(),
                     assetName: assetName.trim(),

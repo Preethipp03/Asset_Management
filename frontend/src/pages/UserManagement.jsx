@@ -10,7 +10,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/users', {
+      const res = await axios.get('http://172.16.0.36:5000/users', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data);
@@ -40,12 +40,12 @@ const UserManagement = () => {
         const updateData = { ...formData };
         if (!formData.password) delete updateData.password;
 
-        await axios.put(`http://localhost:5000/users/${editingUserId}`, updateData, {
+        await axios.put(`http://172.16.0.36:5000/users/${editingUserId}`, updateData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage('✅ User updated successfully!');
       } else {
-        await axios.post('http://localhost:5000/users', formData, {
+        await axios.post('http://172.16.0.36:5000/users', formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage('✅ User created successfully!');
@@ -67,7 +67,7 @@ const UserManagement = () => {
   const deleteUser = async (userId) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://localhost:5000/users/${userId}`, {
+      await axios.delete(`http://172.16.0.36:5000/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchUsers();

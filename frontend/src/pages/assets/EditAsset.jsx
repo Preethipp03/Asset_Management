@@ -41,7 +41,7 @@ const EditAsset = () => {
         setFetching(true);
         const fetchAsset = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/assets/${id}`, {
+                const res = await axios.get(`http://172.16.0.36:5000/assets/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = res.data;
@@ -112,7 +112,7 @@ const EditAsset = () => {
         };
 
         try {
-            await axios.put(`http://localhost:5000/assets/${id}`, payload, {
+            await axios.put(`http://172.16.0.36:5000/assets/${id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSuccess('Asset updated successfully!');

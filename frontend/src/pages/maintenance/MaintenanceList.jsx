@@ -21,7 +21,7 @@ const MaintenanceList = () => {
         setError('');
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5000/maintenance', {
+            const response = await axios.get('http://172.16.0.36:5000/maintenance', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -55,7 +55,7 @@ const MaintenanceList = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/maintenance/${id}`, {
+            await axios.delete(`http://172.16.0.36:5000/maintenance/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchMaintenances(); // Refresh list after delete

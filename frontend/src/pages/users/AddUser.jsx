@@ -65,7 +65,7 @@ const AddUser = () => {
 
         try {
             await axios.post(
-                'http://localhost:5000/users',
+                'http://172.16.0.36:5000/users',
                 formData, // formData directly contains name, email, password, role
                 {
                     headers: { Authorization: `Bearer ${token}` },

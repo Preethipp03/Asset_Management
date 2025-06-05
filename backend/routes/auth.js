@@ -30,7 +30,7 @@ router.post('/ForgotPassword', async (req, res) => {
       { $set: { resetToken: token, resetTokenExpiry } }
     );
 
-    const resetLink = `http://localhost:3000/ResetPassword?token=${token}&email=${email}`;
+    const resetLink = `http://172.16.0.36:3000/ResetPassword?token=${token}&email=${email}`;
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',

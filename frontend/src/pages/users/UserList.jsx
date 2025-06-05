@@ -19,7 +19,7 @@ const UserList = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.get('http://localhost:5000/users', {
+            const res = await axios.get('http://172.16.0.36:5000/users', {
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
                     search: searchQuery,
@@ -50,7 +50,7 @@ const UserList = () => {
     const deleteUser = async (id) => {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
         try {
-            await axios.delete(`http://localhost:5000/users/${id}`, {
+            await axios.delete(`http://172.16.0.36:5000/users/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchUsers();

@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 async function createSuperadmin() {
   // Connect to your MongoDB
-  const uri = "mongodb://localhost:27017/mydatabase"; // Replace with your MongoDB URI
+  const uri = "mongodb://172.16.0.36:27017/mydatabase"; // Replace with your MongoDB URI
   const client = new MongoClient(uri);
 
   try {

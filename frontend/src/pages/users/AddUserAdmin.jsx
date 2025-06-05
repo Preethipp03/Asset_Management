@@ -44,7 +44,7 @@ const AddUserAdmin = () => {
 
         try {
             await axios.post(
-                'http://localhost:5000/users',
+                'http://172.16.0.36:5000/users',
                 { ...formData, role: 'user' }, // Explicitly set role to 'user' for admin-added users
                 { headers: { Authorization: `Bearer ${token}` } }
             );

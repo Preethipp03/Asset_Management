@@ -12,7 +12,7 @@ const ForgotPassword = () => {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5000/auth/ForgotPassword', { email });
+      const res = await axios.post('http://172.16.0.36:5000/auth/ForgotPassword', { email });
       setMessage(res.data.message);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');

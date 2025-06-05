@@ -60,7 +60,7 @@ const UserDashboard = () => {
 
         setRole(roleFromToken);
 
-        const res = await axios.get('http://localhost:5000/api/profile', {
+        const res = await axios.get('http://172.16.0.36:5000/api/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
@@ -83,7 +83,7 @@ const UserDashboard = () => {
         setCountsError(null);
 
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/dashboard/counts', {
+        const res = await axios.get('http://172.16.0.36:5000/dashboard/counts', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -104,7 +104,7 @@ const UserDashboard = () => {
     const fetchMovementDestinations = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/movements', {
+        const res = await axios.get('http://172.16.0.36:5000/movements', {
           headers: { Authorization: `Bearer ${token}` }
         });
 

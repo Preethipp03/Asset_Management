@@ -71,7 +71,7 @@ const AddAsset = () => {
         };
 
         try {
-            await axios.post('http://localhost:5000/assets', payload, {
+            await axios.post('http://172.16.0.36:5000/assets', payload, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

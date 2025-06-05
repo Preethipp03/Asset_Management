@@ -9,7 +9,7 @@ const AssetManagement = () => {
 
   const fetchAssets = async () => {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:5000/assets', {
+    const res = await axios.get('http://172.16.0.36:5000/assets', {
       headers: { Authorization: `Bearer ${token}` },
     });
     setAssets(res.data);
@@ -33,11 +33,11 @@ const AssetManagement = () => {
 
     try {
       if (editingId) {
-        await axios.put(`http://localhost:5000/assets/${editingId}`, data, {
+        await axios.put(`http://172.16.0.36:5000/assets/${editingId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await axios.post('http://localhost:5000/assets', data, {
+        await axios.post('http://172.16.0.36:5000/assets', data, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -55,7 +55,7 @@ const AssetManagement = () => {
 
   const deleteAsset = async (id) => {
     const token = localStorage.getItem('token');
-    await axios.delete(`http://localhost:5000/assets/${id}`, {
+    await axios.delete(`http://172.16.0.36:5000/assets/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     fetchAssets();

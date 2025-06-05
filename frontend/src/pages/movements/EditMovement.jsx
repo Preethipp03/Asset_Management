@@ -45,7 +45,7 @@ const EditMovement = () => {
 
         setFetching(true);
         axios
-            .get(`http://localhost:5000/movements/${movementId}`, {
+            .get(`http://172.16.0.36:5000/movements/${movementId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             .then((res) => {
@@ -119,7 +119,7 @@ const EditMovement = () => {
         setLoading(true);
         try {
             await axios.put(
-                `http://localhost:5000/movements/${movementId}`,
+                `http://172.16.0.36:5000/movements/${movementId}`,
                 {
                     assetName: formData.assetName.trim(),
                     assetId: formData.assetId,

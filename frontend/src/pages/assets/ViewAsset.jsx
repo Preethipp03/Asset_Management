@@ -12,7 +12,7 @@ const ViewAsset = () => {
     useEffect(() => {
         const fetchAsset = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/assets/${id}`, {
+                const res = await axios.get(`http://172.16.0.36:5000/assets/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setAsset(res.data);
@@ -27,7 +27,7 @@ const ViewAsset = () => {
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this asset?')) {
             try {
-                await axios.delete(`http://localhost:5000/assets/${id}`, {
+                await axios.delete(`http://172.16.0.36:5000/assets/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 alert('Asset deleted successfully!');

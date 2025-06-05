@@ -70,7 +70,7 @@ const AddMaintenance = () => {
                 return;
             }
 
-            await axios.post('http://localhost:5000/maintenance', maintenanceData, {
+            await axios.post('http://172.16.0.36:5000/maintenance', maintenanceData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

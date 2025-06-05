@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const backendURL = 'http://localhost:5000';
+const backendURL = 'http://172.16.0.36:5000';
 
 const MaintenanceReport = () => {
   const [filters, setFilters] = useState({

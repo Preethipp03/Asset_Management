@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Adjust this if your backend routes have /api prefix
+  baseURL: 'http://172.16.0.36:5000/api', // Adjust this if your backend routes have /api prefix
 });
 
 // Automatically attach JWT token if it exists

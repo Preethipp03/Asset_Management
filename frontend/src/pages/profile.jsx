@@ -22,7 +22,7 @@ const Profile = () => {
           setLoading(false);
           return;
         }
-        const res = await axios.get('http://localhost:5000/api/profile', {
+        const res = await axios.get('http://172.16.0.36:5000/api/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const userData = res.data.user || res.data;
@@ -48,7 +48,7 @@ const Profile = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put('http://localhost:5000/api/profile', formData, {
+      const res = await axios.put('http://172.16.0.36:5000/api/profile', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Profile updated successfully!');

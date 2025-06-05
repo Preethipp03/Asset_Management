@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./MovementReport.css";
 
-const backendURL = "http://localhost:5000";
+const backendURL = "http://172.16.0.36:5000";
 
 const MovementReport = () => {
   const [filters, setFilters] = useState({

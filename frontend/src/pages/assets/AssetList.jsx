@@ -25,7 +25,7 @@ const AssetList = () => {
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/assets', {
+            const response = await axios.get('http://172.16.0.36:5000/assets', {
                 headers: { Authorization: `Bearer ${token}` },
                 params: {
                     search: searchQuery,
@@ -49,7 +49,7 @@ const AssetList = () => {
         if (!window.confirm('Are you sure you want to delete this asset?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/assets/${id}`, {
+            await axios.delete(`http://172.16.0.36:5000/assets/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchAssets();

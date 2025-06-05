@@ -29,7 +29,7 @@ const EditUser = () => {
         setFetching(true);
         const fetchUser = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/users/${id}`, {
+                const res = await axios.get(`http://172.16.0.36:5000/users/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const { name, email, role } = res.data;
@@ -70,7 +70,7 @@ const EditUser = () => {
                 delete updateData.password;
             }
 
-            await axios.put(`http://localhost:5000/users/${id}`, updateData, {
+            await axios.put(`http://172.16.0.36:5000/users/${id}`, updateData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSuccess('User updated successfully!');

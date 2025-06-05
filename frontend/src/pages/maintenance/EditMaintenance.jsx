@@ -38,7 +38,7 @@ const EditMaintenance = () => {
                     return;
                 }
 
-                const res = await axios.get(`http://localhost:5000/maintenance/${id}`, {
+                const res = await axios.get(`http://172.16.0.36:5000/maintenance/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -106,7 +106,7 @@ const EditMaintenance = () => {
             }
 
             // Send PUT request to update the record
-            await axios.put(`http://localhost:5000/maintenance/${id}`, maintenanceData, {
+            await axios.put(`http://172.16.0.36:5000/maintenance/${id}`, maintenanceData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
