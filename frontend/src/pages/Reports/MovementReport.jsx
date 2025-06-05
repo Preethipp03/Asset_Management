@@ -1,165 +1,186 @@
-import React, { useState } from "react";
-import "./MovementReport.css";
+import React, { useState } from 'react';
+import axios from 'axios';
+import './MaintenanceReport.css'; // Assuming this CSS provides styling for the layout and table
 
-const backendURL = "http://localhost:5000";
+const backendURL = 'http://localhost:5000'; // Ensure this matches your backend server's address
 
 const MovementReport = () => {
-  // State hooks for managing filters, loading status, errors, and fetched records.
   const [filters, setFilters] = useState({
-    fromDate: "",
-    toDate: "",
-    movementFrom: "",
-    movementTo: "",
-    returnable: "", // Can be 'true', 'false', or empty for 'All'
+    fromDate: '',
+    toDate: '',
+    movementFrom: '',
+    movementTo: '',
+    returnable: '',
+    format: 'csv', // Default export format
   });
 
-  const [loading, setLoading] = useState(false); // Indicates if records are being fetched
-  const [exporting, setExporting] = useState(false); // Indicates if an export operation is in progress
-  const [error, setError] = useState(null); // Stores any error messages
-  const [records, setRecords] = useState([]); // Stores the fetched movement records
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false); // New state to track if a search has been attempted
 
-  // Retrieve authentication token from local storage.
-  const token = localStorage.getItem("token");
-
-  // Determines if any filter criteria have been set by the user.
-  const isFilterSet = Object.values(filters).some((val) => val !== "");
-
-  // Handles changes to input fields and select elements, updating the filters state.
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    setFilters({
+      ...filters,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // Validates that the 'From Date' is not later than the 'To Date'.
-  const validateDates = () => {
-    if (filters.fromDate && filters.toDate && new Date(filters.fromDate) > new Date(filters.toDate)) {
-      setError("'From Date' cannot be later than 'To Date'");
-      setRecords([]); // Clear records if dates are invalid
-      return false;
-    }
-    setError(null); // Clear previous date validation error if dates are now valid
-    return true;
-  };
+  // Checks if any filter field has a value
+  const isFilterSet =
+    filters.fromDate ||
+    filters.toDate ||
+    filters.movementFrom ||
+    filters.movementTo ||
+    filters.returnable;
 
-  // Fetches movement records from the backend based on current filters.
-  const fetchRecords = async () => {
-    if (!validateDates()) return; // Stop if dates are invalid
-
+  const handleViewRecords = async () => {
     setLoading(true);
     setError(null);
-    setRecords([]);
+    setRecords([]); // Clear previous records
+    setHasSearched(true); // Mark that a search has been performed
 
     try {
-      const params = new URLSearchParams();
-      // Append only non-empty filter values to URL parameters.
-      Object.entries(filters).forEach(([key, val]) => {
-        if (val) params.append(key, val);
-      });
-      params.append("format", "json"); // Request JSON format for viewing records
-
-      const res = await fetch(`${backendURL}/movements/report?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` }, // Include authorization token
-      });
-
-      // Handle non-OK HTTP responses
-      if (!res.ok) {
-        const errorData = await res.json(); // Attempt to parse error message from response body
-        throw new Error(errorData.message || "Failed to fetch data");
+      const token = localStorage.getItem('token'); // Retrieve auth token
+      if (!token) {
+        setError('Authentication token not found. Please log in.');
+        setLoading(false);
+        return;
       }
 
-      const json = await res.json();
-      setRecords(json.data || []); // Update records state
+      // Prepare parameters for the GET request
+      const params = { ...filters };
+      delete params.format; // The backend shouldn't need the export format for viewing records
 
-      // Set 'No records found' error if no data is returned
-      if (!json.data || json.data.length === 0) {
-        setError("No records found.");
-      }
-    } catch (err) {
-      setError(err.message || "Error fetching data"); // Set error message
-    } finally {
-      setLoading(false); // Reset loading state
-    }
-  };
-
-  // Handles exporting movement records to CSV or PDF format.
-  const handleExport = async (format) => {
-    if (!validateDates()) return; // Stop if dates are invalid
-
-    setExporting(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams();
-      // Append all filter parameters to the URL.
-      Object.entries(filters).forEach(([key, val]) => {
-        if (val) params.append(key, val);
+      // Remove empty filter values to avoid sending unnecessary query parameters
+      Object.keys(params).forEach((key) => {
+        if (!params[key]) delete params[key];
       });
-      params.append("format", format); // Specify export format (csv or pdf)
-      params.append("download", "true"); // Indicate that the request is for download
 
-      const res = await fetch(`${backendURL}/movements/report?${params.toString()}`, {
-        method: "GET",
+      console.log('Sending view records request with params:', params); // Debugging line
+      console.log('Authorization token:', token); // Debugging line
+
+      const response = await axios.get(`${backendURL}/movements/report`, {
+        params,
         headers: {
-          Authorization: `Bearer ${token}`, // Include authorization token
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      // Handle non-OK HTTP responses
-      if (!res.ok) {
-        const errorText = await res.text(); // Get raw error message for blob responses
-        throw new Error(errorText || "Export failed");
+      console.log('Backend response data:', response.data); // Debugging line: Crucial to see what the backend returns
+
+      // Ensure response.data is an array. If your backend nests it, adjust this line.
+      if (Array.isArray(response.data)) {
+        setRecords(response.data);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        // Example if backend returns { success: true, data: [...] }
+        setRecords(response.data.data);
+      } else {
+        console.warn('Backend did not return an array of records directly:', response.data);
+        setError('Unexpected data format from server. Check console for details.');
+        setRecords([]); // Ensure records are empty if format is unexpected
       }
 
-      const blob = await res.blob(); // Get the response as a Blob
-      const url = window.URL.createObjectURL(blob); // Create a URL for the Blob
-      const link = document.createElement("a"); // Create a temporary anchor element
-      link.href = url;
-      link.setAttribute("download", `movement_report.${format}`); // Set download filename
-      document.body.appendChild(link); // Append link to body
-      link.click(); // Programmatically click the link to trigger download
-      link.remove(); // Remove the temporary link
-      window.URL.revokeObjectURL(url); // Release the object URL
     } catch (err) {
-      setError(err.message || "Export error"); // Set error message
+      console.error('Error fetching movement records:', err); // Log the full error
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError(err.response.data?.message || `Error: ${err.response.status} ${err.response.statusText}`);
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError('No response from server. Check if backend is running and accessible.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError(`Request error: ${err.message}`);
+      }
     } finally {
-      setExporting(false); // Reset exporting state
+      setLoading(false);
     }
   };
 
-  // Resets all filters and clears fetched records and errors.
-  const resetFilters = () => {
-    setFilters({
-      fromDate: "",
-      toDate: "",
-      movementFrom: "",
-      movementTo: "",
-      returnable: "",
-    });
-    setRecords([]); // Clear displayed records
-    setError(null); // Clear any errors
+  const handleExport = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token not found. Please log in.');
+        setLoading(false);
+        return;
+      }
+
+      // Include 'download' parameter for backend to know it's an export request
+      const params = { ...filters, download: 'true' };
+
+      // Remove empty filter values
+      Object.keys(params).forEach((key) => {
+        if (!params[key]) delete params[key];
+      });
+
+      console.log('Sending export request with params:', params); // Debugging line
+
+      const response = await axios.get(`${backendURL}/movements/report`, {
+        params,
+        responseType: 'blob', // Important for file downloads (CSV, PDF)
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const blob = new Blob([response.data], {
+        type: filters.format === 'pdf' ? 'application/pdf' : 'text/csv',
+      });
+
+      // Create a temporary link element to trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `movement_report.${filters.format}`; // Set file name
+      document.body.appendChild(link);
+      link.click(); // Programmatically click the link to start download
+      link.remove(); // Clean up the temporary link
+      window.URL.revokeObjectURL(url); // Release the object URL
+
+    } catch (err) {
+      console.error('Error exporting movement report:', err); // Log the full error
+      if (err.response) {
+        setError(err.response.data?.message || `Export Error: ${err.response.status} ${err.response.statusText}`);
+      } else {
+        setError(`Export request error: ${err.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Navigates back in the browser history.
-  const goBack = () => window.history.back();
+  const resetFilters = () => {
+    setFilters({
+      fromDate: '',
+      toDate: '',
+      movementFrom: '',
+      movementTo: '',
+      returnable: '',
+      format: 'csv',
+    });
+    setRecords([]); // Clear records when resetting filters
+    setError(null);
+    setHasSearched(false); // Reset search status
+  };
+
+  const handleBack = () => {
+    window.history.back(); // Navigates back in browser history
+  };
 
   return (
-    <div className="movement-report-wrapper">
-      {/* Header section with back button and title */}
-      <div className="header-with-back-button">
-        <button className="back-button" onClick={goBack}>
-          ← Back
-        </button>
-        <h2 className="edit-movement-title">Movement Report</h2>
-      </div>
+    <div className="maintenance-report-wrapper">
+      <header className="header-with-back-button">
+        <button className="back-button" onClick={handleBack}>Back</button>
+        <h1 className="edit-movement-title">Movement Report</h1>
+      </header>
 
-      {/* Form section for applying filters */}
-      <form
-        className="edit-movement-form"
-        onSubmit={(e) => {
-          e.preventDefault(); // Prevent default form submission
-          fetchRecords(); // Fetch records on form submit
-        }}
-      >
+      <form className="edit-movement-form" onSubmit={(e) => e.preventDefault()}>
         <label>
           From Date:
           <input type="date" name="fromDate" value={filters.fromDate} onChange={handleChange} />
@@ -177,7 +198,7 @@ const MovementReport = () => {
             name="movementFrom"
             value={filters.movementFrom}
             onChange={handleChange}
-            placeholder="Location or Department"
+            placeholder="From Location"
           />
         </label>
 
@@ -188,98 +209,82 @@ const MovementReport = () => {
             name="movementTo"
             value={filters.movementTo}
             onChange={handleChange}
-            placeholder="Location or Department"
+            placeholder="To Location"
           />
         </label>
 
         <label>
           Returnable:
           <select name="returnable" value={filters.returnable} onChange={handleChange}>
-            <option value="">--All--</option>
-            <option value="true">Returnable</option>
-            <option value="false">Non-returnable</option>
+            <option value="">All</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
           </select>
         </label>
 
-        {/* Button group for actions: View, Export, Reset */}
-        <div className="button-group">
-          <button
-            className="submit-button"
-            type="submit" // This button triggers the form's onSubmit (fetchRecords)
-            disabled={loading || exporting || !isFilterSet}
-          >
-            {loading ? "Loading..." : "View Records"}
-          </button>
-
-          <button
-            type="button" // Important: not 'submit' to prevent form re-submission
-            onClick={() => handleExport("csv")}
-            className="submit-button"
-            disabled={loading || exporting || !isFilterSet}
-          >
-            {exporting ? "Exporting..." : "Export CSV"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleExport("pdf")}
-            className="submit-button"
-            disabled={loading || exporting || !isFilterSet}
-          >
-            {exporting ? "Exporting..." : "Export PDF"}
-          </button>
-
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="submit-button"
-            disabled={loading || exporting}
-          >
-            Reset Filters
-          </button>
-        </div>
+        <label>
+          Export Format:
+          <select name="format" value={filters.format} onChange={handleChange}>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </label>
       </form>
 
-      {/* Display error messages */}
+      <div className="button-group">
+        <button className="submit-button" onClick={handleExport} disabled={loading || !isFilterSet}>
+          {loading ? 'Exporting...' : 'Export Report'}
+        </button>
+
+        <button
+          className="submit-button"
+          style={{ backgroundColor: '#007bff' }}
+          onClick={handleViewRecords}
+          disabled={loading || !isFilterSet}
+        >
+          {loading ? 'Loading...' : 'View Records'}
+        </button>
+
+        <button
+          className="submit-button"
+          style={{ backgroundColor: '#6c757d' }}
+          onClick={resetFilters}
+          // Reset button should always be enabled, even if filters aren't set yet
+          disabled={loading}
+        >
+          Reset Filters
+        </button>
+      </div>
+
       {error && <p className="error-message">{error}</p>}
 
-      {/* Message when no records are found after filtering */}
-      {!loading && records.length === 0 && isFilterSet && !error && (
-        <p>No records found.</p> // Removed inline style as CSS handles 'p' tag margin
+      {/* Conditional rendering for messages */}
+      {!loading && hasSearched && records.length === 0 && !error && (
+        <p style={{ marginTop: 20 }}>No records found for the applied filters.</p>
       )}
 
-      {/* Display records in a table if no error and records exist */}
-      {!error && records.length > 0 && (
+      {loading && <p style={{ marginTop: 20 }}>Loading records...</p>}
+
+      {records.length > 0 && (
         <div className="table-container">
-          <p>
-            <strong>Total Records:</strong> {records.length}
-          </p>
           <table className="report-table">
             <thead>
               <tr>
                 <th>Asset Name</th>
-                <th>Serial No</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Type</th>
-                <th>Dispatched By</th>
-                <th>Received By</th>
-                <th>Date</th>
+                <th>Movement From</th>
+                <th>Movement To</th>
                 <th>Returnable</th>
+                <th>Movement Date</th>
               </tr>
             </thead>
             <tbody>
-              {records.map((item, idx) => (
-                <tr key={item._id || idx}> {/* Use _id if available, otherwise idx */}
-                  <td>{item.assetName}</td>
-                  <td>{item.serialNumber}</td>
-                  <td>{item.movementFrom}</td>
-                  <td>{item.movementTo}</td>
-                  <td>{item.movementType}</td>
-                  <td>{item.dispatchedBy}</td>
-                  <td>{item.receivedBy}</td>
-                  <td>{item.date ? new Date(item.date).toLocaleDateString() : "N/A"}</td>
-                  <td>{item.returnable ? "Yes" : "No"}</td>
+              {records.map((record) => (
+                <tr key={record._id || record.id}> {/* Use unique key for each row */}
+                  <td>{record.assetName}</td>
+                  <td>{record.movementFrom}</td>
+                  <td>{record.movementTo}</td>
+                  <td>{record.returnable ? 'Yes' : 'No'}</td>
+                  <td>{record.movementDate ? new Date(record.movementDate).toLocaleDateString() : '-'}</td>
                 </tr>
               ))}
             </tbody>
