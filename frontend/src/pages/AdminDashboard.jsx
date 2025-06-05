@@ -38,6 +38,9 @@ const AdminDashboard = () => {
   const [destinationData, setDestinationData] = useState([]);
   const [maintenanceStatusData, setMaintenanceStatusData] = useState([]);
 
+// This is for your requested movementTypeData for simple horizontal bar chart
+  const [movementTypeData, setMovementTypeData] = useState([]);
+
   const navigate = useNavigate();
 
   // Fetch user info
@@ -152,7 +155,36 @@ const AdminDashboard = () => {
 
     fetchMaintenanceStatus();
   }, []);
+ // New: Fetch data for your simple Movement Type horizontal bar chart
+  useEffect(() => {
+    const fetchMovementTypes = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/movements', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
+        // Count total movements by movementType
+        const typeCounts = {};
+
+        res.data.forEach(m => {
+          const type = m.movementType || 'Unknown';
+          typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+
+        const formatted = Object.entries(typeCounts).map(([type, count]) => ({
+          type,
+          count
+        }));
+
+        setMovementTypeData(formatted);
+      } catch (error) {
+        console.error('Error fetching movement type data:', error);
+      }
+    };
+
+    fetchMovementTypes();
+  }, []);
   const handleLogout = () => {
     const confirmed = window.confirm('Are you sure you want to log out?');
     if (confirmed) {
@@ -221,19 +253,19 @@ const AdminDashboard = () => {
           ) : (
             <>
               <div className="card users-card">
-                <h3>Total Users</h3>
+                <h2>Total Users</h2>
                 <p>{counts.usersCount}</p>
               </div>
               <div className="card assets-card">
-                <h3>Total Assets</h3>
+                <h2>Total Assets</h2>
                 <p>{counts.assetsCount}</p>
               </div>
               <div className="card movements-card">
-                <h3>Total Movements</h3>
+                <h2>Total Movements</h2>
                 <p>{counts.movementsCount}</p>
               </div>
               <div className="card maintenance-card">
-                <h3>Total Maintenance</h3>
+                <h2>Total Maintenance</h2>
                 <p>{counts.maintenanceCount}</p>
               </div>
             </>
@@ -287,6 +319,22 @@ const AdminDashboard = () => {
             )}
           </div>
         </div>
+        <div style={{ marginTop: '40px' }}>
+                 <h3>Movement Type Distribution</h3>
+                 {movementTypeData.length === 0 ? (
+                   <p>No movement type data available.</p>
+                 ) : (
+                   <ResponsiveContainer width="100%" height={100}>
+                     <BarChart data={movementTypeData} layout="vertical" margin={{ left: 80, right:100 }}>
+                       <CartesianGrid strokeDasharray="3 3" />
+                       <XAxis type="number" />
+                       <YAxis dataKey="type" type="category" />
+                       <Tooltip />
+                       <Bar dataKey="count" fill="#8884d8" />
+                     </BarChart>
+                   </ResponsiveContainer>
+                 )}
+               </div>
       </div>
     </div>
   );
