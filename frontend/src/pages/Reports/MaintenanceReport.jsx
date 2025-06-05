@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './MaintenanceReport.css';
 
 const backendURL = 'http://172.16.0.36:5000';
 
@@ -110,125 +111,133 @@ const MaintenanceReport = () => {
     setError(null);
   };
 
+  const handleBack = () => {
+    window.history.back();
+  };
+
   return (
-    <div style={{ maxWidth: 600, margin: 'auto' }}>
-      <h2>Maintenance Report</h2>
+    <div className="maintenance-report-wrapper">
+      <header className="header-with-back-button">
+        <button className="back-button" onClick={handleBack}>
+          Back
+        </button>
+        <h1 className="edit-movement-title">Maintenance Report</h1>
+      </header>
 
-      <label htmlFor="fromDate" style={{ display: 'block', marginTop: 10 }}>
-        From Date:
-      </label>
-      <input
-        type="date"
-        id="fromDate"
-        name="fromDate"
-        value={filters.fromDate}
-        onChange={handleChange}
-      />
+      <form className="edit-movement-form" onSubmit={(e) => e.preventDefault()}>
+        <label>
+          From Date:
+          <input
+            type="date"
+            name="fromDate"
+            value={filters.fromDate}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label htmlFor="toDate" style={{ display: 'block', marginTop: 10 }}>
-        To Date:
-      </label>
-      <input
-        type="date"
-        id="toDate"
-        name="toDate"
-        value={filters.toDate}
-        onChange={handleChange}
-      />
+        <label>
+          To Date:
+          <input
+            type="date"
+            name="toDate"
+            value={filters.toDate}
+            onChange={handleChange}
+          />
+        </label>
 
-      <label htmlFor="maintenanceType" style={{ display: 'block', marginTop: 10 }}>
-        Maintenance Type:
-      </label>
-      <select
-        id="maintenanceType"
-        name="maintenanceType"
-        value={filters.maintenanceType}
-        onChange={handleChange}
-      >
-        <option value="">All</option>
-        <option value="preventive">Preventive</option>
-        <option value="corrective">Corrective</option>
-      </select>
+        <label>
+          Maintenance Type:
+          <input
+            type="text"
+            name="maintenanceType"
+            value={filters.maintenanceType}
+            onChange={handleChange}
+            placeholder="Maintenance Type"
+          />
+        </label>
 
-      <label htmlFor="status" style={{ display: 'block', marginTop: 10 }}>
-        Status:
-      </label>
-      <select id="status" name="status" value={filters.status} onChange={handleChange}>
-        <option value="">All</option>
-        <option value="scheduled">Scheduled</option>
-        <option value="completed">Completed</option>
-        <option value="pending">Pending</option>
-      </select>
+        <label>
+          Status:
+          <select
+            name="status"
+            value={filters.status}
+            onChange={handleChange}
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="inprogress">In Progress</option>
+          </select>
+        </label>
 
-      <label htmlFor="technician" style={{ display: 'block', marginTop: 10 }}>
-        Technician:
-      </label>
-      <input
-        type="text"
-        id="technician"
-        name="technician"
-        value={filters.technician}
-        onChange={handleChange}
-        placeholder="Technician name"
-      />
+        <label>
+          Technician:
+          <input
+            type="text"
+            name="technician"
+            value={filters.technician}
+            onChange={handleChange}
+            placeholder="Technician"
+          />
+        </label>
 
-      <label htmlFor="format" style={{ display: 'block', marginTop: 10 }}>
-        Export Format:
-      </label>
-      <select id="format" name="format" value={filters.format} onChange={handleChange}>
-        <option value="csv">CSV</option>
-        <option value="pdf">PDF</option>
-      </select>
+        <label>
+          Export Format:
+          <select
+            name="format"
+            value={filters.format}
+            onChange={handleChange}
+          >
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </label>
+      </form>
 
-      <div style={{ marginTop: 20 }}>
-        <button onClick={handleExport} disabled={loading || !isFilterSet}>
+      <div className="button-group">
+        <button
+          className="submit-button"
+          onClick={handleExport}
+          disabled={loading || !isFilterSet}
+        >
           {loading ? 'Exporting...' : 'Export Report'}
         </button>
 
         <button
+          className="submit-button"
+          style={{ backgroundColor: '#007bff' }}
           onClick={handleViewRecords}
           disabled={loading || !isFilterSet}
-          style={{ marginLeft: 10 }}
         >
           {loading ? 'Loading...' : 'View Records'}
         </button>
 
         <button
+          className="submit-button"
+          style={{ backgroundColor: '#6c757d' }}
           onClick={resetFilters}
           disabled={loading || !isFilterSet}
-          style={{ marginLeft: 10 }}
         >
           Reset Filters
         </button>
       </div>
 
-      {error && (
-        <p style={{ color: 'red', marginTop: 10 }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="error-message">{error}</p>}
 
       {!loading && records.length === 0 && isFilterSet && (
         <p style={{ marginTop: 20 }}>No records found.</p>
       )}
 
       {records.length > 0 && (
-        <div style={{ marginTop: 30 }}>
-          <p>
-            <strong>Total Records:</strong> {records.length}
-          </p>
-          <table
-            border="1"
-            cellPadding="5"
-            style={{ width: '100%', borderCollapse: 'collapse' }}
-          >
+        <div className="table-container">
+          <table className="report-table">
             <thead>
               <tr>
                 <th>Asset Name</th>
                 <th>Maintenance Type</th>
                 <th>Status</th>
-                <th>Scheduled Date</th>
                 <th>Technician</th>
+                <th>Maintenance Date</th>
               </tr>
             </thead>
             <tbody>
@@ -237,12 +246,12 @@ const MaintenanceReport = () => {
                   <td>{record.assetName}</td>
                   <td>{record.maintenanceType}</td>
                   <td>{record.status}</td>
+                  <td>{record.technician}</td>
                   <td>
-                    {record.scheduledDate
-                      ? new Date(record.scheduledDate).toLocaleDateString()
+                    {record.maintenanceDate
+                      ? new Date(record.maintenanceDate).toLocaleDateString()
                       : '-'}
                   </td>
-                  <td>{record.technicianInHouse || record.technicianVendor || '-'}</td>
                 </tr>
               ))}
             </tbody>

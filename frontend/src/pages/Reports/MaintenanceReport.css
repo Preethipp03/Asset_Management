@@ -1,4 +1,4 @@
-/* Base styles for full viewport */
+/* Make sure html, body and root fill entire viewport */
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -6,8 +6,8 @@ html, body, #root {
   background-color: #eef2f6;
 }
 
-/* Wrapper fills viewport and enables vertical scroll */
-.movement-report-wrapper {
+/* Wrapper fills entire viewport */
+.maintenance-report-wrapper {
   height: 100vh;
   width: 100vw;
   padding: 30px 40px;
@@ -22,13 +22,14 @@ html, body, #root {
   left: 0;
 }
 
-/* Header with back button */
+/* Header: back button + title */
 .header-with-back-button {
   display: flex;
   align-items: center;
   gap: 15px;
 }
 
+/* Back button style */
 .back-button {
   background-color: #007bff;
   border: none;
@@ -46,6 +47,7 @@ html, body, #root {
   background-color: #0056b3;
 }
 
+/* Title styling */
 .edit-movement-title {
   margin: 0;
   font-size: 2.4rem;
@@ -53,7 +55,7 @@ html, body, #root {
   font-weight: 700;
 }
 
-/* Form styles with grid layout */
+/* Form uses full width, grid for responsiveness */
 .edit-movement-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -62,6 +64,7 @@ html, body, #root {
   width: 100%;
 }
 
+/* Label/input vertical layout */
 .edit-movement-form label {
   display: flex;
   flex-direction: column;
@@ -70,6 +73,7 @@ html, body, #root {
   font-size: 1.1rem;
 }
 
+/* Input/select styling */
 .edit-movement-form input,
 .edit-movement-form select {
   margin-top: 6px;
@@ -88,7 +92,7 @@ html, body, #root {
   background-color: #fff;
 }
 
-/* Buttons style */
+/* Submit button shared style for all action buttons */
 .submit-button {
   background-color: #28a745;
   border: none;
@@ -102,7 +106,7 @@ html, body, #root {
   white-space: nowrap;
 }
 
-.submit-button:hover:not(:disabled) {
+.submit-button:hover {
   background-color: #218838;
 }
 
@@ -111,7 +115,7 @@ html, body, #root {
   cursor: not-allowed;
 }
 
-/* Button group layout */
+/* Grouping buttons in a row */
 .button-group {
   display: flex;
   flex-wrap: wrap;
@@ -119,7 +123,7 @@ html, body, #root {
   grid-column: 1 / -1;
 }
 
-/* Error message styling */
+/* Error message style */
 .error-message {
   color: #dc3545;
   font-weight: 600;
@@ -127,12 +131,7 @@ html, body, #root {
   margin-top: 10px;
 }
 
-/* Table container for horizontal scroll */
-.table-container {
-  overflow-x: auto;
-}
-
-/* Table styling */
+/* Table Styling for Report */
 .report-table {
   width: 100%;
   border-collapse: collapse;
@@ -157,4 +156,9 @@ html, body, #root {
 
 .report-table tr:nth-child(even) {
   background-color: #f2f2f2;
+}
+
+/* Container for scroll */
+.table-container {
+  overflow-x: auto;
 }

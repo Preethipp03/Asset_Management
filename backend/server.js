@@ -1184,6 +1184,37 @@ app.get('/dashboard/counts', authMiddleware, roleMiddleware(['admin', 'super_adm
   }
 });
 
+// Add this inside your routes file
+app.get(
+  '/dashboard/maintenance-status-summary',
+  authMiddleware,
+  roleMiddleware(['admin', 'super_admin']),
+  async (req, res) => {
+    try {
+      const db = await connectDB();
+
+      const summary = await db.collection(maintenanceCollection).aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]).toArray();
+
+      const formatted = summary.map(item => ({
+        status: item._id,
+        count: item.count
+      }));
+
+      res.json(formatted);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch maintenance status summary' });
+    }
+  }
+);
+
+
 // =========================
 // SERVER SETUP
 // =========================

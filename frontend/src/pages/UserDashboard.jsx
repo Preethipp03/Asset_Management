@@ -18,8 +18,14 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  ResponsiveContainer
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
+
+const COLORS = ['#FF7F50', '#4A90E2', '#90EE90', '#d9534f'];
 
 const UserDashboard = () => {
   const [user, setUser] = useState(null);
@@ -35,8 +41,11 @@ const UserDashboard = () => {
   const [countsLoading, setCountsLoading] = useState(true);
   const [countsError, setCountsError] = useState(null);
 
-  // Movement destination data for chart
   const [destinationData, setDestinationData] = useState([]);
+  const [maintenanceStatusData, setMaintenanceStatusData] = useState([]);
+
+    // This is for your requested movementTypeData for simple horizontal bar chart
+    const [movementTypeData, setMovementTypeData] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +108,6 @@ const UserDashboard = () => {
     fetchCounts();
   }, []);
 
-  // Fetch movement destinations data for BarChart
   useEffect(() => {
     const fetchMovementDestinations = async () => {
       try {
@@ -109,7 +117,6 @@ const UserDashboard = () => {
         });
 
         const movements = res.data;
-
         const countsMap = {};
 
         movements.forEach(m => {
@@ -124,7 +131,6 @@ const UserDashboard = () => {
         });
 
         const formatted = Object.values(countsMap).sort((a, b) => (b.from + b.to) - (a.from + a.to));
-
         setDestinationData(formatted);
       } catch (error) {
         console.error('Error fetching movement data:', error);
@@ -133,6 +139,75 @@ const UserDashboard = () => {
 
     fetchMovementDestinations();
   }, []);
+
+  // Fetch maintenance status data for PieChart
+  useEffect(() => {
+    const fetchMaintenanceData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/maintenance', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const statusMap = {
+          scheduled: 0,
+          'in-progress': 0,
+          completed: 0,
+          cancelled: 0,
+        };
+
+        res.data.forEach(item => {
+          const status = item.status?.toLowerCase();
+          if (statusMap[status] !== undefined) {
+            statusMap[status]++;
+          }
+        });
+
+        const formatted = Object.entries(statusMap).map(([status, value]) => ({
+          name: status,
+          value
+        }));
+
+        setMaintenanceStatusData(formatted);
+      } catch (error) {
+        console.error('Error fetching maintenance status data:', error);
+      }
+    };
+
+    fetchMaintenanceData();
+  }, []);
+
+// New: Fetch data for your simple Movement Type horizontal bar chart
+  useEffect(() => {
+    const fetchMovementTypes = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:5000/movements', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Count total movements by movementType
+        const typeCounts = {};
+
+        res.data.forEach(m => {
+          const type = m.movementType || 'Unknown';
+          typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+
+        const formatted = Object.entries(typeCounts).map(([type, count]) => ({
+          type,
+          count
+        }));
+
+        setMovementTypeData(formatted);
+      } catch (error) {
+        console.error('Error fetching movement type data:', error);
+      }
+    };
+
+    fetchMovementTypes();
+  }, []);
+
 
   const handleLogout = () => {
     const confirmed = window.confirm('Are you sure you want to log out?');
@@ -150,7 +225,6 @@ const UserDashboard = () => {
     <div className="dashboard-container">
       {/* Sidebar */}
       <div className="sidebar">
-        {/* User Profile */}
         <div className="user-profile">
           <div className="user-avatar">
             {user?.avatar_url ? (
@@ -166,14 +240,10 @@ const UserDashboard = () => {
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="navigation">
           <ul className="nav-list">
             <li className="nav-item">
-              <Link
-                to="/profile"
-                className={`nav-link ${location.pathname === '/profile' ? 'active' : ''}`}
-              >
+              <Link to="/profile" className={`nav-link ${location.pathname === '/profile' ? 'active' : ''}`}>
                 <FaCog className="nav-icon" /> Profile
               </Link>
             </li>
@@ -183,18 +253,12 @@ const UserDashboard = () => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link
-                to="/movements"
-                className={`nav-link ${location.pathname.startsWith('/movements') ? 'active' : ''}`}
-              >
+              <Link to="/movements" className={`nav-link ${location.pathname.startsWith('/movements') ? 'active' : ''}`}>
                 <FaChartBar className="nav-icon" /> My Movements
               </Link>
             </li>
             <li className="nav-item">
-              <Link
-                to="/maintenance"
-                className={`nav-link ${location.pathname.startsWith('/maintenance') ? 'active' : ''}`}
-              >
+              <Link to="/maintenance" className={`nav-link ${location.pathname.startsWith('/maintenance') ? 'active' : ''}`}>
                 <FaCog className="nav-icon" /> My Maintenance
               </Link>
             </li>
@@ -207,7 +271,7 @@ const UserDashboard = () => {
         </nav>
       </div>
 
-      {/* Main content */}
+      {/* Main Content */}
       <div className="main-content">
         <div className="dashboard-cards">
           {countsLoading ? (
@@ -217,37 +281,84 @@ const UserDashboard = () => {
           ) : (
             <>
               <div className="card assets-card">
-                <h3>Total Assets</h3>
+                <h2>Total Assets</h2>
                 <p>{counts.assetsCount}</p>
               </div>
               <div className="card movements-card">
-                <h3>Total Movements</h3>
+                <h2>Total Movements</h2>
                 <p>{counts.movementsCount}</p>
               </div>
               <div className="card maintenance-card">
-                <h3>Total Maintenance</h3>
+                <h2>Total Maintenance</h2>
                 <p>{counts.maintenanceCount}</p>
               </div>
             </>
           )}
         </div>
 
-        {/* Movement Bar Chart */}
-        <h3>Top Movement Locations</h3>
-       {destinationData.length === 0 ? (
-         <p>No movement data available.</p>
-       ) : (
-         <ResponsiveContainer width="100%" height={300}>
-           <BarChart data={destinationData} layout="vertical" margin={{ right: 700,left:30 }}>
-             <CartesianGrid strokeDasharray="3 3" />
-             <XAxis type="number" />
-             <YAxis dataKey="location" type="category" />
-             <Tooltip />
-             <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
-             <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
-           </BarChart>
-         </ResponsiveContainer>
-       )}
+       {/* Charts Section */}
+              <div className="charts-container" style={{ display: 'flex', gap: '2rem', marginTop: '30px', flexWrap: 'wrap' }}>
+                {/* Bar Chart */}
+                <div style={{ flex: 1, minWidth: '400px' }}>
+                  <h3>Top Movement Locations</h3>
+                  {destinationData.length === 0 ? (
+                    <p>No movement data available.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={destinationData} layout="vertical" margin={{ right: 50, left: 30 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="location" type="category" />
+                        <Tooltip />
+                        <Bar dataKey="from" fill="#FF7F50" name="Moved From" />
+                        <Bar dataKey="to" fill="#4A90E2" name="Moved To" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+      
+                {/* Pie Chart */}
+                <div style={{ flex: 1, minWidth: '400px' }}>
+                  <h3>Maintenance Status Distribution</h3>
+                  {maintenanceStatusData.length === 0 ? (
+                    <p>No maintenance data available.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={maintenanceStatusData}
+                          dataKey="value"
+                          nameKey="name"
+                          outerRadius={100}
+                          label
+                        >
+                          {maintenanceStatusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Legend />
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+               <div style={{ marginTop: '40px' }}>
+                        <h3>Movement Type Distribution</h3>
+                        {movementTypeData.length === 0 ? (
+                          <p>No movement type data available.</p>
+                        ) : (
+                          <ResponsiveContainer width="100%" height={100}>
+                            <BarChart data={movementTypeData} layout="vertical" margin={{ left: 80, right:100 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis dataKey="type" type="category" />
+                              <Tooltip />
+                              <Bar dataKey="count" fill="#8884d8" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        )}
+                      </div>
       </div>
     </div>
   );
