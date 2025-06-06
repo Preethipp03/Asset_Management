@@ -11,6 +11,8 @@ require('dotenv').config();
 
 app.use(cors({
   origin: 'http://172.16.0.36:3000',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -85,9 +87,12 @@ app.post('/auth/login', async (req, res) => {
     const users = db.collection(usersCollection);
 
     const user = await users.findOne({ email });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials'});
 
-    const match = await bcrypt.compare(password, user.password);
+    console.log("User found:", user);
+console.log("Comparing passwords...");
+const match = await bcrypt.compare(password, user.password);
+console.log("Password match result:", match);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
@@ -143,6 +148,7 @@ app.post('/users', authMiddleware, roleMiddleware(['admin', 'super_admin']), asy
     if (existingUser) {
       return res.status(409).json({ error: 'Email already registered' });
     }
+
 
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
