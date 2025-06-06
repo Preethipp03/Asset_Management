@@ -122,7 +122,7 @@ const SuperAdminDashboard = () => {
     const fetchMaintenanceStatuses = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/maintenance', {
+        const res = await axios.get('http://172.16.0.36:5000/maintenance', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -152,7 +152,7 @@ const SuperAdminDashboard = () => {
     const fetchMovementTypes = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/movements', {
+        const res = await axios.get('http://172.16.0.36:5000/movements', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
