@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import api from '../../api/axios';
 import './movements.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -113,11 +113,9 @@ const MovementList = () => {
 
     return (
         <div className="movement-list-page">
-            {/* Fixed Header Section */}
             <div className="fixed-header-section">
                 <div className="table-controls-header">
                     <div className="header-left">
-                        {/* Role-based Back Button */}
                         <button className="reset-btn" onClick={handleBackToDashboard} style={{ marginRight: '10px' }}>
                             <i className="fa-solid fa-arrow-left"></i> Back
                         </button>
@@ -136,20 +134,24 @@ const MovementList = () => {
                             <option value="outside_building">Outside</option>
                         </select>
 
-                        <select
-                            value={returnableFilter}
-                            onChange={(e) => { setReturnableFilter(e.target.value); setCurrentPage(1); }}
-                            className="filter-select"
-                        >
-                            <option value="">All Returnable</option>
-                            <option value="true">Returnable</option>
-                            <option value="false">Non-returnable</option>
-                        </select>
+                        {/* Updated structure for Returnable filter and Reset button */}
+                        <div className="returnable-filter-group">
+                            <select
+                                value={returnableFilter}
+                                onChange={(e) => { setReturnableFilter(e.target.value); setCurrentPage(1); }}
+                                className="filter-select"
+                            >
+                                <option value="">All Returnable</option>
+                                <option value="true">Returnable</option>
+                                <option value="false">Non-returnable</option>
+                            </select>
 
-                        <button onClick={handleResetFilters} className="action-btn reset-btn">
-                            <i className="fa-solid fa-rotate-right"></i> Reset
-                        </button>
+                            <button className="reset-btn" onClick={handleResetFilters}>
+                                <i className="fas fa-redo"></i> Reset
+                            </button>
+                        </div>
                     </div>
+
                     <div className="header-right">
                         <div className="search-box">
                             <input
@@ -178,9 +180,8 @@ const MovementList = () => {
                         </div>
                     </div>
                 </div>
-            </div> {/* END: fixed-header-section */}
+            </div>
 
-            {/* Loading, Error, and Table display */}
             {error && <p className="error-message">{error}</p>}
             {loading ? (
                 <p className="loading-message">Loading movements...</p>
@@ -244,7 +245,6 @@ const MovementList = () => {
                 </div>
             )}
 
-            {/* Pagination controls bar */}
             <div className="pagination-controls">
                 <button
                     onClick={() => paginate(currentPage - 1)}

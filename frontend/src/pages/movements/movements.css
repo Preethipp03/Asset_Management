@@ -1,35 +1,30 @@
 /* General Body and Page Container Styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Set body background to white to match the card, ensuring no blue peeks through if card fills */
     background-color: #ffffff;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent body scroll, movement-list-page will handle it */
+    overflow: hidden; /* Prevents scrollbars on the body */
 }
 
 .movement-list-page {
-    position: fixed;
+    position: fixed; /* Ensures it takes up the full viewport */
     top: 0;
     left: 0;
-    /* Critical changes for full-bleed effect */
-    width: 100vw; /* Take 100% of the viewport width */
-    height: 100vh; /* Take 100% of the viewport height */
-    max-width: none; /* Remove any maximum width constraint */
-    margin: 0; /* Remove all external margins */
-    border-radius: 0; /* Remove border-radius to make it perfectly rectangular */
-    box-shadow: none; /* Remove shadow as it's no longer "floating" */
-
-    min-width: 320px; /* Added min-width to prevent squishing on tiny screens */
+    width: 100vw;
+    height: 100vh;
+    max-width: none; /* Override any max-width from parent components */
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-width: 320px; /* Minimum practical width for mobile */
     background-color: #ffffff;
     padding: 30px;
-    box-sizing: border-box; /* Include padding in element's total width/height */
-
+    box-sizing: border-box; /* Include padding in element's total width and height */
     display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Hide overflow of this container, let internal elements scroll */
-
-    animation: fadeIn 0.5s ease-out;
+    flex-direction: column; /* Stacks content vertically */
+    overflow: hidden; /* Prevents content inside from creating scrollbars (table has its own scroll) */
+    animation: fadeIn 0.5s ease-out; /* Smooth entrance animation */
 }
 
 @keyframes fadeIn {
@@ -37,42 +32,52 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Fixed Header Section (now structurally fixed by flexbox) */
 .fixed-header-section {
-    background-color: #ffffff; /* Explicitly set background */
-    padding-bottom: 20px; /* Space below the header controls */
-    border-bottom: 1px solid #e0e0e0; /* Separator line */
+    background-color: #ffffff;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
     margin-bottom: 20px;
-    padding-top: 5px; /* Small padding at the top */
+    padding-top: 5px;
     box-sizing: border-box;
-    width: 100%; /* Ensure it takes full width of its parent */
+    width: 100%;
+    /* Position sticky for the header if you want it to scroll with the table */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
 }
 
-/* Table Controls Header */
 .table-controls-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 15px; /* Space between control groups */
-    width: 100%; /* Ensure it takes full width */
+    justify-content: space-between; /* Pushes left and right sections apart */
+    align-items: center; /* Vertically aligns items in the center */
+    flex-wrap: wrap; /* Allows sections to wrap to the next line on smaller screens */
+    gap: 15px; /* Space between flex items when they wrap */
+    width: 100%;
     box-sizing: border-box;
 }
 
 .header-left, .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-    flex: 1; /* Allow these sections to grow and shrink */
-    min-width: 0; /* Important for flex items to prevent overflow */
+    gap: 15px; /* Space between individual controls within these sections */
+    flex-wrap: wrap; /* Allows controls to wrap within their section */
+    /* flex: 1; /* This can sometimes cause uneven distribution, consider removing if issues arise */
+    min-width: 0; /* Allows content to shrink */
 }
 
 .header-right {
-    justify-content: flex-end; /* Align content to the right */
+    justify-content: flex-end; /* Aligns items to the right within header-right */
 }
 
-/* Add Movement Button */
+/* Updated: Grouping for Returnable filter and Reset button */
+.returnable-filter-group {
+    display: flex; /* Makes the select and button sit side-by-side */
+    align-items: center; /* Vertically aligns them */
+    gap: 10px; /* Space between the dropdown and the reset button */
+    flex-wrap: wrap; /* Allows them to wrap on very small screens if needed */
+}
+
 .add-movement-btn {
     display: inline-flex;
     align-items: center;
@@ -85,7 +90,8 @@ body {
     font-size: 1em;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
-    box-sizing: border-box; /* Crucial for buttons within flex containers */
+    box-sizing: border-box;
+    white-space: nowrap; /* Prevent text wrapping inside button */
 }
 
 .add-movement-btn:hover {
@@ -99,18 +105,28 @@ body {
     font-size: 1.1em;
 }
 
-/* Filter Selects */
+/* MODIFIED: .filter-select now has increased size and width */
 .filter-select {
-    padding: 10px 15px;
+    padding: 10px 15px; /* Increased padding */
     border: 1px solid #dcdfe6;
     border-radius: 8px;
-    font-size: 1em;
+    font-size: 1.05em; /* Slightly increased font size */
     color: #333;
     background-color: #fcfcfc;
     cursor: pointer;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     outline: none;
     box-sizing: border-box;
+    -webkit-appearance: none; /* Remove default browser styling for select */
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-6.5%200-12.3%203.2-16.1%208.1-3.9%204.9-4.8%2011.6-2.7%2017.6l128%20164c3.1%204%207.7%206.2%2012.4%206.2h0c4.6%200%209.2-2.2%2012.4-6.2l128-164c2.1-6%201.2-12.7-2.7-17.6z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow for select */
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px;
+    width: 120px; /* Adjust this value as needed for a suitable width */
+    min-width: 100px; /* Ensure it doesn't get too small */
+    max-width: 150px; /* Prevent it from getting too large */
 }
 
 .filter-select:focus {
@@ -118,62 +134,60 @@ body {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-/* Reset Button - ENHANCED STYLING */
 .reset-btn {
-    /* Changed background to a lighter, less dominant grey for a softer look */
-    background-color: #eef2f6; /* A subtle light grey, similar to page background */
-    color: #34495e; /* Darker text color for contrast */
-    border: 1px solid #dcdfe6; /* Added a subtle border to give it definition */
+    background-color: #eef2f6; /* Light gray */
+    color: #34495e; /* Darker text for contrast */
+    border: 1px solid #dcdfe6;
     padding: 10px 20px;
     border-radius: 8px;
     font-weight: 600;
     font-size: 1em;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Lighter shadow to match softer background */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     box-sizing: border-box;
+    white-space: nowrap; /* Prevent text wrapping inside button */
 }
 
 .reset-btn:hover {
-    background-color: #e2e8f0; /* Slightly darker background on hover */
-    border-color: #c7d0d9; /* Slightly darker border on hover */
-    transform: translateY(-1px); /* Lifts the button slightly */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Clearer shadow on hover */
+    background-color: #e2e8f0;
+    border-color: #c7d0d9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .reset-btn:active {
-    background-color: #d2dce4; /* Even darker on active (pressed) state */
-    border-color: #b0b8c2; /* Darker border on active */
-    transform: translateY(0); /* Pushes the button down to simulate a press */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtler shadow on active */
+    background-color: #d2dce4;
+    border-color: #b0b8c2;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .reset-btn:focus-visible {
-    outline: 2px solid #007bff; /* Clear blue outline for keyboard navigation */
-    outline-offset: 2px; /* Adds space between outline and button border */
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
 }
 
 .reset-btn i {
     margin-right: 8px;
 }
 
-/* Search Box */
 .search-box {
     position: relative;
     display: flex;
     align-items: center;
-    flex: 1; /* Allow search box to take available space */
-    min-width: 180px; /* Minimum width for the search box */
-    max-width: 280px; /* Max width for the search box */
+    flex: 1; /* Allows it to grow and shrink */
+    min-width: 180px; /* Minimum width for search input */
+    max-width: 280px; /* Max width for larger screens */
 }
 
 .search-box input {
-    padding: 10px 15px 10px 40px; /* Left padding for icon */
+    padding: 10px 15px 10px 40px; /* Increased left padding for icon */
     border: 1px solid #dcdfe6;
     border-radius: 8px;
     font-size: 1em;
     color: #333;
-    width: 100%; /* Make it fill its parent */
+    width: 100%;
     box-sizing: border-box;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     outline: none;
@@ -187,39 +201,48 @@ body {
 
 .search-icon {
     position: absolute;
-    left: 15px;
+    left: 15px; /* Position the icon inside the input */
     color: #aeb4c0;
     font-size: 1em;
 }
 
-/* Rows Per Page Selector */
 .rows-per-page-selector {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px; /* Increased from 8px to 10px */
     font-size: 0.95em;
     color: #555;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0; /* Prevents it from shrinking too much */
+    white-space: nowrap; /* Keep text together */
 }
 
 .rows-per-page-selector select {
-    padding: 8px 12px;
+    padding: 10px 15px; /* Increased padding */
     border: 1px solid #dcdfe6;
     border-radius: 8px;
-    font-size: 1em;
+    font-size: 1.05em; /* Slightly increased font size */
     color: #333;
     background-color: #fcfcfc;
     cursor: pointer;
     outline: none;
     box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-6.5%200-12.3%203.2-16.1%208.1-3.9%204.9-4.8%2011.6-2.7%2017.6l128%20164c3.1%204%207.7%206.2%2012.4%206.2h0c4.6%200%209.2-2.2%2012.4-6.2l128-164c2.1-6%201.2-12.7-2.7-17.6z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px;
+    width: 80px; /* Example: adjust this value for desired width */
+    min-width: 60px; /* Minimum width to prevent it from collapsing too much */
+    max-width: 100px; /* Maximum width to prevent it from getting too wide */
 }
 
-/* Table Styles (now the main scrollable area) */
 .table-responsive {
-    flex-grow: 1; /* Takes all remaining vertical space */
+    flex-grow: 1; /* Allows the table to take up available vertical space */
     overflow-y: auto; /* Enables vertical scrolling for table content */
-    overflow-x: auto; /* Keeps horizontal scrolling for wide tables */
-    margin-bottom: 20px; /* Space above pagination */
+    overflow-x: auto; /* Enables horizontal scrolling for table content */
+    margin-bottom: 20px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -228,53 +251,51 @@ body {
     width: 100%;
     border-collapse: separate; /* Allows border-spacing */
     border-spacing: 0;
-    min-width: 1200px; /* Minimum width for the table content (for horizontal scroll) */
+    min-width: 1200px; /* Ensures table is wide enough for all columns */
 }
 
 .data-table th,
 .data-table td {
     padding: 15px 20px;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0; /* Light border for rows */
-    white-space: nowrap; /* Prevent text wrapping in cells */
+    border-bottom: 1px solid #e0e0e0;
+    white-space: nowrap; /* Prevents text wrapping in cells */
     box-sizing: border-box;
 }
 
 .data-table thead th {
-    background-color: #f5f8fa; /* Light header background */
+    background-color: #f5f8fa;
     color: #34495e;
     font-weight: 700;
     font-size: 0.95em;
-    position: sticky; /* Make headers sticky within the scrollable table-responsive div */
-    top: 0; /* Stick to the top of the scrollable container */
-    z-index: 50; /* Ensure headers are above scrolling content */
-    border-bottom: 2px solid #ccd2d8; /* Stronger border for header */
+    position: sticky; /* Makes header row sticky when scrolling */
+    top: 0; /* Sticks to the top of the .table-responsive container */
+    z-index: 50; /* Ensures it stays above table body */
+    border-bottom: 2px solid #ccd2d8;
 }
 
 .data-table tbody tr:nth-child(even) {
-    background-color: #f9fbfd; /* Subtle stripe effect */
+    background-color: #f9fbfd;
 }
 
 .data-table tbody tr:hover {
-    background-color: #eaf3ff; /* Highlight row on hover */
+    background-color: #eaf3ff;
     cursor: pointer;
 }
 
-/* Specific column widths or alignments if needed */
 .data-table th:first-child,
 .data-table td:first-child {
-    width: 50px; /* Small width for # column */
+    width: 50px;
     text-align: center;
 }
 
 .data-table th.actions-cell,
 .data-table td.actions-cell {
-    width: 120px; /* Width for actions column */
+    width: 120px;
     text-align: center;
 }
 
-/* Sort Icon */
-.data-table th span {
+.data-table th span { /* For sort icons */
     margin-left: 5px;
     font-size: 0.8em;
     color: #777;
@@ -286,24 +307,22 @@ body {
     color: #007bff;
 }
 
-
-/* Action Buttons within table */
 .action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px; /* Fixed width for icon buttons */
-    height: 38px; /* Fixed height for icon buttons */
-    border-radius: 50%; /* Make them circular */
+    width: 38px;
+    height: 38px;
+    border-radius: 50%; /* Makes buttons round */
     border: none;
     cursor: pointer;
     font-size: 1.1em;
     transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    margin: 0 5px; /* Space between buttons */
+    margin: 0 5px; /* Space between action buttons */
 }
 
 .edit-btn {
-    background-color: #ffc107; /* Yellow for edit */
+    background-color: #ffc107; /* Yellow */
     color: white;
 }
 
@@ -314,7 +333,7 @@ body {
 }
 
 .delete-btn {
-    background-color: #dc3545; /* Red for delete */
+    background-color: #dc3545; /* Red */
     color: white;
 }
 
@@ -324,7 +343,6 @@ body {
     box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
 }
 
-/* Empty State / Messages */
 .loading-message,
 .error-message,
 .no-data-message {
@@ -355,8 +373,6 @@ body {
     font-style: italic;
 }
 
-
-/* Pagination Controls (now structurally fixed at bottom by flexbox) */
 .pagination-controls {
     display: flex;
     justify-content: center;
@@ -365,7 +381,7 @@ body {
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid #e0e0e0;
-    flex-wrap: wrap; /* Allow pagination buttons to wrap */
+    flex-wrap: wrap; /* Allows pagination buttons to wrap */
 }
 
 .pagination-btn {
@@ -403,52 +419,65 @@ body {
     cursor: not-allowed;
 }
 
-/* Responsive Adjustments */
+/* --- Media Queries for Responsiveness --- */
+
 @media (max-width: 1024px) {
     .movement-list-page {
-        width: 100vw;
-        height: 100vh;
         padding: 25px;
     }
     .table-controls-header {
-        flex-direction: column; /* Stack controls vertically */
-        align-items: flex-start;
-        gap: 10px;
+        flex-direction: column; /* Stacks header sections vertically */
+        align-items: flex-start; /* Align stacked items to the left */
+        gap: 10px; /* Reduce gap between sections */
     }
     .header-left, .header-right {
-        width: 100%; /* Force stacking */
-        justify-content: flex-start;
+        width: 100%; /* Take full width when stacked */
+        justify-content: flex-start; /* Align controls to the left */
         gap: 10px;
-        flex-direction: column; /* Ensure items within left/right headers also stack */
-        align-items: stretch; /* Make items fill the width */
+        /* Re-evaluate flex-direction for inner elements if needed.
+           Leaving as row for now, but they will wrap. */
     }
     .search-box {
-        width: 100%; /* Allow search box to take full width */
-        max-width: none; /* Remove max-width constraint here */
+        width: 100%; /* Search box takes full width */
+        max-width: none;
+    }
+    .returnable-filter-group {
+        /* Keep as flex row, but they will wrap if space is tight */
+        flex-wrap: wrap;
+        gap: 8px; /* Slightly reduced gap */
     }
 }
 
 @media (max-width: 768px) {
     .movement-list-page {
-        margin: 0;
         padding: 20px;
-        width: 100vw;
-        height: 100vh;
     }
     .add-movement-btn {
-        width: 100%;
-        justify-content: center;
+        width: 100%; /* Add button takes full width */
+        justify-content: center; /* Center content within button */
         padding: 10px 20px;
     }
-    .filter-select, .reset-btn {
-        width: 100%; /* Make them take full width and stack */
+    .filter-select { /* Adjusted for smaller screens, applies to both "All Type" and "All Returnable" */
+        width: 100%; /* Filters and selects take full width on smaller screens */
+        font-size: 0.9em;
+        padding: 8px 12px;
+        min-width: unset; /* Allow to shrink to fit 100% width */
+        max-width: unset; /* Allow to expand to fit 100% width */
+    }
+    .reset-btn {
+        width: 100%; /* Reset button takes full width */
         font-size: 0.9em;
         padding: 8px 12px;
     }
     .rows-per-page-selector {
         width: 100%;
-        justify-content: center;
+        justify-content: center; /* Center the "rows per page" text and select */
         font-size: 0.85em;
+    }
+    .rows-per-page-selector select { /* Adjusted for smaller screens */
+        padding: 8px 12px; /* Smaller padding for smaller screens */
+        font-size: 0.9em; /* Smaller font for smaller screens */
+        width: 70px; /* Keep a specific width for rows per page on smaller screens if desired, or set to 100% */
     }
     .data-table th, .data-table td {
         padding: 10px 12px;
@@ -465,23 +494,20 @@ body {
 @media (max-width: 480px) {
     .movement-list-page {
         padding: 15px;
-        margin: 0;
-        width: 100vw;
-        height: 100vh;
     }
     .data-table {
-        min-width: 800px;
+        min-width: 800px; /* Maintain minimum width for table content */
     }
     .data-table th, .data-table td {
         padding: 8px 10px;
         font-size: 0.8em;
     }
     .pagination-controls {
-        flex-direction: column;
+        flex-direction: column; /* Stack pagination buttons */
         gap: 8px;
     }
     .pagination-btn {
-        width: 100%;
+        width: 100%; /* Pagination buttons take full width */
         padding: 8px 15px;
     }
 }
